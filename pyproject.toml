@@ -15,6 +15,9 @@ dependencies = [
     "uvicorn>=0.30",
 ]
 
+[project.scripts]
+threadfin = "threadfin.cli:main"
+
 [project.optional-dependencies]
 dev = [
     "httpx2>=2.0",  # starlette.testclient

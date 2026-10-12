@@ -294,3 +294,16 @@ contents, domain settings, the URL returned and the download queue).
 | Turning `cache.images` off left the files until the next scheduled update; the cache was emptied before every scheduled update unless caching was on. | kept, and turning it off deletes the cache at once (also if it happens while images are downloading) |
 | A build during the downloads did not get its own download run. | **fixed** |
 
+## Command line (`cli.py`)
+
+Tested with the real command (`tests/test_cli.py` starts and stops a server process).
+
+| Go behaviour | Status |
+|---|---|
+| Flags `-config`, `-port`, `-restore`, `-info`, `-debug`, `-bind`, `-branch`, `-h`; `-port` is saved to settings.json. | kept (also as `--config` etc.) |
+| `-restore`: shows version, file and config folder, asks `yes` / `no` (any other answer: `Invalid input`), restores, exits. | kept; a failed restore is reported and changes nothing (see Backup) |
+| The server listened only on the first LAN address found (not even `localhost`), and the `bindIpAddress` setting won over `-bind`. | **changed**: all interfaces by default; `-bind` wins over the setting |
+| `-dev` (web files from the source tree); `-branch` chose the self-update branch. | `-dev` **dropped**; `-branch` accepted and saved, nothing updates itself |
+| Binary self-update check at start-up. | **dropped** (see Backup, restore and scheduler) |
+| Request logging. | **new**: from `-debug 2` (off below, since `/m3u/` and `/xmltv/` URLs can carry credentials) |
+

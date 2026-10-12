@@ -1,10 +1,10 @@
 # threadfin-py
 
 Python port of [Threadfin](https://github.com/Threadfin/Threadfin) (M3U proxy and EPG
-mapper for Plex / Emby / Jellyfin). **Work in progress**: everything except a command to start
-the server is done (see the roadmap).
+mapper for Plex / Emby / Jellyfin). Every part of the Go app in scope is ported; see the open
+questions below.
 
-Scope decisions: no stream buffer (`/stream/` will redirect to the provider URL),
+Scope decisions: no stream buffer (`/stream/` redirects to the provider URL),
 no WebSocket UI (REST API + server-rendered HTMX pages instead), channel probe kept
 and extended with stored results. Existing `~/.threadfin` config folders stay compatible.
 
@@ -26,7 +26,28 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
 | Web UI (`/web/`: status, playlists, XMLTV, filters, mapping with probe, users, settings, backup / restore, log) | done, htmx, tested through the app |
 | REST API (`/api/v1/`), Go's `/api/`, `/ppv/`, `/data_images/` | done; settings and filter saving golden-tested against Go (56 cases) |
+| `threadfin` command (start, `-restore`, `-info`) | done, tested with a real server process |
 | Image cache (`cache.images`, `/images/`) | done; URL lookups golden-tested against Go (8 cases, 14 URLs each), downloads in the background |
+
+## Running
+
+    pip install .            # or: python3 -m venv .venv && .venv/bin/pip install .
+    threadfin                # or: python -m threadfin
+
+Then open `http://<this machine>:34400/web/`, add a playlist (and, for the XMLTV mode, a guide),
+and add the tuner in Plex / Emby / Jellyfin as `http://<this machine>:34400`. An existing
+`~/.threadfin` folder from the Go app is used as it is.
+
+| Option | |
+|---|---|
+| `-config DIR` | config folder (default `~/.threadfin`) |
+| `-port PORT` | server port, saved to settings.json (default 34400) |
+| `-bind IP` | listen address (default: the `bindIpAddress` setting, else all interfaces) |
+| `-restore FILE` | restore a backup (asks first), then exit |
+| `-info` | show the configuration, then exit |
+| `-debug 0-3` | more logging; 2 and up logs every request |
+
+Go's single-dash spelling and `--config` etc. both work. Stop the server with Ctrl+C or SIGTERM.
 
 ## REST API
 
@@ -57,12 +78,6 @@ Needs Python 3.12+ and (for one integration test) `ffmpeg`/`ffprobe`. Golden fil
 `tests/golden/` were produced by the real Go code; regenerate them with the scripts in
 `tools/go_golden/` (needs Go and network access). See `docs/PARITY_NOTES.md` for the
 Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the development method.
-
-## Roadmap
-
-1. Entry point: no CLI, `__main__` or `[project.scripts]` yet to start the server
-   (uvicorn on `web.create_app`), including Go's `-restore <archive>` (confirm, then
-   `backup.restore_backup`).
 
 ## Open questions
 
