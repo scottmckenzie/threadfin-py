@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Threadfin{% endblock %}</title>
+  <link rel="stylesheet" href="/web/static/style.css">
+  <link rel="icon" href="data:,">
+  <script src="/web/static/htmx-2.0.4.min.js" defer></script>
+  <script src="/web/static/app.js" defer></script>
+</head>
+<body>
+{% block body %}
+<header class="topbar">
+  <a class="brand" href="/web/">Threadfin</a>
+  <span class="muted">{{ version }} · {{ settings.epg_source }}</span>
+  <span class="spacer"></span>
+  {% if user %}
+    <span class="muted">{{ username }}</span>
+    <button class="link" hx-post="/web/logout">Log out</button>
+  {% endif %}
+</header>
+<div class="layout">
+  <nav class="menu" aria-label="Main menu">
+    {% set items = [("status", "/web/", "Status"), ("playlists", "/web/playlists", "Playlists")] %}
+    {% if xepg %}{% set items = items + [("xmltv", "/web/xmltv", "XMLTV")] %}{% endif %}
+    {% set items = items + [("filters", "/web/filters", "Filters")] %}
+    {% if xepg %}{% set items = items + [("mapping", "/web/mapping", "Mapping")] %}{% endif %}
+    {% if auth_on %}{% set items = items + [("users", "/web/users", "Users")] %}{% endif %}
+    {% set items = items + [("settings", "/web/settings", "Settings"), ("log", "/web/log", "Log")] %}
+    {% for key, href, label in items %}
+      <a href="{{ href }}" {% if page == key %}aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<dialog id="dialog"><div id="dialog-body"></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+{% endblock %}
+</body>
+</html>

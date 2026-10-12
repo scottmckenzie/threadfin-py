@@ -1,0 +1,24 @@
+{
+ "op": "settings",
+ "settings": {
+  "uuid": "2026-01-ABCD-EFGHIJ",
+  "ffmpeg.path": "{work}/bin/ffmpeg",
+  "vlc.path": "{work}/bin/cvlc",
+  "backup.path": "{work}/cfg/backup/",
+  "temp.path": "{work}/tmp/",
+  "ThreadfinAutoUpdate": false
+ },
+ "request": {
+  "cmd": "saveSettings",
+  "settings": {
+   "authentication.web": true,
+   "authentication.m3u": true
+  }
+ },
+ "files": [
+  "bin/ffmpeg",
+  "bin/cvlc",
+  "bin/other"
+ ],
+ "dirs": []
+}

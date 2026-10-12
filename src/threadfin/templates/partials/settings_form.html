@@ -1,0 +1,28 @@
+<form hx-disinherit="*" hx-post="/web/settings" hx-target="#settings" hx-disabled-elt="find button[type=submit]">
+  {% if message %}<p class="ok">{{ message }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  {% for title, fields in sections %}
+  <section class="card">
+    <h2>{{ title }}</h2>
+    {% for f in fields %}
+      {% set v = values.get(f.key) %}
+      <div class="setting{% if f.needs_web_auth and not values.get('authentication.web') %} muted{% endif %}">
+        {% if f.kind == "bool" %}
+          <label class="check"><input type="checkbox" name="{{ f.key }}" {% if v %}checked{% endif %}> {{ f.title }}</label>
+        {% elif f.kind == "select" %}
+          <label>{{ f.title }}
+            <select name="{{ f.key }}">{% for choice in f.choices %}<option value="{{ choice }}" {% if choice == v %}selected{% endif %}>{{ choice or "–" }}</option>{% endfor %}</select></label>
+        {% elif f.kind == "times" %}
+          <label>{{ f.title }} <input name="{{ f.key }}" value="{{ v|join(',') }}" placeholder="{{ f.placeholder }}"></label>
+        {% elif f.kind == "int" %}
+          <label>{{ f.title }} <input name="{{ f.key }}" type="number" value="{{ v }}"></label>
+        {% else %}
+          <label>{{ f.title }} <input name="{{ f.key }}" value="{{ v if v is not none else '' }}" placeholder="{{ f.placeholder }}"></label>
+        {% endif %}
+        {% if f.description %}<small>{{ f.description }}{% if f.needs_web_auth %} Needs web authentication.{% endif %}</small>{% endif %}
+      </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+  <div class="buttons sticky"><span class="spacer"></span><button class="primary" type="submit">Save settings</button></div>
+</form>

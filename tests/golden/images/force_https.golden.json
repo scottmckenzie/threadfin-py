@@ -1,0 +1,81 @@
+{
+  "lookups": [
+    {
+      "source": "http://img.example/logo.png",
+      "first": "http://192.168.1.2:34400/images/66270af4d75f9a84faca9ff24d755ace.png",
+      "second": "https://tv.example:8443/images/66270af4d75f9a84faca9ff24d755ace.png"
+    },
+    {
+      "source": "http://img.example/logo.png?size=big",
+      "first": "https://tv.example:8443/images/66270af4d75f9a84faca9ff24d755ace.png",
+      "second": "https://tv.example:8443/images/66270af4d75f9a84faca9ff24d755ace.png"
+    },
+    {
+      "source": "https://cdn.example/a/b/Channel.PNG",
+      "first": "http://192.168.1.2:34400/images/08d2411054f9d699d7761e9d00332e58.PNG",
+      "second": "https://tv.example:8443/images/08d2411054f9d699d7761e9d00332e58.PNG"
+    },
+    {
+      "source": "http://img.example/noext",
+      "first": "http://img.example/noext",
+      "second": "http://img.example/noext"
+    },
+    {
+      "source": "http://img.example/dir.v2/noext",
+      "first": "http://img.example/dir.v2/noext",
+      "second": "http://img.example/dir.v2/noext"
+    },
+    {
+      "source": "http://img.example/logo.jpg#frag",
+      "first": "http://img.example/logo.jpg#frag",
+      "second": "http://img.example/logo.jpg#frag"
+    },
+    {
+      "source": "http://img.example/page.html",
+      "first": "http://192.168.1.2:34400/images/cc41e8d017bfbc5d6361b7d8c2b1e20d.html",
+      "second": "https://tv.example:8443/images/cc41e8d017bfbc5d6361b7d8c2b1e20d.html"
+    },
+    {
+      "source": "http://img.example/script.php?id=1",
+      "first": "http://img.example/script.php?id=1",
+      "second": "http://img.example/script.php?id=1"
+    },
+    {
+      "source": "logo.png",
+      "first": "logo.png",
+      "second": "logo.png"
+    },
+    {
+      "source": "ftp://img.example/logo.gif",
+      "first": "ftp://img.example/logo.gif",
+      "second": "ftp://img.example/logo.gif"
+    },
+    {
+      "source": "\r\nhttp://img.example/trimmed.png\r\n",
+      "first": "http://192.168.1.2:34400/images/12ad8158384ec975c046c38560f647a6.png",
+      "second": "https://tv.example:8443/images/12ad8158384ec975c046c38560f647a6.png"
+    },
+    {
+      "source": "",
+      "first": "",
+      "second": ""
+    },
+    {
+      "source": "http://img.example/space name.svg",
+      "first": "http://192.168.1.2:34400/images/fca9549408cac4744a111ba34777a5f8.svg",
+      "second": "https://tv.example:8443/images/fca9549408cac4744a111ba34777a5f8.svg"
+    },
+    {
+      "source": "http://img.example/weird%20.webp",
+      "first": "http://img.example/weird%20.webp",
+      "second": "http://img.example/weird%20.webp"
+    }
+  ],
+  "queue": [
+    "http://img.example/logo.jpg#frag",
+    "http://img.example/script.php?id=1",
+    "logo.png",
+    "ftp://img.example/logo.gif",
+    "http://img.example/weird%20.webp"
+  ]
+}

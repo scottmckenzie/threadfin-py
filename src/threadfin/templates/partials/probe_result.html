@@ -1,0 +1,13 @@
+{% if error %}
+  <p class="error">{{ error }}</p>
+{% elif probe %}
+  {% if probe.ok %}
+    <p><strong>{{ probe.summary.resolution or "?" }}</strong>{% if probe.summary.frame_rate %} · {{ probe.summary.frame_rate }} fps{% endif %}{% if probe.summary.audio_channels %} · {{ probe.summary.audio_channels }}{% endif %}
+      {% if probe.details.video_codec %} · {{ probe.details.video_codec }}{% endif %}{% if probe.details.audio_codec %} / {{ probe.details.audio_codec }}{% endif %}</p>
+  {% else %}
+    <p class="error">Probe failed: {{ probe.error }}</p>
+  {% endif %}
+  <p class="muted">{{ "Stored result from" if probe.cached else "Probed" }} {{ probe.probed_at.astimezone().strftime("%Y-%m-%d %H:%M") }} ({{ probe.duration_ms }} ms)</p>
+{% else %}
+  <p class="muted">Not probed yet.</p>
+{% endif %}

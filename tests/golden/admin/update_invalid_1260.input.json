@@ -1,0 +1,26 @@
+{
+ "op": "settings",
+ "settings": {
+  "uuid": "2026-01-ABCD-EFGHIJ",
+  "ffmpeg.path": "{work}/bin/ffmpeg",
+  "vlc.path": "{work}/bin/cvlc",
+  "backup.path": "{work}/cfg/backup/",
+  "temp.path": "{work}/tmp/",
+  "ThreadfinAutoUpdate": false
+ },
+ "request": {
+  "cmd": "saveSettings",
+  "settings": {
+   "update": [
+    "0300",
+    "1260"
+   ]
+  }
+ },
+ "files": [
+  "bin/ffmpeg",
+  "bin/cvlc",
+  "bin/other"
+ ],
+ "dirs": []
+}

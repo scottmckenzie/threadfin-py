@@ -1,0 +1,36 @@
+<form hx-disinherit="*" hx-post="/web/providers/{{ kind }}{% if provider_id %}/{{ provider_id }}{% endif %}" hx-target="#dialog-body"
+      hx-disabled-elt="find button[type=submit]">
+  <h2>{% if provider_id %}{{ data.get("name") or provider_id }}{% else %}New {{ title }}{% endif %}</h2>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <label>Name <input name="name" value="{{ data.get('name', '') }}"></label>
+  <label>Description <input name="description" value="{{ data.get('description', '') }}"></label>
+  {% if kind == "hdhr" %}
+    <label>Tuner address <input name="file.source" value="{{ data.get('file.source', '') }}" placeholder="192.168.1.10" required>
+      <small>The HDHomeRun's IP address (and port); its lineup.json is read.</small></label>
+  {% else %}
+    <label>URL <input name="file.source" value="{{ data.get('file.source', '') }}" placeholder="http://provider/{{ 'playlist.m3u' if kind == 'm3u' else 'guide.xml' }}" required></label>
+  {% endif %}
+  {% if kind != "xmltv" %}
+    <label>Tuners <input name="tuner" type="number" min="1" max="100" value="{{ data.get('tuner', 1) }}">
+      <small>Parallel connections the provider allows.</small></label>
+  {% endif %}
+  <div class="row">
+    <label>HTTP proxy IP <input name="http_proxy.ip" value="{{ data.get('http_proxy.ip', '') }}"></label>
+    <label>HTTP proxy port <input name="http_proxy.port" value="{{ data.get('http_proxy.port', '') }}"></label>
+  </div>
+  {% if kind == "m3u" %}
+  <div class="row">
+    <label>Origin header <input name="http_headers.origin" value="{{ data.get('http_headers.origin', '') }}"></label>
+    <label>Referer header <input name="http_headers.referer" value="{{ data.get('http_headers.referer', '') }}"></label>
+  </div>
+  {% endif %}
+  <div class="buttons">
+    {% if provider_id %}
+      <button class="danger" type="button" hx-post="/web/providers/{{ kind }}/{{ provider_id }}/delete"
+              hx-swap="none" hx-confirm="Delete {{ data.get('name') or provider_id }} and its local copy?">Delete</button>
+    {% endif %}
+    <span class="spacer"></span>
+    <button type="button" data-close-dialog>Cancel</button>
+    <button class="primary" type="submit">{% if provider_id %}Save{% else %}Add and download{% endif %}</button>
+  </div>
+</form>

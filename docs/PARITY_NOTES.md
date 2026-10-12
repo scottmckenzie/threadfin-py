@@ -208,10 +208,10 @@ results, error texts and `authentication.json` after every step.
 | The first-user form ignored "Default user already exists" and, given an existing user's credentials, gave that user every level. | **fixed**: refused once a user exists |
 | A user could be created with an empty username and password (which then matched requests without credentials). | **fixed**: refused |
 | Every Basic / URL check minted a session token that stayed in memory forever. | **changed**: only logins issue tokens; expired tokens are purged |
-| Tokens: in memory, 60 minutes, replaced by a new one on every check. | kept (deleting a user also ends its sessions) |
+| Tokens: in memory, 60 minutes, replaced by a new one on every check. | kept for Go's `/api/` (deleting a user also ends its sessions); **changed** for web / REST sessions: extended on every use instead of replaced, because the UI sends requests in parallel |
 | Changing only the password (no username) in the user editor was silently ignored. | kept (the new UI always sends the username) |
 | `authentication.json` written with mode 0600. | kept, written atomically |
-| Web-UI login (cookie `Token`), create-first-user page, API token auth and the configuration-wizard bypass. | not yet: wired up with the REST API + UI; the store functions are ported and tested |
+| Web-UI login (cookie `Token`), create-first-user page, API token auth. | kept (see Web UI and APIs below); the cookie is `HttpOnly`, `SameSite=Lax` |
 
 ## Backup, restore and scheduler (`backup.py`, `scheduler.py`, `service.py`)
 
@@ -242,3 +242,55 @@ were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
 | The loop slept 60 s *after* each check and update, so it drifted and could skip a minute (e.g. `0301` after a long `0300` update); a time listed twice ran twice. | **fixed**: wakes at each minute boundary, at most one run per minute |
 | Daily binary self-update at a random time between 00:10 and 01:58 (`ThreadfinAutoUpdate`). | **dropped** (the setting is kept in `settings.json`) |
 | Start-up: with `files.update` on and at least one **M3U** provider: backup, download, build; otherwise build from the local copies. | **fixed**: HDHomeRun providers count too (an HDHomeRun-only setup was never refreshed on start) |
+
+## Web UI and APIs (`ui.py`, `api.py`, `access.py`, `admin.py`)
+
+The WebSocket UI is replaced by server-rendered pages (htmx) and a REST API; both call the same
+`Service` / `admin.py` functions. Go's two real save routines, `updateServerSettings` and
+`saveFilter`, are golden-tested on 56 cases (`tests/golden/admin`, settings.json compared after
+every request); the rest is tested through the app (`tests/test_ui.py`, `tests/test_api.py`).
+
+| Go behaviour | Status |
+|---|---|
+| Settings page: `update` times with spaces removed and checked as `HHMM`; `backup.path` / `temp.path` get a trailing `/`, are created and must be writable; `ffmpeg.path` / `vlc.path` must be files; turning web authentication off turns every other authentication off; empty FFmpeg / VLC options become the defaults; buffer `ffmpeg` / `vlc` needs the path. | kept |
+| A refused setting (e.g. buffer `ffmpeg` without a path) was already applied in memory and saved with the next change. | **fixed**: a request is checked completely first; nothing changes on error |
+| Keys outside the settings page (port, UUID, files, …) and unknown keys were silently ignored; values of the wrong type dropped the WebSocket connection. | **changed**: refused with an error |
+| `excludeStreamHttps` could never be saved (Go's request struct spelled it `excludeStreamsHttps`). | **fixed** |
+| `xepg.replace.missing.images` did not regenerate the guide (empty `case` in Go's switch). | **fixed**: guide-related settings rebuild |
+| New filters get the lowest free number; changes to unknown filter ids are ignored; an empty rule is `Invalid filter rule`. | kept |
+| A new filter was stored with the whole request nested in it (`{"-1": {...}, "0": {...}, ...}`). | **fixed**: only the filter's fields |
+| A filter field of the wrong type (e.g. a numeric rule) was saved and broke every later build. | **fixed**: refused |
+| Provider dialogs: new providers are downloaded first and dropped if that fails; editing does not download. | kept; fields are type-checked (Go stored whatever the browser sent, including internal keys) |
+| Mapping: the browser sent the whole channel database back and Go saved it as it came. | **changed**: per-channel changes of the editable fields only, checked (number, XMLTV file and channel must exist; an active channel needs a guide), then a rebuild |
+| Bulk edit with `x-channels-start` numbers the selected channels from there. | kept (in their current order) |
+| Logo upload wrote the browser's file name into the upload folder, `../` included. | **fixed**: base name only, image extensions, at most 5 MB |
+| The channel probe ran `ffprobe` on whatever `probeURL` the browser sent. | **fixed**: the channel's own stream URL, network schemes only (never local files); results are stored (see Channel probe) |
+| The UI's WebSocket accepted any origin, so any web page could change the settings. | **fixed**: POSTs need an htmx / `X-Requested-With` / `Authorization` header or a JSON body |
+| Deleting the last user was possible while login was required (anyone could then create a new "first user"). | **fixed**: refused; a user cannot delete or lock out themselves |
+| Backup download from the temp folder via `/download/<name>`, deleted after the download. | kept as `/web/backup` and `GET /api/v1/backup` (created on request, deleted afterwards) |
+| Configuration wizard. | **dropped**: dead code in Go (`System.ConfigurationWizard` is never set) |
+| Go `/api/`: needs the `api` setting (423 otherwise), POST only (404 for GET), invalid JSON 400; `status`, `login`, `update.m3u` / `.hdhr` / `.xmltv` / `.xepg`; `Invalid API command`; with `authentication.api` a token that is replaced in every answer. | kept |
+| Go `/api/` wrote a second JSON object after an error object. | **fixed**: one object |
+| `/ppv/enable` / `/ppv/disable`: (de)activate the channels mapped to the PPV dummy guide, no authentication, any method. | kept (used by scripts) |
+| Settings that do nothing in this port (stream buffer, VLC, SSDP, self-update, temp folder) are on the settings page. | **changed**: kept in settings.json, not shown |
+| The log page (`WebScreenLog`, `log.entries.ram` lines in memory, error / warning counters, reset). | kept |
+
+## Image cache (`imagecache.py`, `service.py`)
+
+Go's `GetURL` is golden-tested on 8 cases of 14 URLs each (`tests/golden/images`: cache folder
+contents, domain settings, the URL returned and the download queue).
+
+| Go behaviour | Status |
+|---|---|
+| With `cache.images`, every logo / poster URL in the guide and playlist is looked up: a cached image gives `<base>/images/<name>`, otherwise the original URL is used and the image queued. After the build the queue is downloaded in the background, unused images are deleted and the guide is written again. | kept |
+| Cache file name: `md5(URL without the query)` plus the path's extension (case kept); `\r` / `\n` around the URL are ignored; URLs without an extension are not cached. | kept (an existing Go cache folder is reused) |
+| Any extension was cached and served with the matching type: a provider URL ending in `.html` became a page on this server (where the login cookie lives). Relative, `ftp://` and `.php` URLs were queued too. | **fixed**: only http(s) URLs with an image extension; a download must be an image (checked by its first bytes); responses carry `nosniff`, and SVGs a sandboxing CSP (also for uploaded logos on `/data_images/`) |
+| Two URLs differing only in the query were both downloaded into the same file. | **fixed**: one download per file |
+| The base URL was the address of the *last request* to the server (opening the UI via `localhost` broke every image in Plex), and the configured domain was only applied from the second lookup of an image. | **changed**: the configured domain (`forceHttps` + HTTPS domain, or the HTTP domain), else the bind / LAN address with the port, for every lookup; the playlist uses the address the client asked with, like its stream links |
+| `forceHttps` links (images, playlist, lineup) carry the HTTPS port, `:443` included. | kept, except that `:443` is left out (same address); this port previously left the HTTPS port out of playlist / lineup links |
+| The cached URL was stored as the channel's logo in `xepg.json` (and kept when caching was turned off). | **fixed**: `xepg.json` keeps the provider's URL; only the guide and playlist use the cache |
+| Cached URLs pointed at `/images//<full disk path>` (it worked because `/images/` used only the last path element). | **fixed**: `/images/<name>`; names are checked, nothing outside the cache folder is served |
+| Failed downloads were retried on every build. | **changed**: after 6 hours |
+| Turning `cache.images` off left the files until the next scheduled update; the cache was emptied before every scheduled update unless caching was on. | kept, and turning it off deletes the cache at once (also if it happens while images are downloading) |
+| A build during the downloads did not get its own download run. | **fixed** |
+

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="heading">
+  <h1>Log</h1>
+  <span class="spacer"></span>
+  <button hx-post="/web/log/clear" hx-swap="none" hx-confirm="Clear the log?">Clear</button>
+</div>
+<div class="card" hx-get="/web/log/entries" hx-trigger="refresh-list from:body, every 5s">
+  {% include "partials/log_entries.html" %}
+</div>
+{% endblock %}

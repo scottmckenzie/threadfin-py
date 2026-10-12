@@ -1,0 +1,7 @@
+<div id="logo-field" class="row">
+  <label>Logo URL <input name="tvg-logo" value="{{ value if value is defined else c.tvg_logo }}"></label>
+  <label>Upload a logo
+    <input type="file" name="logo" accept="image/*" hx-post="/web/logo" hx-encoding="multipart/form-data"
+           hx-include="closest #logo-field" hx-target="#logo-field" hx-swap="outerHTML" hx-trigger="change"></label>
+  {% if logo_error %}<p class="error">{{ logo_error }}</p>{% endif %}
+</div>

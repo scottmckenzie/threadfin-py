@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="heading">
+    <h1>Users</h1>
+    <span class="spacer"></span>
+    <button class="primary" hx-get="/web/users/new" hx-target="#dialog-body">Add user</button>
+  </div>
+  <div hx-get="/web/users/list" hx-trigger="load, refresh-list from:body"><p class="muted">Loading…</p></div>
+</section>
+{% endblock %}

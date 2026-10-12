@@ -1,0 +1,7 @@
+{% if error %}
+  <p class="error">Restore failed: {{ error }}</p>
+{% elif web_url %}
+  <p class="ok">Backup restored. The port changed: restart Threadfin, then open <a href="{{ web_url }}">{{ web_url }}</a>.</p>
+{% else %}
+  <p class="ok">Backup restored. <a href="/web/">Reload</a></p>
+{% endif %}

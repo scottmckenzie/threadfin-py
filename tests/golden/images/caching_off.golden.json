@@ -1,0 +1,75 @@
+{
+  "lookups": [
+    {
+      "source": "http://img.example/logo.png",
+      "first": "http://img.example/logo.png",
+      "second": "http://img.example/logo.png"
+    },
+    {
+      "source": "http://img.example/logo.png?size=big",
+      "first": "http://img.example/logo.png?size=big",
+      "second": "http://img.example/logo.png?size=big"
+    },
+    {
+      "source": "https://cdn.example/a/b/Channel.PNG",
+      "first": "https://cdn.example/a/b/Channel.PNG",
+      "second": "https://cdn.example/a/b/Channel.PNG"
+    },
+    {
+      "source": "http://img.example/noext",
+      "first": "http://img.example/noext",
+      "second": "http://img.example/noext"
+    },
+    {
+      "source": "http://img.example/dir.v2/noext",
+      "first": "http://img.example/dir.v2/noext",
+      "second": "http://img.example/dir.v2/noext"
+    },
+    {
+      "source": "http://img.example/logo.jpg#frag",
+      "first": "http://img.example/logo.jpg#frag",
+      "second": "http://img.example/logo.jpg#frag"
+    },
+    {
+      "source": "http://img.example/page.html",
+      "first": "http://img.example/page.html",
+      "second": "http://img.example/page.html"
+    },
+    {
+      "source": "http://img.example/script.php?id=1",
+      "first": "http://img.example/script.php?id=1",
+      "second": "http://img.example/script.php?id=1"
+    },
+    {
+      "source": "logo.png",
+      "first": "logo.png",
+      "second": "logo.png"
+    },
+    {
+      "source": "ftp://img.example/logo.gif",
+      "first": "ftp://img.example/logo.gif",
+      "second": "ftp://img.example/logo.gif"
+    },
+    {
+      "source": "\r\nhttp://img.example/trimmed.png\r\n",
+      "first": "http://img.example/trimmed.png",
+      "second": "http://img.example/trimmed.png"
+    },
+    {
+      "source": "",
+      "first": "",
+      "second": ""
+    },
+    {
+      "source": "http://img.example/space name.svg",
+      "first": "http://img.example/space name.svg",
+      "second": "http://img.example/space name.svg"
+    },
+    {
+      "source": "http://img.example/weird%20.webp",
+      "first": "http://img.example/weird%20.webp",
+      "second": "http://img.example/weird%20.webp"
+    }
+  ],
+  "queue": []
+}

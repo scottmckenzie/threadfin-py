@@ -9,9 +9,11 @@ in `docs/PARITY_NOTES.md`.
     python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
     .venv/bin/python -W error -X dev -m unittest discover -s tests
 
-`.venv/bin/pytest` also works. Runtime dependencies are pydantic, starlette and uvicorn. Tests use
-`unittest` and providers use stdlib `urllib`; keep it that way unless there is a reason to add a
-dependency. One integration test needs `ffmpeg`/`ffprobe`.
+`.venv/bin/pytest` also works. Runtime dependencies are pydantic, starlette, uvicorn, jinja2 and
+python-multipart. Tests use `unittest` (web tests use Starlette's `TestClient`, which needs `httpx2`;
+shared set-up in `tests/webfixture.py`, so run tests through `discover -s tests`) and providers use
+stdlib `urllib`; keep it that way unless there is a reason to add a dependency. One integration test
+needs `ffmpeg`/`ffprobe`. htmx is vendored in `src/threadfin/static/` (no CDN: the UI must work offline).
 
 ## Scope decisions
 

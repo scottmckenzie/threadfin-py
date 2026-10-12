@@ -1,0 +1,43 @@
+{% set kind = data.get("type", "group-title") %}
+<form hx-disinherit="*" hx-post="/web/filters{% if filter_id %}/{{ filter_id }}{% endif %}" hx-target="#dialog-body">
+  <h2>{% if filter_id %}Edit filter{% else %}New {{ "group" if kind == "group-title" else "custom" }} filter{% endif %}</h2>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <input type="hidden" name="type" value="{{ kind }}">
+  <label>Name <input name="name" value="{{ data.get('name', '') }}"></label>
+  <label>Description <input name="description" value="{{ data.get('description', '') }}"></label>
+  {% if kind == "group-title" %}
+    <label>M3U group
+      <select name="filter" required>
+        <option value="">–</option>
+        {% for g in groups %}<option value="{{ g.name }}" {% if g.name == data.get('filter') %}selected{% endif %}>{{ g.label }}</option>{% endfor %}
+        {% if data.get('filter') and data.get('filter') not in groups|map(attribute='name') %}
+          <option value="{{ data.get('filter') }}" selected>{{ data.get('filter') }} (not in the playlists now)</option>
+        {% endif %}
+      </select></label>
+    <label>Include <input name="include" value="{{ data.get('include', '') }}" placeholder="word1,word2">
+      <small>Only streams of the group whose name contains one of these words.</small></label>
+    <label>Exclude <input name="exclude" value="{{ data.get('exclude', '') }}" placeholder="word1,word2">
+      <small>Leave out streams whose name contains one of these words.</small></label>
+    <label class="check"><input type="checkbox" name="liveEvent" {% if data.get('liveEvent') %}checked{% endif %}> Live events (keep the channels active with the PPV guide)</label>
+  {% else %}
+    <label>Rule <input name="filter" value="{{ data.get('filter', '') }}" placeholder="BBC {HD} !{SD}" required>
+      <small>Text the stream must contain (its name or any attribute); <code>{a,b}</code>: one of these too; <code>!{a,b}</code>: none of these.</small></label>
+  {% endif %}
+  <label class="check"><input type="checkbox" name="caseSensitive" {% if data.get('caseSensitive') %}checked{% endif %}> Case sensitive</label>
+  <label class="check"><input type="checkbox" name="active" {% if data.get('active', true) %}checked{% endif %}> Active</label>
+  <div class="row">
+    <label>Starting channel number <input name="startingNumber" value="{{ data.get('startingNumber', '1000') }}"></label>
+    <label>EPG category
+      <select name="x-category"><option value="">–</option>
+        {% for label, value in categories %}<option value="{{ value }}" {% if value == data.get('x-category') %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+  </div>
+  <div class="buttons">
+    {% if filter_id %}
+      <button class="danger" type="button" hx-post="/web/filters/{{ filter_id }}/delete" hx-swap="none" hx-confirm="Delete this filter?">Delete</button>
+    {% endif %}
+    <span class="spacer"></span>
+    <button type="button" data-close-dialog>Cancel</button>
+    <button class="primary" type="submit">Save</button>
+  </div>
+</form>

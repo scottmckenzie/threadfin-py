@@ -1,0 +1,16 @@
+{% if users %}
+<table class="list">
+  <thead><tr><th>Username</th>{% for key, label in levels %}<th>{{ label }}</th>{% endfor %}<th></th></tr></thead>
+  <tbody>
+  {% for id, data in users %}
+    <tr>
+      <td><strong>{{ data.get("username") or id }}</strong>{% if id == user %} <span class="badge">you</span>{% endif %}</td>
+      {% for key, label in levels %}<td>{{ "✓" if data.get(key) is sameas true else "" }}</td>{% endfor %}
+      <td class="actions"><button hx-get="/web/users/{{ id }}/edit" hx-target="#dialog-body">Edit</button></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No users.</p>
+{% endif %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="heading"><h1>Settings</h1></div>
+<div id="settings">{% include "partials/settings_form.html" %}</div>
+
+<section class="card">
+  <h2>Backup and restore</h2>
+  <p>Download a backup of the configuration, users, channel database and provider copies, or restore one
+    (Go Threadfin backups work too). Restoring replaces the current configuration, then updates from the providers.</p>
+  <div class="buttons">
+    <a class="button" href="/web/backup" download>Download backup</a>
+  </div>
+  <form hx-post="/web/restore" hx-encoding="multipart/form-data" hx-target="#restore-result"
+        hx-confirm="Replace the current configuration with this backup?" hx-disabled-elt="find button">
+    <label>Backup file <input type="file" name="archive" accept=".zip,application/zip" required></label>
+    <button type="submit">Restore</button>
+  </form>
+  <div id="restore-result"></div>
+</section>
+{% endblock %}

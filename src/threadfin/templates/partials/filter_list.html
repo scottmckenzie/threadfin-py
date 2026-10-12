@@ -1,0 +1,22 @@
+{% if filters %}
+<table class="list">
+  <thead><tr><th>Name</th><th>Type</th><th>Rule</th><th>Start</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+  {% for id, f in filters %}
+    <tr>
+      <td><strong>{{ f.get("name") or "(unnamed)" }}</strong>
+        {% if f.get("description") %}<div class="muted">{{ f.get("description") }}</div>{% endif %}</td>
+      <td>{{ "Group" if f.get("type") == "group-title" else "Custom" }}</td>
+      <td class="wrap"><code>{{ f.get("filter", "") }}</code>
+        {% if f.get("include") %} <span class="muted">include</span> <code>{{ f.get("include") }}</code>{% endif %}
+        {% if f.get("exclude") %} <span class="muted">exclude</span> <code>{{ f.get("exclude") }}</code>{% endif %}</td>
+      <td>{{ f.get("startingNumber", "") }}</td>
+      <td>{{ "yes" if f.get("active", true) else "no" }}</td>
+      <td class="actions"><button hx-get="/web/filters/{{ id }}/edit" hx-target="#dialog-body">Edit</button></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No filters. Without filters, all streams are used as long as there are at most 480.</p>
+{% endif %}

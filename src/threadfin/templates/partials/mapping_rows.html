@@ -1,0 +1,29 @@
+{% if rows %}
+<table class="list mapping">
+  <thead><tr>
+    <th><input type="checkbox" data-select-all aria-label="Select all"></th>
+    <th class="num">No.</th><th>Logo</th><th>Channel</th><th>Playlist / group</th><th>Guide</th><th>Probe</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for id, c in rows %}
+    {% set p = probes.get(id) %}
+    <tr class="{{ 'inactive' if not c.x_active }}">
+      <td><input type="checkbox" name="ids" value="{{ id }}" aria-label="Select {{ c.x_name }}"></td>
+      <td class="num">{{ c.x_channel_id }}</td>
+      <td>{% if c.tvg_logo %}<img class="logo" src="{{ c.tvg_logo }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</td>
+      <td><strong>{{ c.x_name }}</strong>{% if c.x_hide_channel %} <span class="badge">hidden</span>{% endif %}
+        {% if c.x_name != c.name %}<div class="muted">{{ c.name }}</div>{% endif %}</td>
+      <td>{{ c.file_m3u_name }}<div class="muted">{{ c.x_group_title }}</div></td>
+      <td>{% if c.x_xmltv_file in ("", "-") %}<span class="muted">–</span>{% else %}
+        {{ names.get(c.x_xmltv_file, {}).get(c.x_mapping, c.x_mapping) }}
+        <div class="muted">{{ providers.get(c.x_xmltv_file, c.x_xmltv_file) }}</div>{% endif %}</td>
+      <td class="nowrap">{% if p %}{% if p.ok %}{{ p.summary.resolution }} {{ p.summary.frame_rate }}{% if p.summary.frame_rate %}fps{% endif %}<div class="muted">{{ p.summary.audio_channels }}</div>{% else %}<span class="error" title="{{ p.error }}">failed</span>{% endif %}{% endif %}</td>
+      <td class="actions"><button type="button" hx-get="/web/mapping/{{ id }}/edit" hx-target="#dialog-body" hx-swap="innerHTML">Edit</button></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="muted">{% if total > limit %}Showing {{ limit }} of {{ total }} channels: narrow the search.{% else %}{{ total }} channels.{% endif %}</p>
+{% else %}
+<p class="muted">No channels here.{% if not service.channels %} Add a playlist and an XMLTV guide first.{% endif %}</p>
+{% endif %}

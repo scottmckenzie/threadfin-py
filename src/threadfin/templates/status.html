@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="heading">
+  <h1>Status</h1>
+  <span class="spacer"></span>
+  <button hx-post="/web/rebuild" hx-swap="none" hx-disabled-elt="this">Rebuild</button>
+  <button class="primary" hx-post="/web/update" hx-swap="none" hx-disabled-elt="this"
+          title="Download every playlist, tuner and guide, then rebuild">Update now</button>
+</div>
+<div hx-get="/web/status/panel" hx-trigger="refresh-list from:body, every 15s">
+  {% include "partials/status_panel.html" %}
+</div>
+{% endblock %}

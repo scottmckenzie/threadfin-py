@@ -1,7 +1,8 @@
 # threadfin-py
 
 Python port of [Threadfin](https://github.com/Threadfin/Threadfin) (M3U proxy and EPG
-mapper for Plex / Emby / Jellyfin). **Work in progress**: the data layer is done.
+mapper for Plex / Emby / Jellyfin). **Work in progress**: everything except a command to start
+the server is done (see the roadmap).
 
 Scope decisions: no stream buffer (`/stream/` will redirect to the provider URL),
 no WebSocket UI (REST API + server-rendered HTMX pages instead), channel probe kept
@@ -20,10 +21,32 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | M3U playlist output + stream id registry | done, golden-tested against Go (39 cases) |
 | Build pipeline, `/stream/` redirect, `/m3u/`, `/xmltv/` endpoints | done, tested end to end |
 | HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
-| Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth) | done, golden-tested against Go (14 step-by-step cases); web/API login comes with the UI |
-| Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written; download/upload come with the UI |
+| Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth, web / API login) | done, golden-tested against Go (14 step-by-step cases) |
+| Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written |
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
-| REST API + HTMX UI | not started |
+| Web UI (`/web/`: status, playlists, XMLTV, filters, mapping with probe, users, settings, backup / restore, log) | done, htmx, tested through the app |
+| REST API (`/api/v1/`), Go's `/api/`, `/ppv/`, `/data_images/` | done; settings and filter saving golden-tested against Go (56 cases) |
+| Image cache (`cache.images`, `/images/`) | done; URL lookups golden-tested against Go (8 cases, 14 URLs each), downloads in the background |
+
+## REST API
+
+JSON under `/api/v1/`; errors are `{"error": "..."}` with a 4xx status. With web authentication on,
+send `Authorization: Bearer <token>` from `POST /api/v1/login {"username", "password"}` (the user
+needs web access). A `POST` must have a JSON body or an `X-Requested-With` header (CSRF guard).
+
+| Endpoint | |
+|---|---|
+| `GET /status`, `GET` / `DELETE /log`, `POST /update` (download + build), `POST /build` | status, log, updates |
+| `GET` / `PATCH /settings` | settings (the settings-page keys; unknown keys are refused) |
+| `GET` / `POST /providers/{m3u,hdhr,xmltv}`, `GET` / `PATCH` / `DELETE /providers/{kind}/{id}`, `POST .../refresh` | playlists, tuners, guides |
+| `GET` / `POST /filters`, `PATCH` / `DELETE /filters/{id}`, `GET /groups` | filters and M3U groups |
+| `GET /channels[?active=&group=]`, `GET` / `PATCH /channels/{id}`, `POST /channels/bulk {"ids", "changes"}` | channel mapping |
+| `POST /channels/{id}/probe[?force=1]`, `GET /channels/{id}/probes`, `GET /xmltv`, `POST /logos` | probe, guide channels, logo upload |
+| `GET` / `POST /users`, `PATCH` / `DELETE /users/{id}` | users |
+| `GET /backup`, `POST /restore` (multipart `file` or a zip body) | backup and restore |
+
+Go's API (`POST /api/` with `{"cmd": "status" | "login" | "update.m3u" | ...}`, needs the API setting),
+`/ppv/enable` / `/ppv/disable` and `/data_images/` work as before.
 
 ## Tests
 
@@ -37,13 +60,7 @@ Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the developmen
 
 ## Roadmap
 
-1. REST API + HTMX UI, including the probe UI (inventory: `webserver.go` WebSocket
-   commands, `webUI.go`, `html/`), with web login (cookie `Token`), the create-first-user
-   page, API token auth and user management on top of `auth.py`, backup download
-   (`create_backup`, Go served it from `/download/`) and restore upload (`Service.restore`). Add `jinja2` (and `python-multipart` if forms post)
-   to `pyproject.toml`.
-2. Image cache (Go: `images.go`, `internal/imgcache`): only an identity hook exists so far.
-3. Entry point: no CLI, `__main__` or `[project.scripts]` yet to start the server
+1. Entry point: no CLI, `__main__` or `[project.scripts]` yet to start the server
    (uvicorn on `web.create_app`), including Go's `-restore <archive>` (confirm, then
    `backup.restore_backup`).
 

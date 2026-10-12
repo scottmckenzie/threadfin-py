@@ -1,0 +1,11 @@
+{% if entries %}
+<table class="log">
+  <tbody>
+  {% for e in entries|reverse %}
+    <tr class="level-{{ e.level|lower }}"><td class="nowrap muted">{{ e.time.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>{{ e.level }}</td><td>{{ e.message }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Nothing logged yet.</p>
+{% endif %}

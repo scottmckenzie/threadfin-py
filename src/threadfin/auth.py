@@ -236,6 +236,30 @@ class Authentication:
                 raise AuthError(SESSION_EXPIRED)
             return self._issue_token(entry[0])
 
+    def session(self, token: str) -> str:
+        """Web-UI session check: the user id, with the token's lifetime extended (not rotated).
+
+        Go replaced the cookie token on every request, which breaks requests the page sends in
+        parallel; here a session stays valid while it is used.
+        """
+        with self._lock:
+            entry = self._tokens.get(token)
+            now = self._clock()
+            if entry is None or entry[1] < now:
+                self._tokens.pop(token, None)
+                raise AuthError(SESSION_EXPIRED)
+            self._tokens[token] = (entry[0], now + self.token_seconds)
+            return entry[0]
+
+    def logout(self, token: str) -> None:
+        with self._lock:
+            self._tokens.pop(token, None)
+
+    def username(self, user_id: str) -> str:
+        """The name shown in the UI (Go keeps it in the user's data)."""
+        name = self.read_user_data(user_id).get("username")
+        return name if isinstance(name, str) else ""
+
     def user_id_for_token(self, token: str) -> str:
         with self._lock:
             entry = self._tokens.get(token)

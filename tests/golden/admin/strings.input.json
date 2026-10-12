@@ -1,0 +1,28 @@
+{
+ "op": "settings",
+ "settings": {
+  "uuid": "2026-01-ABCD-EFGHIJ",
+  "ffmpeg.path": "{work}/bin/ffmpeg",
+  "vlc.path": "{work}/bin/cvlc",
+  "backup.path": "{work}/cfg/backup/",
+  "temp.path": "{work}/tmp/",
+  "ThreadfinAutoUpdate": false
+ },
+ "request": {
+  "cmd": "saveSettings",
+  "settings": {
+   "udpxy": "10.0.0.1:4022",
+   "user.agent": "VLC",
+   "dummyChannel": "PPV",
+   "epgCategories": "Kids:kids",
+   "epgCategoriesColors": "kids:red",
+   "bindIpAddress": "0.0.0.0"
+  }
+ },
+ "files": [
+  "bin/ffmpeg",
+  "bin/cvlc",
+  "bin/other"
+ ],
+ "dirs": []
+}

@@ -1,0 +1,24 @@
+<form hx-disinherit="*" hx-post="/web/users{% if user_id %}/{{ user_id }}{% endif %}" hx-target="#dialog-body">
+  <h2>{% if user_id %}{{ data.get("username") or user_id }}{% else %}New user{% endif %}</h2>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <label>Username <input name="username" value="{{ data.get('username', '') }}" autocomplete="off" required></label>
+  <div class="row">
+    <label>Password <input name="password" type="password" autocomplete="new-password" {% if not user_id %}required{% endif %}
+      {% if user_id %}placeholder="unchanged"{% endif %}></label>
+    <label>Confirm password <input name="confirm" type="password" autocomplete="new-password"></label>
+  </div>
+  <fieldset>
+    <legend>Access</legend>
+    {% for key, label in levels %}
+      <label class="check"><input type="checkbox" name="{{ key }}" {% if data.get(key) is sameas true %}checked{% endif %}> {{ label }}</label>
+    {% endfor %}
+  </fieldset>
+  <div class="buttons">
+    {% if user_id %}
+      <button class="danger" type="button" hx-post="/web/users/{{ user_id }}/delete" hx-swap="none" hx-confirm="Delete this user?">Delete</button>
+    {% endif %}
+    <span class="spacer"></span>
+    <button type="button" data-close-dialog>Cancel</button>
+    <button class="primary" type="submit">Save</button>
+  </div>
+</form>

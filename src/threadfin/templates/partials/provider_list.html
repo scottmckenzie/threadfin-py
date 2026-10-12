@@ -1,0 +1,33 @@
+{% if records %}
+<table class="list">
+  <thead><tr>
+    <th>Name</th><th>Source</th>
+    {% if kind != "xmltv" %}<th class="num">Streams</th><th class="num">Tuners</th>{% else %}<th class="num">Channels</th><th class="num">Programmes</th>{% endif %}
+    <th>Last update</th><th class="num">Availability</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for id, r in records.items() %}
+    {% set compat = r.get("compatibility") or {} %}
+    <tr>
+      <td><strong>{{ r.get("name") or id }}</strong>
+        {% if r.get("description") %}<div class="muted">{{ r.get("description") }}</div>{% endif %}
+        {% if errors.get(id) %}<div class="error">{{ errors[id] }}</div>{% endif %}</td>
+      <td class="wrap"><code>{{ r.get("file.source", "") }}</code></td>
+      {% if kind != "xmltv" %}
+        <td class="num">{{ compat.get("streams", "") }}</td><td class="num">{{ r.get("tuner", "") }}</td>
+      {% else %}
+        <td class="num">{{ compat.get("xmltv.channels", "") }}</td><td class="num">{{ compat.get("xmltv.programs", "") }}</td>
+      {% endif %}
+      <td class="nowrap">{{ r.get("last.update", "") }}</td>
+      <td class="num">{{ r.get("provider.availability", "") }} %</td>
+      <td class="actions">
+        <button hx-get="/web/providers/{{ kind }}/{{ id }}/edit" hx-target="#dialog-body">Edit</button>
+        <button hx-post="/web/providers/{{ kind }}/{{ id }}/refresh" hx-swap="none" hx-disabled-elt="this">Update</button>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">None yet.</p>
+{% endif %}

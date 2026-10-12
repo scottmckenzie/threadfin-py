@@ -1,0 +1,30 @@
+<section class="cards">
+  <div class="card stat"><span class="label">Streams</span><strong>{{ info["streams.active"] }} / {{ info["streams.all"] }}</strong><span class="muted">active / all</span></div>
+  {% if xepg %}<div class="card stat"><span class="label">Channels</span><strong>{{ info["streams.xepg"] }}</strong><span class="muted">in the guide</span></div>{% endif %}
+  <div class="card stat"><span class="label">Tuners</span><strong>{{ info["tuner"] }}</strong><span class="muted">{{ info["playlist.tuners"] }} in playlists</span></div>
+  <div class="card stat"><span class="label">State</span><strong>{{ "Updating" if info["busy"] else "Idle" }}</strong>
+    <span class="muted"><a href="/web/log">{{ info["log.errors"] }} errors, {{ info["log.warnings"] }} warnings</a></span></div>
+</section>
+
+<section class="card">
+  <h2>Addresses</h2>
+  <dl class="pairs">
+    <dt>DVR (Plex / Emby / Jellyfin)</dt><dd><code>{{ info["url.dvr"] }}</code></dd>
+    {% if xepg %}
+      <dt>M3U playlist</dt><dd><code>{{ info["url.m3u"] }}</code></dd>
+      <dt>XMLTV guide</dt><dd><code>{{ info["url.xepg"] }}</code></dd>
+    {% else %}
+      <dt>M3U / XMLTV</dt><dd class="muted">Only available with the EPG source XEPG (Settings).</dd>
+    {% endif %}
+    <dt>UUID</dt><dd><code>{{ info["uuid"] }}</code></dd>
+  </dl>
+</section>
+
+<section class="card">
+  <h2>Last build</h2>
+  {% if not report.ok %}<p class="error">{{ report.error }}</p>{% endif %}
+  <p>{{ report.streams }} streams, {{ report.channels }} channels, {{ report.programmes }} programmes.</p>
+  {% for id, err in report.provider_errors.items() %}<p class="error">{{ id }}: {{ err }}</p>{% endfor %}
+  {% for name, err in report.xmltv_errors.items() %}<p class="error">{{ name }}: {{ err }}</p>{% endfor %}
+  {% for warning in report.warnings %}<p class="warning">{{ warning }}</p>{% endfor %}
+</section>

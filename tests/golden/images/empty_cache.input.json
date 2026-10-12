@@ -1,0 +1,26 @@
+{
+ "caching": true,
+ "cacheURL": "http://192.168.1.2:34400/images/",
+ "files": [],
+ "httpDomain": "",
+ "port": "34400",
+ "forceHttps": false,
+ "httpsPort": 443,
+ "httpsDomain": "",
+ "sources": [
+  "http://img.example/logo.png",
+  "http://img.example/logo.png?size=big",
+  "https://cdn.example/a/b/Channel.PNG",
+  "http://img.example/noext",
+  "http://img.example/dir.v2/noext",
+  "http://img.example/logo.jpg#frag",
+  "http://img.example/page.html",
+  "http://img.example/script.php?id=1",
+  "logo.png",
+  "ftp://img.example/logo.gif",
+  "\r\nhttp://img.example/trimmed.png\r\n",
+  "",
+  "http://img.example/space name.svg",
+  "http://img.example/weird%20.webp"
+ ]
+}

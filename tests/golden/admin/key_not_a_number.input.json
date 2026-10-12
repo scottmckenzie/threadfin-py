@@ -1,0 +1,40 @@
+{
+ "op": "filter",
+ "settings": {
+  "uuid": "2026-01-ABCD-EFGHIJ",
+  "ffmpeg.path": "{work}/bin/ffmpeg",
+  "vlc.path": "{work}/bin/cvlc",
+  "backup.path": "{work}/cfg/backup/",
+  "temp.path": "{work}/tmp/",
+  "ThreadfinAutoUpdate": false,
+  "filter": {
+   "0": {
+    "active": true,
+    "caseSensitive": false,
+    "description": "",
+    "exclude": "",
+    "filter": "News",
+    "include": "",
+    "liveEvent": false,
+    "name": "News",
+    "type": "group-title",
+    "startingNumber": "1000",
+    "x-category": ""
+   }
+  }
+ },
+ "request": {
+  "cmd": "saveFilter",
+  "filter": {
+   "abc": {
+    "name": "x"
+   }
+  }
+ },
+ "files": [
+  "bin/ffmpeg",
+  "bin/cvlc",
+  "bin/other"
+ ],
+ "dirs": []
+}

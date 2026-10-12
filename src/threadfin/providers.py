@@ -400,6 +400,16 @@ class ProviderManager:
                 raise ProviderError(result.error or "download failed")
             return result
 
+    async def update(self, kind: str, provider_id: str, changes: dict[str, Any]) -> bool:
+        """Change fields of a provider record (Go ``saveFiles`` for an existing id); no download."""
+        async with self._lock:
+            record = self.records(kind).get(provider_id)
+            if not isinstance(record, dict):
+                return False
+            record.update(changes)
+            await asyncio.to_thread(self._save)
+            return True
+
     async def remove(self, kind: str, provider_id: str) -> bool:
         """Delete a provider record and its local copy."""
         async with self._lock:

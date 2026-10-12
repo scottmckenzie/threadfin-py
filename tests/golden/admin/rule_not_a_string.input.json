@@ -1,0 +1,31 @@
+{
+ "op": "filter",
+ "settings": {
+  "uuid": "2026-01-ABCD-EFGHIJ",
+  "ffmpeg.path": "{work}/bin/ffmpeg",
+  "vlc.path": "{work}/bin/cvlc",
+  "backup.path": "{work}/cfg/backup/",
+  "temp.path": "{work}/tmp/",
+  "ThreadfinAutoUpdate": false,
+  "filter": {}
+ },
+ "request": {
+  "cmd": "saveFilter",
+  "filter": {
+   "-1": {
+    "active": true,
+    "caseSensitive": true,
+    "description": "d",
+    "filter": 5,
+    "name": "BBC",
+    "type": "custom-filter"
+   }
+  }
+ },
+ "files": [
+  "bin/ffmpeg",
+  "bin/cvlc",
+  "bin/other"
+ ],
+ "dirs": []
+}

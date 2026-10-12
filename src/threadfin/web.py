@@ -15,13 +15,16 @@ without a ``WWW-Authenticate`` challenge, as in Go.
 On start-up the service updates from the providers (``files.update``) or builds from the local
 copies, then the scheduler runs the ``update`` times (see scheduler.py).
 
-The management API/UI is added on top of this app.
+``/images/<name>``       the image cache (``cache.images``, see imagecache.py)
+``/web/``                the web UI (ui.py); ``/api/v1/`` the REST API, ``/api/`` Go's API, ``/ppv/``,
+                        ``/data_images/`` (api.py)
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -30,23 +33,12 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.routing import Route
 
-from . import hdhr
+from . import api, hdhr, ui
+from .access import base_url
+from .imagecache import IMAGE_TYPES, image_headers
 from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError
 from .scheduler import Scheduler
 from .service import Service
-
-
-def base_url(request: Request, service: Service) -> str:
-    """scheme://host[:port] the client used (a configured public domain wins, as in Go)."""
-    settings = service.settings
-    if settings.force_https and settings.https_threadfin_domain:
-        return f"https://{settings.https_threadfin_domain}"
-    if settings.http_threadfin_domain:
-        port = settings.port
-        return f"http://{settings.http_threadfin_domain}:{port}" if port else f"http://{settings.http_threadfin_domain}"
-    host = request.headers.get("host") or f"localhost:{settings.port}"
-    scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
-    return f"{scheme}://{host}"
 
 
 def forbidden() -> Response:
@@ -125,11 +117,23 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         entries = await asyncio.to_thread(service.lineup, base_url(request, service))
         return Response(hdhr.to_json(entries), media_type="application/json")
 
+    async def images(request: Request) -> Response:
+        """Go ``/images/``: the image cache (open, like the guide that links to it)."""
+        name = request.path_params["name"]
+        path = service.images.path(name)
+        if path is None or not path.is_file():
+            return PlainTextResponse("Not Found [404]\n", status_code=404)
+        return FileResponse(path, media_type=IMAGE_TYPES[path.suffix.lower()], headers=image_headers(name))
+
     async def capability(request: Request) -> Response:
         return Response(hdhr.capability_xml(device(request)), media_type="application/xml")
 
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
+        logger = logging.getLogger("threadfin")
+        logger.addHandler(service.log)
+        if logger.getEffectiveLevel() > logging.INFO:
+            logger.setLevel(logging.INFO)
         if build_on_start:
             await service.start()  # also restores group caps / registry after a restart
         task = asyncio.create_task(Scheduler(service).run(), name="scheduler") if schedule else None
@@ -140,6 +144,8 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
                 task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await task
+            logger.removeHandler(service.log)
+            service.close()
 
     app = Starlette(
         routes=[
@@ -147,12 +153,15 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
             Route("/m3u/threadfin.m3u", m3u, methods=["GET", "HEAD"]),
             Route("/xmltv/threadfin.xml", xmltv, methods=["GET", "HEAD"]),
             Route("/xmltv/threadfin.xml.gz", xmltv_gz, methods=["GET", "HEAD"]),
+            Route("/images/{name}", images, methods=["GET", "HEAD"]),
             Route("/discover.json", discover, methods=["GET", "HEAD"]),
             Route("/lineup_status.json", lineup_status, methods=["GET", "HEAD"]),
             Route("/lineup.json", lineup, methods=["GET", "HEAD"]),
             Route("/device.xml", capability, methods=["GET", "HEAD"]),
             Route("/capability", capability, methods=["GET", "HEAD"]),
             Route("/", capability, methods=["GET", "HEAD"]),
+            *api.routes(service),
+            *ui.routes(service),
         ],
         lifespan=lifespan,
     )

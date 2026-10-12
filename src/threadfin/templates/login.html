@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Log in · Threadfin{% endblock %}
+{% block body %}
+<main class="center">
+  <form class="card narrow" method="post" action="/web/login">
+    <h1>Threadfin</h1>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <label>Username <input name="username" autocomplete="username" value="{{ username_value or '' }}" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="primary" type="submit">Log in</button>
+  </form>
+</main>
+{% endblock %}

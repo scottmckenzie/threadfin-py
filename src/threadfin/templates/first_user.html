@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Create the first user · Threadfin{% endblock %}
+{% block body %}
+<main class="center">
+  <form class="card narrow" method="post" action="/web/first-user">
+    <h1>Create the first user</h1>
+    <p class="muted">Web authentication is on and there are no users yet. This account gets access to
+      everything except the API.</p>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <label>Username <input name="username" autocomplete="username" value="{{ username_value or '' }}" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="new-password" required></label>
+    <label>Confirm password <input name="confirm" type="password" autocomplete="new-password" required></label>
+    <button class="primary" type="submit">Create</button>
+  </form>
+</main>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+{% for kind in kinds %}
+<section class="card">
+  <div class="heading">
+    <h1>{{ titles[kind] }}s</h1>
+    <span class="spacer"></span>
+    <button class="primary" hx-get="/web/providers/{{ kind }}/new" hx-target="#dialog-body">Add {{ titles[kind] }}</button>
+  </div>
+  <div hx-get="/web/providers/{{ kind }}/list" hx-trigger="load, refresh-list from:body">
+    <p class="muted">Loading…</p>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}
