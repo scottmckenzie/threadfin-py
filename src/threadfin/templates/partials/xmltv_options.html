@@ -1,2 +1,0 @@
-<option value="-">–</option>
-{% for id, name in channels %}<option value="{{ id }}" {% if id == selected %}selected{% endif %}>{{ name }}{% if name != id %} ({{ id }}){% endif %}</option>{% endfor %}

@@ -91,10 +91,40 @@ def xmltv_files(service: Service) -> list[tuple[str, str]]:
     return sorted(files, key=lambda f: f[1].lower()) + [(DUMMY_FILE, DUMMY_FILE)]
 
 
-def xmltv_channels(service: Service, file: str) -> list[tuple[str, str]]:
-    channels = service.xmltv_mapping.get(file, {})
-    return sorted(((cid, str(info.get("display-name") or cid)) for cid, info in channels.items()),
-                  key=lambda c: c[1].lower())  # fmt: skip
+MAX_MATCHES = 50
+
+
+def xmltv_label(service: Service, file: str, channel_id: str) -> str:
+    """``Display name (id)`` of a guide channel, ``""`` if the guide has no such channel."""
+    info = service.xmltv_mapping.get(file, {}).get(channel_id)
+    if info is None:
+        return ""
+    name = str(info.get("display-name") or channel_id)
+    return name if name == channel_id else f"{name} ({channel_id})"
+
+
+def picker_label(service: Service, file: str, channel_id: str) -> str:
+    """What the picker shows: the guide channel, or the stored id if the guide lacks it now (the
+    mapping is kept, not silently dropped)."""
+    if channel_id in ("", "-"):
+        return ""
+    return xmltv_label(service, file, channel_id) or f"{channel_id} (not in this guide)"
+
+
+def search_xmltv(service: Service, file: str, query: str, limit: int = MAX_MATCHES) -> list[tuple[str, str]]:
+    """Guide channels whose name or id contains ``query``: exact matches first, then prefixes."""
+    text = query.strip().lower()
+    if not text:
+        return []
+    found = []
+    for channel_id, info in service.xmltv_mapping.get(file, {}).items():
+        name = str(info.get("display-name") or channel_id)
+        keys = (name.lower(), channel_id.lower())
+        if any(text in key for key in keys):
+            rank = 0 if text in keys else 1 if any(key.startswith(text) for key in keys) else 2
+            found.append((rank, name.lower(), channel_id, xmltv_label(service, file, channel_id)))
+    found.sort()
+    return [(channel_id, label) for _, _, channel_id, label in found[:limit]]
 
 
 def channel_number(channel: XEPGChannel) -> float:
@@ -394,8 +424,9 @@ def routes(service: Service) -> list[BaseRoute]:
         probe = service.probe_results([channel_id]).get(channel_id)
         others = sorted({c.x_name for cid, c in service.channels.items() if cid != channel_id and c.x_name})
         return render(request, "partials/channel_form.html", channel_id=channel_id, c=channel, error=error,
-                      labels=CHANNEL_LABELS, files=xmltv_files(service), channels=xmltv_channels(service, file),
-                      categories=categories(service), probe=probe, other_names=others)  # fmt: skip
+                      labels=CHANNEL_LABELS, files=xmltv_files(service), categories=categories(service),
+                      probe=probe, other_names=others, file=file, selected=channel.x_mapping,
+                      label=picker_label(service, file, channel.x_mapping))  # fmt: skip
 
     async def channel_edit(request: Request) -> Response:
         channel_id = request.path_params["id"]
@@ -421,10 +452,21 @@ def routes(service: Service) -> list[BaseRoute]:
             return channel_form(request, channel_id, preview, str(exc))
         return done("Saved")
 
-    async def xmltv_options(request: Request) -> Response:
+    async def xmltv_picker(request: Request) -> Response:
+        """The XMLTV channel picker after another guide file was chosen: the guide channel with the
+        stream's tvg-id is preselected if the file has one (as in Go)."""
         file = request.query_params.get("x-xmltv-file", "")
-        return render(request, "partials/xmltv_options.html", channels=xmltv_channels(service, file),
-                      selected=request.query_params.get("selected", ""))  # fmt: skip
+        channel = service.channels[request.query_params.get("channel", "")]
+        selected = channel.tvg_id if xmltv_label(service, file, channel.tvg_id) else "-"
+        return render(request, "partials/xmltv_picker.html", file=file, selected=selected,
+                      label=picker_label(service, file, selected))  # fmt: skip
+
+    async def xmltv_search(request: Request) -> Response:
+        """Matches for what was typed in the picker; nothing for an empty search."""
+        query = request.query_params
+        matches = search_xmltv(service, query.get("x-xmltv-file", ""), query.get("q", ""))
+        return render(request, "partials/xmltv_matches.html", matches=matches, query=query.get("q", "").strip(),
+                      limit=MAX_MATCHES)  # fmt: skip
 
     async def channel_probe(request: Request) -> Response:
         channel_id = request.path_params["id"]
@@ -606,7 +648,8 @@ def routes(service: Service) -> list[BaseRoute]:
         ("/filters/{id}/delete", filter_delete, ["POST"]),
         ("/mapping", mapping_page, ["GET"]),
         ("/mapping/rows", mapping_rows, ["GET"]),
-        ("/mapping/xmltv-options", xmltv_options, ["GET"]),
+        ("/mapping/xmltv-picker", xmltv_picker, ["GET"]),
+        ("/mapping/xmltv-search", xmltv_search, ["GET"]),
         ("/mapping/bulk", mapping_bulk, ["POST"]),
         ("/mapping/{id}/edit", channel_edit, ["GET"]),
         ("/mapping/{id}", channel_save, ["POST"]),

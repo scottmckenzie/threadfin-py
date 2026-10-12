@@ -263,6 +263,8 @@ every request); the rest is tested through the app (`tests/test_ui.py`, `tests/t
 | Provider dialogs: new providers are downloaded first and dropped if that fails; editing does not download. | kept; fields are type-checked (Go stored whatever the browser sent, including internal keys) |
 | Mapping: the browser sent the whole channel database back and Go saved it as it came. | **changed**: per-channel changes of the editable fields only, checked (number, XMLTV file and channel must exist; an active channel needs a guide), then a rebuild |
 | Bulk edit with `x-channels-start` numbers the selected channels from there. | kept (in their current order) |
+| Mapping dialog: choosing an XMLTV channel ticks Active, `-` unticks it; choosing another XMLTV file preselects the stream's `tvg-id`; choosing the dummy guide unticks "Update Channel Logo". | kept in the UI (the REST API never activates implicitly); `tvg-id` is only preselected if the file has that channel (Go filled it in regardless) |
+| The XMLTV channel field carried every channel of the guide into the page (a `<datalist>`). | **changed**: searched on the server as you type (name or id; exact, then prefix matches; at most 50); no list until something is typed |
 | Logo upload wrote the browser's file name into the upload folder, `../` included. | **fixed**: base name only, image extensions, at most 5 MB |
 | The channel probe ran `ffprobe` on whatever `probeURL` the browser sent. | **fixed**: the channel's own stream URL, network schemes only (never local files); results are stored (see Channel probe) |
 | The UI's WebSocket accepted any origin, so any web page could change the settings. | **fixed**: POSTs need an htmx / `X-Requested-With` / `Authorization` header or a JSON body |

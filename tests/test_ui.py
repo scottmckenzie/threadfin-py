@@ -117,7 +117,7 @@ class Mapping(AppTestCase):
     def test_every_filter_control_reloads_the_list(self) -> None:
         """htmx ``from:find <selector>`` listens on the first match only: name each control."""
         page = self.client.get("/web/mapping").text
-        form = re.search(r'<form class="toolbar"[^>]*hx-trigger="([^"]+)">(.*?)</form>', page, re.S)
+        form = re.search(r'<form class="toolbar"[^>]*hx-trigger="([^"]+)">(.*?)</form>', page, re.DOTALL)
         assert form is not None
         trigger, body = form.groups()
         for tag, name in re.findall(r'<(input|select) name="([^"]+)"', body):
@@ -139,7 +139,9 @@ class Mapping(AppTestCase):
     def test_edit(self) -> None:
         channel_id = self.channel_ids()["Beta"]
         form = self.client.get(f"/web/mapping/{channel_id}/edit").text
-        self.assertIn('<option value="b" selected>Beta TV (b)</option>', form)
+        self.assertIn('<input type="hidden" name="x-mapping" value="b">', form)
+        self.assertIn('value="Beta TV (b)"', form)  # the picker shows the chosen guide channel
+        self.assertNotIn("Alpha TV", form)  # but no list of guide channels
         data = {"x-active": "on", "x-channelID": "7", "x-name": "Beta HD", "x-xmltv-file": self.service.channels[channel_id].x_xmltv_file,
                 "x-mapping": "b", "tvg-logo": "http://x/b.png"}  # fmt: skip
         response = self.client.post(f"/web/mapping/{channel_id}", data=data, headers=HX)
@@ -156,12 +158,65 @@ class Mapping(AppTestCase):
         self.assertIn('value="Typed name"', response.text)
         self.assertEqual(self.service.channels[channel_id].x_name, "Beta")
 
-    def test_xmltv_options(self) -> None:
-        file = next(name for name in self.service.xmltv_mapping if name != "Threadfin Dummy")
-        options = self.client.get(f"/web/mapping/xmltv-options?x-xmltv-file={file}&selected=c").text
-        self.assertIn('<option value="c" selected>Gamma TV (c)</option>', options)
-        dummy = self.client.get("/web/mapping/xmltv-options?x-xmltv-file=Threadfin+Dummy").text
-        self.assertIn('value="PPV"', dummy)
+    def guide(self) -> str:
+        return next(name for name in self.service.xmltv_mapping if name != "Threadfin Dummy")
+
+    def matches(self, file: str, q: str) -> list[str]:
+        html = self.client.get("/web/mapping/xmltv-search", params={"x-xmltv-file": file, "q": q}).text
+        return re.findall(r'data-xmltv-id="([^"]*)"', html)
+
+    def test_xmltv_search(self) -> None:
+        guide = self.guide()
+        self.assertEqual(self.matches(guide, ""), [])  # nothing until something is typed
+        self.assertEqual(self.matches(guide, "  "), [])
+        self.assertEqual(self.matches(guide, "beta"), ["b"])
+        self.assertEqual(self.matches(guide, "TV"), ["a", "b", "c"])
+        self.assertEqual(self.matches(guide, "c"), ["c"])  # an exact id first ...
+        self.assertEqual(self.matches("Threadfin Dummy", "min")[:2], ["120_Minutes", "180_Minutes"])
+        html = self.client.get("/web/mapping/xmltv-search", params={"x-xmltv-file": guide, "q": "zzz"}).text
+        self.assertIn("No guide channel matches", html)
+        self.assertEqual(self.matches("nope.xml", "a"), [])
+
+    def test_xmltv_search_ranking_and_limit(self) -> None:
+        guide = self.guide()
+        channels = {f"id{i}": {"display-name": f"News {i}"} for i in range(80)}
+        channels["news"] = {"display-name": "Weather"}
+        channels["x"] = {"display-name": "Morning news"}
+        self.service.xmltv_mapping[guide] = channels
+        found = self.matches(guide, "news")
+        self.assertEqual(found[0], "news")  # exact id
+        self.assertEqual(len(found), 50)
+        self.assertNotIn("x", found)  # a substring match ranks after the 80 prefix matches
+        html = self.client.get("/web/mapping/xmltv-search", params={"x-xmltv-file": guide, "q": "news"}).text
+        self.assertIn("The first 50 matches", html)
+
+    def test_picker_preselects_the_streams_tvg_id(self) -> None:
+        channel_id = self.channel_ids()["Gamma"]  # tvg-id "c"
+        html = self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": self.guide(), "channel": channel_id}).text
+        self.assertIn('name="x-mapping" value="c"', html)
+        self.assertIn('value="Gamma TV (c)"', html)
+        html = self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "Threadfin Dummy", "channel": channel_id}).text
+        self.assertIn('name="x-mapping" value="-"', html)
+        self.assertIn('name="q" value=""', html)  # nothing chosen: an empty search box
+        self.assertIn('data-dummy="true"', html)
+        html = self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "-", "channel": channel_id}).text
+        self.assertIn("disabled", html)
+        self.assertEqual(self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "-", "channel": "nope"}).status_code, 404)
+
+    def test_mapping_missing_from_the_guide_is_kept(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        del self.service.xmltv_mapping[self.guide()]["b"]  # e.g. the provider's file was incomplete
+        form = self.client.get(f"/web/mapping/{channel_id}/edit").text
+        self.assertIn('<input type="hidden" name="x-mapping" value="b">', form)
+        self.assertIn('value="b (not in this guide)"', form)
+
+    def test_save_with_the_picker(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        data = {"x-active": "on", "x-channelID": "7", "x-name": "Beta", "x-xmltv-file": "Threadfin Dummy",
+                "x-mapping": "60_Minutes", "q": "60 Minutes"}  # fmt: skip
+        response = self.client.post(f"/web/mapping/{channel_id}", data=data, headers=HX)
+        self.assertEqual(triggers(response)["toast"], "Saved")
+        self.assertEqual(self.service.channels[channel_id].x_mapping, "60_Minutes")
 
     def test_bulk(self) -> None:
         ids = list(self.channel_ids().values())

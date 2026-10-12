@@ -23,14 +23,14 @@
   </div>
   <div class="row">
     <label>{{ labels["x-xmltv-file"] }}
-      <select name="x-xmltv-file" hx-get="/web/mapping/xmltv-options" hx-target="#x-mapping" hx-include="this" hx-vals='{"selected": "{{ c.x_mapping }}"}'>
+      <select name="x-xmltv-file" hx-get="/web/mapping/xmltv-picker" hx-target="#xmltv-picker" hx-swap="outerHTML"
+              hx-include="this" hx-vals='{"channel": "{{ channel_id }}"}'>
         <option value="-">–</option>
-        {% for name, label in files %}<option value="{{ name }}" {% if name == c.x_xmltv_file %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        {% for name, flabel in files %}<option value="{{ name }}" {% if name == c.x_xmltv_file %}selected{% endif %}>{{ flabel }}</option>{% endfor %}
       </select></label>
-    <label>{{ labels["x-mapping"] }}
-      <select name="x-mapping" id="x-mapping">
-        {% with selected = c.x_mapping %}{% include "partials/xmltv_options.html" %}{% endwith %}
-      </select></label>
+    <div class="field"><span>{{ labels["x-mapping"] }}</span>
+      {% include "partials/xmltv_picker.html" %}
+      <small>Choosing a guide channel activates the channel; “None” deactivates it.</small></div>
   </div>
   <label>{{ labels["x-ppv-extra"] }} <input name="x-ppv-extra" value="{{ c.x_ppv_extra }}" placeholder="Added to the programme title of PPV channels"></label>
   <datalist id="channel-names">{% for n in other_names %}<option value="{{ n }}">{% endfor %}</datalist>

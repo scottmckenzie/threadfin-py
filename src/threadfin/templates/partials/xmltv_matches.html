@@ -1,0 +1,6 @@
+{% for id, label in matches %}
+  <button type="button" role="option" data-xmltv-id="{{ id }}" data-label="{{ label }}">{{ label }}</button>
+{% else %}
+  {% if query %}<p class="muted">No guide channel matches “{{ query }}”.</p>{% endif %}
+{% endfor %}
+{% if matches|length == limit %}<p class="muted">The first {{ limit }} matches: type more to narrow them down.</p>{% endif %}

@@ -1,0 +1,12 @@
+<div class="xmltv-picker" id="xmltv-picker" data-label="{{ label }}" data-dummy="{{ 'true' if file == 'Threadfin Dummy' else 'false' }}">
+  <input type="hidden" name="x-mapping" value="{{ selected or '-' }}">
+  <div class="picker-row">
+    <input type="search" name="q" value="{{ label }}" autocomplete="off" aria-label="XMLTV channel"
+           placeholder="{{ 'Type to search the guide' if file not in ('', '-') else 'Choose an XMLTV file first' }}"
+           {% if file in ('', '-') %}disabled{% endif %}
+           hx-get="/web/mapping/xmltv-search" hx-trigger="input changed delay:250ms" hx-target="next .matches"
+           hx-include="[name='x-xmltv-file']" hx-sync="this:replace">
+    <button type="button" data-xmltv-id="-" data-label="" title="No guide channel (the channel becomes inactive)">None</button>
+  </div>
+  <div class="matches" role="listbox" aria-label="Matching guide channels"></div>
+</div>
