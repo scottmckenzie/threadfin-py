@@ -1,0 +1,72 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "Pizza group-title": "",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Joe",
+      "_values": "ap.1 Joe Joe",
+      "name": "Joe",
+      "tvg-id": "ap.1",
+      "tvg-name": "Joe",
+      "url": "http://example.com/ap1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Single",
+      "_values": "ap.2 Single G Roll Radio",
+      "group-title": "G",
+      "name": "Roll Radio",
+      "tvg-id": "ap.2",
+      "tvg-name": "Single",
+      "url": "http://example.com/ap2"
+    },
+    {
+      "_values": "Don\"t Stop",
+      "name": "Don\"t Stop",
+      "tvg-id": "threadfin-28b59e6fb8f75bb34290de05c61f173e",
+      "url": "http://example.com/ap3"
+    },
+    {
+      "_values": "ap.4 Children Kids Zone",
+      "group-title": "Children",
+      "name": "Kids Zone",
+      "tvg-id": "ap.4",
+      "url": "http://example.com/ap4"
+    },
+    {
+      "_values": "ap.5 G Allo",
+      "group-title": "G",
+      "name": "Allo",
+      "tvg-id": "ap.5",
+      "url": "http://example.com/ap5"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "L",
+      "_values": "ap.6 L L",
+      "name": "L",
+      "quipe group-title": "",
+      "tvg-id": "ap.6",
+      "tvg-name": "L",
+      "url": "http://example.com/ap6"
+    },
+    {
+      "_values": "ap.7 G Apostrophe In URL",
+      "group-title": "G",
+      "name": "Apostrophe In URL",
+      "tvg-id": "ap.7",
+      "url": "http://example.com/it\"s/stream.ts?title=don\"t"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "He said ",
+      "_values": "ap.8 He said  G Mixed Quotes",
+      "group-title": "G",
+      "name": "Mixed Quotes",
+      "tvg-id": "ap.8",
+      "tvg-name": "He said ",
+      "url": "http://example.com/ap8"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_values": "w.1 G Whitespace Line",
+      "group-title": "G",
+      "name": "Whitespace Line",
+      "tvg-id": "w.1",
+      "url": " "
+    },
+    {
+      "_values": "w.2 G Tab Name\t",
+      "group-title": "G",
+      "name": "Tab Name\t",
+      "tvg-id": "w.2",
+      "url": "http://example.com/w2"
+    },
+    {
+      "_values": "w.3 G Lone CR",
+      "group-title": "G",
+      "name": "Lone CR",
+      "tvg-id": "w.3",
+      "url": "http://example.com/w3"
+    }
+  ]
+}

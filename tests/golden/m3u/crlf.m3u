@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="a.1" tvg-name="Alpha" tvg-logo="http://x/l.png" group-title="News",Alpha One
+http://example.com/a1
+#EXTINF:-1 tvg-id="b.2" tvg-name="Beta" group-title="Sport",Beta Two
+http://example.com/b2

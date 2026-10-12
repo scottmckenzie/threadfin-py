@@ -1,0 +1,25 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Same",
+      "_values": "dup Same G Same",
+      "group-title": "G",
+      "name": "Same",
+      "tvg-id": "dup",
+      "tvg-name": "Same",
+      "url": "http://example.com/s1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Same",
+      "_values": "dup Same G Same",
+      "group-title": "G",
+      "name": "Same",
+      "tvg-id": "dup",
+      "tvg-name": "Same",
+      "url": "http://example.com/s2"
+    }
+  ]
+}

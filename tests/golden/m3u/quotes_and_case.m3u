@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id='q.1' tvg-name='Single Quoted' TVG-Logo="http://x/L.png" Group-Title="Mixed",Single Quoted
+http://example.com/q1
+#EXTINF:-1 TVG-ID="q.2" tvg-chno="42" tvg-shift="-1" group-title="G" radio="true",Case Test
+http://example.com/q2
+#EXTINF:-1 tvg-id="q.3" tvg-logo="http://example.com/a=b&c=d.png" group-title="A &amp; B",Special Chars
+http://example.com/q3?token=abc&x=1

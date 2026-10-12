@@ -1,0 +1,17 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_values": "dq.1 G The  Channel",
+      "group-title": "G",
+      "name": "The  Channel",
+      "tvg-id": "dq.1",
+      "url": "http://example.com/dq1"
+    },
+    {
+      "group-title": "G",
+      "tvg-id": "dq.2",
+      "url": "http://example.com/dq2"
+    }
+  ]
+}

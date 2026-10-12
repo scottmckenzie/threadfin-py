@@ -1,0 +1,1 @@
+{"streams":[{"codec_type":"video","height":1080,"r_frame_rate":"50/1"},{"codec_type":"video","height":480,"r_frame_rate":"25/1"},{"codec_type":"audio","channels":6,"channel_layout":"5.1"},{"codec_type":"audio","channels":2,"channel_layout":"stereo"}]}

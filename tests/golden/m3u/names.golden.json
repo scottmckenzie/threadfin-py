@@ -1,0 +1,38 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "FromTvgName",
+      "_values": "n.1 FromTvgName G FromTvgName",
+      "group-title": "G",
+      "name": "FromTvgName",
+      "tvg-id": "n.1",
+      "tvg-name": "FromTvgName",
+      "url": "http://example.com/n1"
+    },
+    {
+      "_values": "n.2 G Name, With, Commas",
+      "group-title": "G",
+      "name": "Name, With, Commas",
+      "tvg-id": "n.2",
+      "url": "http://example.com/n2"
+    },
+    {
+      "_values": "n.3 G Trailing Space",
+      "group-title": "G",
+      "name": "Trailing Space",
+      "tvg-id": "n.3",
+      "url": "http://example.com/n3"
+    },
+    {
+      "group-title": "G",
+      "tvg-id": "n.4",
+      "url": "http://example.com/n4"
+    },
+    {
+      "tvg-id": "n.5",
+      "url": "http://example.com/n5"
+    }
+  ]
+}

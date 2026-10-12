@@ -1,0 +1,35 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "NoId",
+      "_values": "NoId G No Id Channel",
+      "group-title": "G",
+      "name": "No Id Channel",
+      "tvg-id": "threadfin-ee7bb5b21516b4a45c51d0b3357d4f23",
+      "tvg-name": "NoId",
+      "url": "http://example.com/noid"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Blank",
+      "_values": "Blank G Blank Id Channel",
+      "group-title": "G",
+      "name": "Blank Id Channel",
+      "tvg-id": "threadfin-db532916930c6b6a3c9fe2bb0708149e",
+      "tvg-name": "Blank",
+      "url": "http://example.com/blank"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Placeholder",
+      "_values": "(no tvg-id) Placeholder G Placeholder Id",
+      "group-title": "G",
+      "name": "Placeholder Id",
+      "tvg-id": "threadfin-c05928a4ea247246ef5faed513818e69",
+      "tvg-name": "Placeholder",
+      "url": "http://example.com/placeholder"
+    }
+  ]
+}

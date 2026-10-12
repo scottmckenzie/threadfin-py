@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 x1="a" tvg_id="b" tvg-id2="c" channel-number="5" group-title="G",Odd Keys
+http://example.com/o1
+#EXTINF:-1 tvg-id="o.2" tvg-name="" group-title="",Empty Values
+http://example.com/o2
+#EXTINF:-1 tvg-id="o.3" tvg-name="Two" tvg-name="Dup" group-title="G",Duplicate Key
+http://example.com/o3

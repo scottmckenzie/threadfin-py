@@ -1,0 +1,35 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "": "c",
+      "_values": "a b c 5 G Odd Keys",
+      "channel-number": "5",
+      "group-title": "G",
+      "id": "b",
+      "name": "Odd Keys",
+      "tvg-id": "threadfin-5f5ed7859c9e4640bb04f09df9397481",
+      "url": "http://example.com/o1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "",
+      "_values": "o.2 Empty Values",
+      "group-title": "",
+      "name": "Empty Values",
+      "tvg-id": "o.2",
+      "tvg-name": "",
+      "url": "http://example.com/o2"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Dup",
+      "_values": "o.3 Two Dup G Duplicate Key",
+      "group-title": "G",
+      "name": "Duplicate Key",
+      "tvg-id": "o.3",
+      "tvg-name": "Dup",
+      "url": "http://example.com/o3"
+    }
+  ]
+}

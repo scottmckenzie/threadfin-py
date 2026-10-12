@@ -1,0 +1,8 @@
+{
+  "unknown.key": "dropped-by-go",
+  "file": ["http://example.com/list.m3u"],
+  "xmltv": ["http://example.com/epg.xml"],
+  "key": "abc",
+  "git.branch": "beta",
+  "update.url": "http://example.com/update"
+}

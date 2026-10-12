@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="u.1" tvg-name="Télévision Française" group-title="Français",Télévision Française
+http://example.com/u1
+#EXTINF:-1 tvg-id="u.2" tvg-name="日本放送" group-title="日本",日本放送
+http://example.com/u2

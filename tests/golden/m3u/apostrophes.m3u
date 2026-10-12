@@ -1,0 +1,17 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="ap.1" tvg-name="Joe's Pizza" group-title="Food",Joe's Pizza
+http://example.com/ap1
+#EXTINF:-1 tvg-id='ap.2' tvg-name='Single' group-title='G',Rock'n'Roll Radio
+http://example.com/ap2
+#EXTINF:-1,Don't Stop
+http://example.com/ap3
+#EXTINF:-1 tvg-id="ap.4" group-title="Children's TV",Kids Zone
+http://example.com/ap4
+#EXTINF:-1 tvg-id="ap.5" group-title="G",'Allo 'Allo
+http://example.com/ap5
+#EXTINF:-1 tvg-id="ap.6" tvg-name="L'Équipe" group-title="Sport",L'Équipe 21
+http://example.com/ap6
+#EXTINF:-1 tvg-id="ap.7" group-title="G",Apostrophe In URL
+http://example.com/it's/stream.ts?title=don't
+#EXTINF:-1 tvg-id="ap.8" tvg-name='He said "hi"' group-title="G",Mixed Quotes
+http://example.com/ap8

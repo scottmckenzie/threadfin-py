@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="g.1" tvg-name="Rock'n'Roll" group-title="Music",Rock'n'Roll Radio
+http://example.com/g1
+#EXTINF:-1 tvg-id="g.2" group-title="G",Port Test
+http://example.com:-1/path
+#EXTINF:-1 tvg-id="g.3" group-title="G",Mentions #EXTINF inside name
+http://example.com/g3

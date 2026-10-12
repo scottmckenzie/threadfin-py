@@ -1,0 +1,25 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "D1",
+      "_values": "d.1 D1 G D1",
+      "group-title": "G",
+      "name": "D1",
+      "tvg-id": "d.1",
+      "tvg-name": "D1",
+      "url": "http://example.com/d1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "D2",
+      "_values": "d.2 D2 G D2",
+      "group-title": "G",
+      "name": "D2",
+      "tvg-id": "d.2",
+      "tvg-name": "D2",
+      "url": "rtmp://example.com/live/d2"
+    }
+  ]
+}

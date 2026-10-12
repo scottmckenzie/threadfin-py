@@ -1,0 +1,8 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="w.1" group-title="G",Whitespace Line
+ 
+http://example.com/w1
+#EXTINF:-1 tvg-id="w.2" group-title="G",Tab Name	
+http://example.com/w2
+#EXTINF:-1 tvg-id="w.3" group-title="G",Lone CR
+http://example.com/w3

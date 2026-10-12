@@ -1,0 +1,12 @@
+#EXTM3U x-tvg-url="http://example.com/epg.xml"
+#EXTGRP:Ignored
+#EXTINF:-1 tvg-id="d.1" tvg-name="D1" group-title="G",D1
+#EXTVLCOPT:http-user-agent=foo
+#comment line
+http://example.com/d1
+
+#EXTINF:-1 tvg-id="d.2" tvg-name="D2" group-title="G",D2
+
+
+rtmp://example.com/live/d2
+#EXTINF:-1 tvg-id="d.3" tvg-name="D3" group-title="G",D3

@@ -1,0 +1,43 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel.1",
+      "_values": "1 1 Channel.1 tvg.id.1 Group 1  Channel 1",
+      "channelID": "1",
+      "group-title": "Group 1",
+      "name": " Channel 1",
+      "tvg-chno": "1",
+      "tvg-id": "tvg.id.1",
+      "tvg-logo": "https://example/logo.png",
+      "tvg-name": "Channel.1",
+      "url": "http://example.com/stream/1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel.2",
+      "_values": "2 2 Channel.2 tvg.id.2 Group 2 Channel 2",
+      "channelID": "2",
+      "group-title": "Group 2",
+      "name": "Channel 2",
+      "tvg-chno": "2",
+      "tvg-id": "tvg.id.2",
+      "tvg-logo": "https://example/logo.png",
+      "tvg-name": "Channel.2",
+      "url": "http://example.com/stream/2"
+    },
+    {
+      "_values": " Sample artist - Sample title",
+      "name": " Sample artist - Sample title",
+      "tvg-id": "threadfin-3ff775e9e8287313d5516d43c4416667",
+      "url": "http://example.com/stream/3"
+    },
+    {
+      "_values": "Example Artist - Example title",
+      "name": "Example Artist - Example title",
+      "tvg-id": "threadfin-ff79536f23268afdbec2524e78ad1900",
+      "url": "http://example.com/stream/4"
+    }
+  ]
+}

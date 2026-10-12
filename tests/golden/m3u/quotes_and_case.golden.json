@@ -1,0 +1,35 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "Group-Title": "Mixed",
+      "TVG-Logo": "http://x/L.png",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Single Quoted",
+      "_values": "q.1 Single Quoted Mixed Single Quoted",
+      "name": "Single Quoted",
+      "tvg-id": "q.1",
+      "tvg-name": "Single Quoted",
+      "url": "http://example.com/q1"
+    },
+    {
+      "TVG-ID": "q.2",
+      "_values": "q.2 42 -1 G true Case Test",
+      "group-title": "G",
+      "name": "Case Test",
+      "radio": "true",
+      "tvg-chno": "42",
+      "tvg-id": "threadfin-6ab3c1ed198fb4f0bc7118a56982d0ac",
+      "tvg-shift": "-1",
+      "url": "http://example.com/q2"
+    },
+    {
+      "_values": "q.3 A \u0026amp; B Special Chars",
+      "group-title": "A \u0026amp; B",
+      "name": "Special Chars",
+      "tvg-id": "q.3",
+      "tvg-logo": "http://example.com/a=b\u0026c=d.png",
+      "url": "http://example.com/q3?token=abc\u0026x=1"
+    }
+  ]
+}

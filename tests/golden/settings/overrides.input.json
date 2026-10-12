@@ -1,0 +1,15 @@
+{
+  "port": "8080",
+  "tuner": 4,
+  "authentication.web": true,
+  "authentication.m3u": true,
+  "buffer": "ffmpeg",
+  "uuid": "2024-01-ABCD-123456",
+  "user.agent": "Custom Agent",
+  "language": "de",
+  "files.update": false,
+  "mapping.first.channel": 2000,
+  "files": {"m3u": {"abc": {"name": "Provider", "url": "http://example.com/a.m3u"}}, "hdhr": {}, "xmltv": {}},
+  "filter": {"1": {"name": "News", "type": "custom-filter", "filter": "news"}},
+  "update": ["0300", "1500"]
+}

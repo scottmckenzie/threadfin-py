@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-name="NoId" group-title="G",No Id Channel
+http://example.com/noid
+#EXTINF:-1 tvg-id="" tvg-name="Blank" group-title="G",Blank Id Channel
+http://example.com/blank
+#EXTINF:-1 tvg-id="(no tvg-id)" tvg-name="Placeholder" group-title="G",Placeholder Id
+http://example.com/placeholder

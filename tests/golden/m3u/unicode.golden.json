@@ -1,0 +1,25 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Télévision Française",
+      "_values": "u.1 Télévision Française Français Télévision Française",
+      "group-title": "Français",
+      "name": "Télévision Française",
+      "tvg-id": "u.1",
+      "tvg-name": "Télévision Française",
+      "url": "http://example.com/u1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "日本放送",
+      "_values": "u.2 日本放送 日本 日本放送",
+      "group-title": "日本",
+      "name": "日本放送",
+      "tvg-id": "u.2",
+      "tvg-name": "日本放送",
+      "url": "http://example.com/u2"
+    }
+  ]
+}

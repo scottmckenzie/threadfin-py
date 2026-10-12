@@ -1,0 +1,26 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Rock",
+      "_values": "g.1 Rock Music Roll Radio",
+      "group-title": "Music",
+      "name": "Roll Radio",
+      "tvg-id": "g.1",
+      "tvg-name": "Rock",
+      "url": "http://example.com/g1"
+    },
+    {
+      "_values": "g.2 G Port Test",
+      "group-title": "G",
+      "name": "Port Test",
+      "tvg-id": "g.2",
+      "url": "http://example.com/path"
+    },
+    {
+      "tvg-id": "threadfin-42e69d5f9c9b81b8e0a616dfafabe8c4",
+      "url": "http://example.com/g3"
+    }
+  ]
+}

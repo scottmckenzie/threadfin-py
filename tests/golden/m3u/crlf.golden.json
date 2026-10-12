@@ -1,0 +1,26 @@
+{
+  "error": null,
+  "streams": [
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Alpha",
+      "_values": "a.1 Alpha News Alpha One",
+      "group-title": "News",
+      "name": "Alpha One",
+      "tvg-id": "a.1",
+      "tvg-logo": "http://x/l.png",
+      "tvg-name": "Alpha",
+      "url": "http://example.com/a1"
+    },
+    {
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Beta",
+      "_values": "b.2 Beta Sport Beta Two",
+      "group-title": "Sport",
+      "name": "Beta Two",
+      "tvg-id": "b.2",
+      "tvg-name": "Beta",
+      "url": "http://example.com/b2"
+    }
+  ]
+}
