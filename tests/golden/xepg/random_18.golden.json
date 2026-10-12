@@ -1,0 +1,158 @@
+{
+  "xepg": {
+    "x-ID.2": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 52",
+      "_values": "Sports Channel 52",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "4426bb788a4cdac448f8223fd8562f50",
+      "group-title": "Sports",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 52",
+      "tvg-chno": "300",
+      "tvg-id": "id.52",
+      "tvg-logo": "http://l/52.png",
+      "tvg-name": "Channel 52",
+      "url": "http://p/M1/52",
+      "x-active": false,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "300",
+      "x-description": "",
+      "x-epg": "x-ID.2",
+      "x-group-title": "Sports",
+      "x-hide-channel": false,
+      "x-mapping": "-",
+      "x-name": "Channel 52",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    },
+    "x-ID.3": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "",
+      "_values": "Kids Channel 88",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "f45b502a9ffdd466879c0933543f0293",
+      "group-title": "Kids",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 88",
+      "tvg-chno": "31",
+      "tvg-id": "id.88",
+      "tvg-logo": "",
+      "tvg-name": "Channel 88",
+      "url": "http://p/M1/88",
+      "x-active": false,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "31",
+      "x-description": "",
+      "x-epg": "x-ID.3",
+      "x-group-title": "Kids",
+      "x-hide-channel": false,
+      "x-mapping": "-",
+      "x-name": "Channel 88",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    },
+    "x-ID.4": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "",
+      "_values": "Sports Channel 58",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "52968c439f9f0146a1ed5b9c812d2a06",
+      "group-title": "Sports",
+      "is_backup_channel": false,
+      "live": true,
+      "name": "Channel 58",
+      "tvg-chno": "301",
+      "tvg-id": "id.58",
+      "tvg-logo": "http://l/58.png",
+      "tvg-name": "Channel 58",
+      "url": "http://p/M1/58",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "301",
+      "x-description": "",
+      "x-epg": "x-ID.4",
+      "x-group-title": "Sports",
+      "x-hide-channel": false,
+      "x-mapping": "PPV",
+      "x-name": "Channel 58",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "Threadfin Dummy"
+    }
+  },
+  "xepgCount": 1,
+  "mapping": {
+    "Threadfin Dummy": {
+      "120_Minutes": {
+        "display-name": "120 Minutes",
+        "icon": "",
+        "id": "120_Minutes"
+      },
+      "180_Minutes": {
+        "display-name": "180 Minutes",
+        "icon": "",
+        "id": "180_Minutes"
+      },
+      "240_Minutes": {
+        "display-name": "240 Minutes",
+        "icon": "",
+        "id": "240_Minutes"
+      },
+      "30_Minutes": {
+        "display-name": "30 Minutes",
+        "icon": "",
+        "id": "30_Minutes"
+      },
+      "360_Minutes": {
+        "display-name": "360 Minutes",
+        "icon": "",
+        "id": "360_Minutes"
+      },
+      "60_Minutes": {
+        "display-name": "60 Minutes",
+        "icon": "",
+        "id": "60_Minutes"
+      },
+      "90_Minutes": {
+        "display-name": "90 Minutes",
+        "icon": "",
+        "id": "90_Minutes"
+      },
+      "PPV": {
+        "display-name": "PPV Event",
+        "icon": "",
+        "id": "PPV"
+      }
+    }
+  }
+}

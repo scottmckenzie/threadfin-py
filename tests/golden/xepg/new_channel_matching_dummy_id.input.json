@@ -1,0 +1,39 @@
+{
+ "settings": {
+  "mapping.first.channel": 1000,
+  "files": {
+   "m3u": {
+    "M1": {
+     "name": "Provider M1"
+    }
+   },
+   "hdhr": {},
+   "xmltv": {
+    "X1": {
+     "name": "EPG one"
+    }
+   }
+  },
+  "filter": {}
+ },
+ "xmltv": {},
+ "xepg": {},
+ "active": [
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 1",
+   "tvg-id": "PPV",
+   "tvg-logo": "",
+   "tvg-name": "Channel 1",
+   "url": "http://p/M1/1",
+   "_values": "News Channel 1",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 1"
+  }
+ ],
+ "inactive": []
+}

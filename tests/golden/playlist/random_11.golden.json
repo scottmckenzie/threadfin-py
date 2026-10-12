@@ -1,0 +1,55 @@
+{
+  "m3u": "#EXTM3U url-tvg=\"http://localhost:34400/xmltv/threadfin.xml\" x-tvg-url=\"http://localhost:34400/xmltv/threadfin.xml\"\n#EXTINF:0 channelID=\"x-ID.5\" tvg-chno=\"0\" tvg-name=\"Chan 5\" tvg-id=\"0\" tvg-logo=\"http://l/5.png\" group-title=\"A\",Chan 5\nhttp://localhost:34400/stream/9fa282d80ffd7b6f6ab0fa8997449082\n#EXTINF:0 channelID=\"x-ID.8\" tvg-chno=\"21\" tvg-name=\"Chan 8\" tvg-id=\"21\" tvg-logo=\"http://l/8.png\" group-title=\"A\",Chan 8\nhttp://localhost:34400/stream/4b16c20d11a360a129527b4381e1e00f\n#EXTINF:0 channelID=\"x-ID.1\" tvg-chno=\"39.5\" tvg-name=\"Chan 1\" tvg-id=\"39.5\" tvg-logo=\"http://l/1.png\" group-title=\"K\",Chan 1\nhttp://localhost:34400/stream/9fa282d80ffd7b6f6ab0fa8997449082\n#EXTINF:0 channelID=\"x-ID.18\" tvg-chno=\"68.5\" tvg-name=\"Chan 18\" tvg-id=\"68.5\" tvg-logo=\"http://l/18.png\" group-title=\"K\",Chan 18\nhttp://localhost:34400/stream/e80591cb110c781ffdb897d6173e5319\n#EXTINF:0 channelID=\"x-ID.4\" tvg-chno=\"x0\" tvg-name=\"Chan 4\" tvg-id=\"x0\" tvg-logo=\"http://l/4.png\" group-title=\"K\",Chan 4\nhttp://localhost:34400/stream/894b9bc44832af5431901b005a051224\n#EXTINF:0 channelID=\"x-ID.21\" tvg-chno=\"x100\" tvg-name=\"Chan 21\" tvg-id=\"x100\" tvg-logo=\"http://l/21.png\" group-title=\"B\",Chan 21\nhttp://localhost:34400/stream/22416b5901cb78abd6d2150a261709f1\n",
+  "registry": {
+    "22416b5901cb78abd6d2150a261709f1": {
+      "channelNumber": "x100",
+      "name": "Chan 21",
+      "playlistID": "M2",
+      "url": "http://p/7",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "22416b5901cb78abd6d2150a261709f1"
+    },
+    "4b16c20d11a360a129527b4381e1e00f": {
+      "channelNumber": "21",
+      "name": "Chan 8",
+      "playlistID": "M2",
+      "url": "http://p/6",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "4b16c20d11a360a129527b4381e1e00f"
+    },
+    "894b9bc44832af5431901b005a051224": {
+      "channelNumber": "x0",
+      "name": "Chan 4",
+      "playlistID": "M2",
+      "url": "http://p/9",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "894b9bc44832af5431901b005a051224"
+    },
+    "9fa282d80ffd7b6f6ab0fa8997449082": {
+      "channelNumber": "0",
+      "name": "Chan 5",
+      "playlistID": "M1",
+      "url": "http://p/3",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "9fa282d80ffd7b6f6ab0fa8997449082"
+    },
+    "e80591cb110c781ffdb897d6173e5319": {
+      "channelNumber": "68.5",
+      "name": "Chan 18",
+      "playlistID": "M1",
+      "url": "http://p/8",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "e80591cb110c781ffdb897d6173e5319"
+    }
+  }
+}

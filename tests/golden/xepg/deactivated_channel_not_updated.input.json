@@ -1,0 +1,129 @@
+{
+ "settings": {
+  "mapping.first.channel": 1000,
+  "files": {
+   "m3u": {
+    "M1": {
+     "name": "Provider M1"
+    }
+   },
+   "hdhr": {},
+   "xmltv": {
+    "X1": {
+     "name": "EPG one"
+    }
+   }
+  },
+  "filter": {}
+ },
+ "xmltv": {},
+ "xepg": {
+  "x-ID.0": {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 1",
+   "tvg-id": "id.1",
+   "tvg-logo": "",
+   "tvg-name": "Channel 1",
+   "tvg-chno": "1000",
+   "url": "http://p/M1/1",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 1",
+   "_values": "News Channel 1",
+   "x-active": true,
+   "x-category": "",
+   "x-channelID": "1000",
+   "x-epg": "x-ID.0",
+   "x-group-title": "News",
+   "x-mapping": "-",
+   "x-xmltv-file": "-",
+   "x-ppv-extra": "",
+   "x-backup-channel-1": "",
+   "x-backup-channel-2": "",
+   "x-backup-channel-3": "",
+   "x-hide-channel": false,
+   "x-name": "Channel 1",
+   "x-update-channel-icon": false,
+   "x-update-channel-name": false,
+   "x-description": "",
+   "live": false,
+   "is_backup_channel": false,
+   "backup_channel_1": null,
+   "backup_channel_2": null,
+   "backup_channel_3": null,
+   "channelUniqueID": ""
+  },
+  "x-ID.1": {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 2",
+   "tvg-id": "id.2",
+   "tvg-logo": "",
+   "tvg-name": "Channel 2",
+   "tvg-chno": "1001",
+   "url": "http://old",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 2",
+   "_values": "News Channel 2",
+   "x-active": false,
+   "x-category": "",
+   "x-channelID": "1001",
+   "x-epg": "x-ID.1",
+   "x-group-title": "News",
+   "x-mapping": "-",
+   "x-xmltv-file": "-",
+   "x-ppv-extra": "",
+   "x-backup-channel-1": "",
+   "x-backup-channel-2": "",
+   "x-backup-channel-3": "",
+   "x-hide-channel": false,
+   "x-name": "Custom",
+   "x-update-channel-icon": false,
+   "x-update-channel-name": false,
+   "x-description": "",
+   "live": false,
+   "is_backup_channel": false,
+   "backup_channel_1": null,
+   "backup_channel_2": null,
+   "backup_channel_3": null,
+   "channelUniqueID": ""
+  }
+ },
+ "active": [
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 1",
+   "tvg-id": "id.1",
+   "tvg-logo": "",
+   "tvg-name": "Channel 1",
+   "url": "http://p/M1/1",
+   "_values": "News Channel 1",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 1"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 2",
+   "tvg-id": "id.2",
+   "tvg-logo": "",
+   "tvg-name": "Channel 2",
+   "url": "http://p/M1/2",
+   "_values": "News Channel 2",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 2"
+  }
+ ],
+ "inactive": []
+}

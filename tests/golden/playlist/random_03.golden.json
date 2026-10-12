@@ -1,0 +1,35 @@
+{
+  "m3u": "#EXTM3U url-tvg=\"http://localhost:34400/xmltv/threadfin.xml\" x-tvg-url=\"http://localhost:34400/xmltv/threadfin.xml\"\n#EXTINF:0 channelID=\"x-ID.14\" tvg-chno=\"53.5\" tvg-name=\"Chan 14\" tvg-id=\"53.5\" tvg-logo=\"http://l/14.png\" group-title=\"A\",Chan 14\nhttp://localhost:34400/stream/d16d9a86dbce553c83ba5c80b82da7ee\n#EXTINF:0 channelID=\"x-ID.11\" tvg-chno=\"57.5\" tvg-name=\"Chan 11\" tvg-id=\"57.5\" tvg-logo=\"http://l/11.png\" group-title=\"A\",Chan 11\nhttp://localhost:34400/stream/07f46f8c518908ee29989e84443259ae\n#EXTINF:0 channelID=\"x-ID.8\" tvg-chno=\"x00\" tvg-name=\"Chan 8\" tvg-id=\"x00\" tvg-logo=\"http://l/8.png\" group-title=\"A\",Chan 8\nhttp://localhost:34400/stream/e80591cb110c781ffdb897d6173e5319\n",
+  "registry": {
+    "07f46f8c518908ee29989e84443259ae": {
+      "channelNumber": "57.5",
+      "name": "Chan 11",
+      "playlistID": "M2",
+      "url": "http://p/4",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "07f46f8c518908ee29989e84443259ae"
+    },
+    "d16d9a86dbce553c83ba5c80b82da7ee": {
+      "channelNumber": "53.5",
+      "name": "Chan 14",
+      "playlistID": "M2",
+      "url": "http://p/8",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "d16d9a86dbce553c83ba5c80b82da7ee"
+    },
+    "e80591cb110c781ffdb897d6173e5319": {
+      "channelNumber": "x00",
+      "name": "Chan 8",
+      "playlistID": "M1",
+      "url": "http://p/8",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "e80591cb110c781ffdb897d6173e5319"
+    }
+  }
+}

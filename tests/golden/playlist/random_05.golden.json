@@ -1,0 +1,45 @@
+{
+  "m3u": "#EXTM3U url-tvg=\"http://localhost:34400/xmltv/threadfin.xml\" x-tvg-url=\"http://localhost:34400/xmltv/threadfin.xml\"\n#EXTINF:0 channelID=\"x-ID.7\" tvg-chno=\"0\" tvg-name=\"Chan 7\" tvg-id=\"0\" tvg-logo=\"http://l/7.png\" group-title=\"A\",Chan 7\nhttp://localhost:34400/stream/9fa282d80ffd7b6f6ab0fa8997449082\n#EXTINF:0 channelID=\"x-ID.4\" tvg-chno=\"11\" tvg-name=\"Chan 4\" tvg-id=\"11\" tvg-logo=\"http://l/4.png\" group-title=\"K\",Chan 4\nhttp://localhost:34400/stream/901577c2ec3d2b82465e08454d852ba4\n#EXTINF:0 channelID=\"x-ID.1\" tvg-chno=\"x2\" tvg-name=\"Chan 1\" tvg-id=\"x2\" tvg-logo=\"http://l/1.png\" group-title=\"A\",Chan 1\nhttp://localhost:34400/stream/725e87b2130b1e5fba122f29852b0305\n#EXTINF:0 channelID=\"x-ID.3\" tvg-chno=\"x20\" tvg-name=\"Chan 3\" tvg-id=\"x20\" tvg-logo=\"http://l/3.png\" group-title=\"B\",Chan 3\nhttp://localhost:34400/stream/9fa282d80ffd7b6f6ab0fa8997449082\n#EXTINF:0 channelID=\"x-ID.5\" tvg-chno=\"x200\" tvg-name=\"Chan 5\" tvg-id=\"x200\" tvg-logo=\"http://l/5.png\" group-title=\"K\",Chan 5\nhttp://localhost:34400/stream/61fa5f70e69243c7f8b877a052ebcb6a\n",
+  "registry": {
+    "61fa5f70e69243c7f8b877a052ebcb6a": {
+      "channelNumber": "x200",
+      "name": "Chan 5",
+      "playlistID": "M2",
+      "url": "http://p/1",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "61fa5f70e69243c7f8b877a052ebcb6a"
+    },
+    "725e87b2130b1e5fba122f29852b0305": {
+      "channelNumber": "x2",
+      "name": "Chan 1",
+      "playlistID": "M2",
+      "url": "http://p/2",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "725e87b2130b1e5fba122f29852b0305"
+    },
+    "901577c2ec3d2b82465e08454d852ba4": {
+      "channelNumber": "11",
+      "name": "Chan 4",
+      "playlistID": "M1",
+      "url": "http://p/1",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "901577c2ec3d2b82465e08454d852ba4"
+    },
+    "9fa282d80ffd7b6f6ab0fa8997449082": {
+      "channelNumber": "0",
+      "name": "Chan 7",
+      "playlistID": "M1",
+      "url": "http://p/3",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "9fa282d80ffd7b6f6ab0fa8997449082"
+    }
+  }
+}

@@ -236,22 +236,13 @@ class RefreshTests(ServerCase):
         self.assertEqual(self.settings.files.m3u, {})
         self.assertEqual(list(self.data.iterdir()), [])
 
-    async def test_local_file_source(self) -> None:
+    async def test_local_files_are_not_supported(self) -> None:
         local = self.data / "mine.m3u"
         local.write_text(M3U)
-        await self.manager.add("m3u", {"file.source": str(local)})
-        self.assertEqual(next(iter(self.settings.files.m3u.values()))["name"], "mine.m3u")
-
-    async def test_local_files_can_be_forbidden(self) -> None:
-        local = self.data / "mine.m3u"
-        local.write_text(M3U)
-        manager = ProviderManager(self.settings, self.data, self._save, allow_local_files=False)
-        with self.assertRaises(ProviderError):
-            await manager.add("m3u", {"file.source": str(local)})
-
-    async def test_missing_local_file(self) -> None:
-        with self.assertRaises(ProviderError):
-            await self.manager.add("m3u", {"file.source": str(self.data / "absent.m3u")})
+        for source in (str(local), f"file://{local}", "ftp://h/x.m3u"):
+            with self.subTest(source=source), self.assertRaises(ProviderError):
+                await self.manager.add("m3u", {"file.source": source})
+        self.assertEqual(self.settings.files.m3u, {})
 
     async def test_failure_counters_and_availability(self) -> None:
         await self.manager.add("m3u", {"file.source": f"{self.base}/flaky"})

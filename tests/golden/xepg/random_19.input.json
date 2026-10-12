@@ -1,0 +1,255 @@
+{
+ "settings": {
+  "mapping.first.channel": 1000,
+  "files": {
+   "m3u": {
+    "M1": {
+     "name": "Provider M1"
+    }
+   },
+   "hdhr": {},
+   "xmltv": {
+    "X1": {
+     "name": "EPG one"
+    }
+   }
+  },
+  "filter": {
+   "0": {
+    "type": "group-title",
+    "filter": "News",
+    "startingNumber": "300",
+    "x-category": "Kids",
+    "active": true,
+    "caseSensitive": false,
+    "liveEvent": false,
+    "include": "",
+    "exclude": "",
+    "name": "News"
+   }
+  }
+ },
+ "xmltv": {
+  "X1": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><tv generator-info-name=\"t\"><channel id=\"id.1\"><display-name>id.1 name</display-name><icon src=\"http://i/id.1.png\"/></channel><channel id=\"id.119\"><display-name>id.119 name</display-name><icon src=\"http://i/id.119.png\"/></channel><channel id=\"id.153\"><display-name>id.153 name</display-name><icon src=\"http://i/id.153.png\"/></channel><channel id=\"id.188\"><display-name>id.188 name</display-name><icon src=\"http://i/id.188.png\"/></channel><channel id=\"id.2\"><display-name>id.2 name</display-name><icon src=\"http://i/id.2.png\"/></channel><channel id=\"id.62\"><display-name>id.62 name</display-name><icon src=\"http://i/id.62.png\"/></channel><channel id=\"id.75\"><display-name>id.75 name</display-name><icon src=\"http://i/id.75.png\"/></channel><channel id=\"id.98\"><display-name>id.98 name</display-name><icon src=\"http://i/id.98.png\"/></channel><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.1\"><title>id.1 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.1\"><title>id.1 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.1\"><title>id.1 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.1\"><title>id.1 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.1\"><title>id.1 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.119\"><title>id.119 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.119\"><title>id.119 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.119\"><title>id.119 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.119\"><title>id.119 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.119\"><title>id.119 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.153\"><title>id.153 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.153\"><title>id.153 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.153\"><title>id.153 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.153\"><title>id.153 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.153\"><title>id.153 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.188\"><title>id.188 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.188\"><title>id.188 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.188\"><title>id.188 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.188\"><title>id.188 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.188\"><title>id.188 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.2\"><title>id.2 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.2\"><title>id.2 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.2\"><title>id.2 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.2\"><title>id.2 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.2\"><title>id.2 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.62\"><title>id.62 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.62\"><title>id.62 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.62\"><title>id.62 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.62\"><title>id.62 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.62\"><title>id.62 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.75\"><title>id.75 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.75\"><title>id.75 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.75\"><title>id.75 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.75\"><title>id.75 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.75\"><title>id.75 show 4</title></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.98\"><title>id.98 show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"id.98\"><title>id.98 show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"id.98\"><title>id.98 show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"id.98\"><title>id.98 show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"id.98\"><title>id.98 show 4</title></programme></tv>"
+ },
+ "xepg": {
+  "x-ID.0": {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "",
+   "name": "Channel 119",
+   "tvg-id": "threadfin-119",
+   "tvg-logo": "http://l/119.png",
+   "tvg-name": "Channel 119",
+   "tvg-chno": "1002",
+   "url": "http://p/M2/119",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 119",
+   "_values": " Channel 119",
+   "x-active": true,
+   "x-category": "",
+   "x-channelID": "1002",
+   "x-epg": "x-ID.0",
+   "x-group-title": "",
+   "x-mapping": "-",
+   "x-xmltv-file": "X1.xml",
+   "x-ppv-extra": "",
+   "x-backup-channel-1": "",
+   "x-backup-channel-2": "",
+   "x-backup-channel-3": "",
+   "x-hide-channel": false,
+   "x-name": "Channel 119",
+   "x-update-channel-icon": false,
+   "x-update-channel-name": false,
+   "x-description": "",
+   "live": false,
+   "is_backup_channel": false,
+   "backup_channel_1": null,
+   "backup_channel_2": null,
+   "backup_channel_3": null,
+   "channelUniqueID": ""
+  }
+ },
+ "active": [
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "",
+   "name": "Channel 161",
+   "tvg-id": "id.161",
+   "tvg-logo": "http://l/161.png",
+   "tvg-name": "Channel 161",
+   "url": "http://p/M1/161",
+   "_values": " Channel 161",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 161"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "News",
+   "name": "Channel 75",
+   "tvg-id": "threadfin-75",
+   "tvg-logo": "",
+   "tvg-name": "Channel 75",
+   "url": "http://p/M2/75",
+   "_values": "News Channel 75",
+   "liveEvent": "false",
+   "tvg-chno": "19",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 75"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "",
+   "name": "Channel 62",
+   "tvg-id": "id.62",
+   "tvg-logo": "",
+   "tvg-name": "Channel 62",
+   "url": "http://p/M2/62",
+   "_values": " Channel 62",
+   "liveEvent": "false"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "",
+   "name": "Channel 153",
+   "tvg-id": "id.153",
+   "tvg-logo": "http://l/153.png",
+   "tvg-name": "Channel 153",
+   "url": "http://p/M1/153",
+   "_values": " Channel 153",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 153"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "Kids",
+   "name": "Channel 124",
+   "tvg-id": "id.124",
+   "tvg-logo": "",
+   "tvg-name": "Channel 124",
+   "url": "http://p/M2/124",
+   "_values": "Kids Channel 124",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 124"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "",
+   "name": "Channel 118",
+   "tvg-id": "threadfin-118",
+   "tvg-logo": "",
+   "tvg-name": "Channel 118",
+   "url": "http://p/M1/118",
+   "_values": " Channel 118",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 118"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 166",
+   "tvg-id": "threadfin-166",
+   "tvg-logo": "http://l/166.png",
+   "tvg-name": "Channel 166",
+   "url": "http://p/M1/166",
+   "_values": "News Channel 166",
+   "liveEvent": "true",
+   "tvg-chno": "141"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "News",
+   "name": "Channel 52",
+   "tvg-id": "id.52",
+   "tvg-logo": "http://l/52.png",
+   "tvg-name": "Channel 52",
+   "url": "http://p/M2/52",
+   "_values": "News Channel 52",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 52"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "News",
+   "name": "Channel 98",
+   "tvg-id": "id.98",
+   "tvg-logo": "",
+   "tvg-name": "Channel 98",
+   "url": "http://p/M1/98",
+   "_values": "News Channel 98",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 98"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "",
+   "name": "Channel 119",
+   "tvg-id": "threadfin-119",
+   "tvg-logo": "http://l/119.png",
+   "tvg-name": "Channel 119",
+   "url": "http://p/M2/119",
+   "_values": " Channel 119",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 119"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "Provider M1",
+   "_file.m3u.path": "/data/M1.m3u",
+   "group-title": "Kids",
+   "name": "Channel 56",
+   "tvg-id": "threadfin-56",
+   "tvg-logo": "http://l/56.png",
+   "tvg-name": "Channel 56",
+   "url": "http://p/M1/56",
+   "_values": "Kids Channel 56",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 56"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "Provider M2",
+   "_file.m3u.path": "/data/M2.m3u",
+   "group-title": "News",
+   "name": "Channel 188",
+   "tvg-id": "id.188",
+   "tvg-logo": "",
+   "tvg-name": "Channel 188",
+   "url": "http://p/M2/188",
+   "_values": "News Channel 188",
+   "liveEvent": "false",
+   "_uuid.key": "tvg-name",
+   "_uuid.value": "Channel 188"
+  }
+ ],
+ "inactive": []
+}

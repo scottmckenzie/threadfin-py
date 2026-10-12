@@ -1,0 +1,49 @@
+{
+ "tz": "Australia/Sydney",
+ "settings": {
+  "enableNonAscii": false,
+  "xepg.replace.missing.images": true,
+  "xepg.replace.channel.title": false
+ },
+ "xmltv": {
+  "X1.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><tv generator-info-name=\"t\"><channel id=\"id.1\"><display-name>id.1</display-name></channel><channel id=\"id.2\"><display-name>id.2</display-name></channel><channel id=\"id.3\"><display-name>id.3</display-name></channel><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.1\"><title lang=\"en\">  Café Show 0  </title><title lang=\"fr\">Émission</title><sub-title lang=\"en\">Sub 0</sub-title><desc lang=\"en\">Desc é 0</desc><credits><director>Dir</director><actor role=\"Hero\">A</actor><actor>B</actor><writer>W</writer><presenter>P</presenter><producer>Pr</producer></credits><date>2020</date><category lang=\"en\">Drama</category><category lang=\"en\">Thriller</category><language>English</language><icon src=\"http://x/p0.png\" width=\"100\" height=\"200\"/><country lang=\"en\">US</country><episode-num system=\"xmltv_ns\">0.0.</episode-num><video><aspect>16:9</aspect><colour>yes</colour><present>yes</present><quality>HDTV</quality></video><previously-shown start=\"20250101000000 +0000\"/><premiere>First</premiere><new/><live/><rating system=\"MPAA\"><value>PG</value><icon src=\"http://r/pg.png\"/></rating><star-rating system=\"imdb\"><value>7/10</value></star-rating></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.1\"><title lang=\"en\">  Café Show 1  </title><title lang=\"fr\">Émission</title><sub-title lang=\"en\">Sub 1</sub-title><desc lang=\"en\">Desc é 1</desc><credits><director>Dir</director><actor role=\"Hero\">A</actor><actor>B</actor><writer>W</writer><presenter>P</presenter><producer>Pr</producer></credits><date>2020</date><category lang=\"en\">Drama</category><category lang=\"en\">Thriller</category><language>English</language><icon src=\"http://x/p1.png\" width=\"100\" height=\"200\"/><country lang=\"en\">US</country><episode-num system=\"xmltv_ns\">0.1.</episode-num><video><aspect>16:9</aspect><colour>yes</colour><present>yes</present><quality>HDTV</quality></video><previously-shown start=\"20250101000000 +0000\"/><premiere>First</premiere><new/><live/><rating system=\"MPAA\"><value>PG</value><icon src=\"http://r/pg.png\"/></rating><star-rating system=\"imdb\"><value>7/10</value></star-rating></programme><programme start=\"20260101120000 +0100\" stop=\"20260101130000 +0100\" channel=\"id.1\"><title>Plain 1</title></programme><programme start=\"20260102120000 +0100\" stop=\"20260102130000 +0100\" channel=\"id.1\"><title>Plain 2</title></programme><programme start=\"bad\" stop=\"20260101020000 +0000\" channel=\"id.1\"><title>Bad start</title><desc>d</desc></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.2\"><title lang=\"en\">  Café Show 0  </title><title lang=\"fr\">Émission</title><sub-title lang=\"en\">Sub 0</sub-title><desc lang=\"en\">Desc é 0</desc><credits><director>Dir</director><actor role=\"Hero\">A</actor><actor>B</actor><writer>W</writer><presenter>P</presenter><producer>Pr</producer></credits><date>2020</date><category lang=\"en\">Drama</category><category lang=\"en\">Thriller</category><language>English</language><icon src=\"http://x/p0.png\" width=\"100\" height=\"200\"/><country lang=\"en\">US</country><episode-num system=\"xmltv_ns\">0.0.</episode-num><video><aspect>16:9</aspect><colour>yes</colour><present>yes</present><quality>HDTV</quality></video><previously-shown start=\"20250101000000 +0000\"/><premiere>First</premiere><new/><live/><rating system=\"MPAA\"><value>PG</value><icon src=\"http://r/pg.png\"/></rating><star-rating system=\"imdb\"><value>7/10</value></star-rating></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.2\"><title lang=\"en\">  Café Show 1  </title><title lang=\"fr\">Émission</title><sub-title lang=\"en\">Sub 1</sub-title><desc lang=\"en\">Desc é 1</desc><credits><director>Dir</director><actor role=\"Hero\">A</actor><actor>B</actor><writer>W</writer><presenter>P</presenter><producer>Pr</producer></credits><date>2020</date><category lang=\"en\">Drama</category><category lang=\"en\">Thriller</category><language>English</language><icon src=\"http://x/p1.png\" width=\"100\" height=\"200\"/><country lang=\"en\">US</country><episode-num system=\"xmltv_ns\">0.1.</episode-num><video><aspect>16:9</aspect><colour>yes</colour><present>yes</present><quality>HDTV</quality></video><previously-shown start=\"20250101000000 +0000\"/><premiere>First</premiere><new/><live/><rating system=\"MPAA\"><value>PG</value><icon src=\"http://r/pg.png\"/></rating><star-rating system=\"imdb\"><value>7/10</value></star-rating></programme><programme start=\"20260101120000 +0100\" stop=\"20260101130000 +0100\" channel=\"id.2\"><title>Plain 1</title></programme><programme start=\"20260102120000 +0100\" stop=\"20260102130000 +0100\" channel=\"id.2\"><title>Plain 2</title></programme><programme start=\"bad\" stop=\"20260101020000 +0000\" channel=\"id.2\"><title>Bad start</title><desc>d</desc></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.3\"><title lang=\"en\">  Café Show 0  </title><title lang=\"fr\">Émission</title><sub-title lang=\"en\">Sub 0</sub-title><desc lang=\"en\">Desc é 0</desc><credits><director>Dir</director><actor role=\"Hero\">A</actor><actor>B</actor><writer>W</writer><presenter>P</presenter><producer>Pr</producer></credits><date>2020</date><category lang=\"en\">Drama</category><category lang=\"en\">Thriller</category><language>English</language><icon src=\"http://x/p0.png\" width=\"100\" height=\"200\"/><country lang=\"en\">US</country><episode-num system=\"xmltv_ns\">0.0.</episode-num><video><aspect>16:9</aspect><colour>yes</colour><present>yes</present><quality>HDTV</quality></video><previously-shown start=\"20250101000000 +0000\"/><premiere>First</premiere><new/><live/><rating system=\"MPAA\"><value>PG</value><icon src=\"http://r/pg.png\"/></rating><star-rating system=\"imdb\"><value>7/10</value></star-rating></programme><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"id.3\"><title lang=\"en\">  Café Show 1  </title><title lang=\"fr\">Émission</title><sub-title lang=\"en\">Sub 1</sub-title><desc lang=\"en\">Desc é 1</desc><credits><director>Dir</director><actor role=\"Hero\">A</actor><actor>B</actor><writer>W</writer><presenter>P</presenter><producer>Pr</producer></credits><date>2020</date><category lang=\"en\">Drama</category><category lang=\"en\">Thriller</category><language>English</language><icon src=\"http://x/p1.png\" width=\"100\" height=\"200\"/><country lang=\"en\">US</country><episode-num system=\"xmltv_ns\">0.1.</episode-num><video><aspect>16:9</aspect><colour>yes</colour><present>yes</present><quality>HDTV</quality></video><previously-shown start=\"20250101000000 +0000\"/><premiere>First</premiere><new/><live/><rating system=\"MPAA\"><value>PG</value><icon src=\"http://r/pg.png\"/></rating><star-rating system=\"imdb\"><value>7/10</value></star-rating></programme><programme start=\"20260101120000 +0100\" stop=\"20260101130000 +0100\" channel=\"id.3\"><title>Plain 1</title></programme><programme start=\"20260102120000 +0100\" stop=\"20260102130000 +0100\" channel=\"id.3\"><title>Plain 2</title></programme><programme start=\"bad\" stop=\"20260101020000 +0000\" channel=\"id.3\"><title>Bad start</title><desc>d</desc></programme></tv>"
+ },
+ "xepg": {
+  "x-ID.1": {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M1.m3u",
+   "group-title": "G",
+   "name": "Alpha",
+   "tvg-id": "id.1",
+   "tvg-logo": "http://l/logo.png",
+   "tvg-name": "Alpha",
+   "tvg-chno": "1",
+   "url": "http://p/1",
+   "_uuid.key": "",
+   "_values": "Alpha",
+   "x-active": true,
+   "x-category": "",
+   "x-channelID": "1",
+   "x-epg": "x-ID.1",
+   "x-group-title": "G",
+   "x-mapping": "id.1",
+   "x-xmltv-file": "X1.xml",
+   "x-ppv-extra": "",
+   "x-backup-channel-1": "",
+   "x-backup-channel-2": "",
+   "x-backup-channel-3": "",
+   "x-hide-channel": false,
+   "x-name": "Alpha",
+   "x-update-channel-icon": false,
+   "x-update-channel-name": false,
+   "x-description": "",
+   "live": false,
+   "is_backup_channel": false,
+   "backup_channel_1": null,
+   "backup_channel_2": null,
+   "backup_channel_3": null,
+   "channelUniqueID": ""
+  }
+ }
+}

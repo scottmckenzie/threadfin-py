@@ -330,7 +330,6 @@ class ProviderManager:
         save: Callable[[], None],
         *,
         app_name: str = "threadfin",
-        allow_local_files: bool = True,
         max_bytes: int = DEFAULT_MAX_BYTES,
         fetch: Callable[..., Download] = download,
     ) -> None:
@@ -338,7 +337,6 @@ class ProviderManager:
         self._data = Path(data_folder)
         self._save = save
         self._app = app_name
-        self._allow_local = allow_local_files
         self._max_bytes = max_bytes
         self._fetch = fetch
         self._lock = asyncio.Lock()
@@ -451,14 +449,7 @@ class ProviderManager:
                 source, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes
             )
             return fetched.filename, fetched.body
-        if not self._allow_local:
-            raise ProviderError("local files are not allowed as a provider source")
-        path = Path(source)
-        if not path.is_file():
-            raise ProviderError(f"{source}: no such file")
-        if path.stat().st_size > self._max_bytes:
-            raise ProviderError(f"{source}: file exceeds {self._max_bytes} bytes")
-        return go_base(source), path.read_bytes()
+        raise ProviderError(f"unsupported source {source!r}: use an http:// or https:// URL")
 
     def _store(
         self,

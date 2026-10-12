@@ -1,0 +1,5 @@
+{
+  "generatedAt": "2026-10-12T17:28:41.295750855+11:00",
+  "tz": "Australia/Sydney",
+  "xml": "\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n\u003ctv\u003e\n  \u003cgenerator\u003eThreadfin\u003c/generator\u003e\n  \u003csource\u003eThreadfin - 1.0.0\u003c/source\u003e\n  \u003cchannel id=\"1\"\u003e\n      \u003cdisplay-name\u003eAlpha\u003c/display-name\u003e\n      \u003cicon src=\"http://l/logo.png\"\u003e\u003c/icon\u003e\n      \u003clive\u003efalse\u003c/live\u003e\n      \u003cactive\u003etrue\u003c/active\u003e\n  \u003c/channel\u003e\n\u003c/tv\u003e\n"
+}

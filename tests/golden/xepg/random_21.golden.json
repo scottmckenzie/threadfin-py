@@ -1,0 +1,247 @@
+{
+  "xepg": {
+    "x-ID.14": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 146",
+      "_values": " Channel 146",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "",
+      "group-title": "",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 146",
+      "tvg-chno": "1015",
+      "tvg-id": "id.146",
+      "tvg-logo": "",
+      "tvg-name": "Channel 146",
+      "url": "http://p/M1/146",
+      "x-active": false,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1015",
+      "x-description": "",
+      "x-epg": "x-ID.14",
+      "x-group-title": "",
+      "x-hide-channel": false,
+      "x-mapping": "-",
+      "x-name": "Channel 146",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": true,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    },
+    "x-ID.17": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 50",
+      "_values": "Kids Channel 50",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "a3712d5539c4f904394d06487a658283",
+      "group-title": "Kids",
+      "is_backup_channel": false,
+      "live": true,
+      "name": "Channel 50",
+      "tvg-chno": "1018",
+      "tvg-id": "id.50",
+      "tvg-logo": "http://l/50.png",
+      "tvg-name": "Channel 50",
+      "url": "http://p/M1/50",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1018",
+      "x-description": "",
+      "x-epg": "x-ID.17",
+      "x-group-title": "Kids",
+      "x-hide-channel": false,
+      "x-mapping": "id.11",
+      "x-name": "Channel 50",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    },
+    "x-ID.2": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 186",
+      "_values": " Channel 186",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "",
+      "group-title": "",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 186",
+      "tvg-chno": "1004",
+      "tvg-id": "id.186",
+      "tvg-logo": "http://l/186.png",
+      "tvg-name": "Channel 186",
+      "url": "http://p/M1/186/moved",
+      "x-active": false,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1004",
+      "x-description": "",
+      "x-epg": "x-ID.2",
+      "x-group-title": "",
+      "x-hide-channel": false,
+      "x-mapping": "-",
+      "x-name": "Channel 186",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": true,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    },
+    "x-ID.9": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 43",
+      "_values": "Kids Channel 43",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "30400cfed5a98a18d9c89f9658e3aac7",
+      "group-title": "Kids",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 43",
+      "tvg-chno": "1011",
+      "tvg-id": "id.43",
+      "tvg-logo": "",
+      "tvg-name": "Channel 43",
+      "url": "http://p/M1/43/moved",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1011",
+      "x-description": "",
+      "x-epg": "x-ID.9",
+      "x-group-title": "Kids",
+      "x-hide-channel": false,
+      "x-mapping": "-",
+      "x-name": "Channel 43",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    }
+  },
+  "xepgCount": 7,
+  "mapping": {
+    "Threadfin Dummy": {
+      "120_Minutes": {
+        "display-name": "120 Minutes",
+        "icon": "",
+        "id": "120_Minutes"
+      },
+      "180_Minutes": {
+        "display-name": "180 Minutes",
+        "icon": "",
+        "id": "180_Minutes"
+      },
+      "240_Minutes": {
+        "display-name": "240 Minutes",
+        "icon": "",
+        "id": "240_Minutes"
+      },
+      "30_Minutes": {
+        "display-name": "30 Minutes",
+        "icon": "",
+        "id": "30_Minutes"
+      },
+      "360_Minutes": {
+        "display-name": "360 Minutes",
+        "icon": "",
+        "id": "360_Minutes"
+      },
+      "60_Minutes": {
+        "display-name": "60 Minutes",
+        "icon": "",
+        "id": "60_Minutes"
+      },
+      "90_Minutes": {
+        "display-name": "90 Minutes",
+        "icon": "",
+        "id": "90_Minutes"
+      },
+      "PPV": {
+        "display-name": "PPV Event",
+        "icon": "",
+        "id": "PPV"
+      }
+    },
+    "X1.xml": {
+      "id.1": {
+        "active": false,
+        "display-name": "id.1 name",
+        "icon": "http://i/id.1.png",
+        "id": "id.1"
+      },
+      "id.146": {
+        "active": false,
+        "display-name": "id.146 name",
+        "icon": "http://i/id.146.png",
+        "id": "id.146"
+      },
+      "id.191": {
+        "active": false,
+        "display-name": "id.191 name",
+        "icon": "http://i/id.191.png",
+        "id": "id.191"
+      },
+      "id.2": {
+        "active": false,
+        "display-name": "id.2 name",
+        "icon": "http://i/id.2.png",
+        "id": "id.2"
+      },
+      "id.44": {
+        "active": false,
+        "display-name": "id.44 name",
+        "icon": "http://i/id.44.png",
+        "id": "id.44"
+      },
+      "id.47": {
+        "active": false,
+        "display-name": "id.47 name",
+        "icon": "http://i/id.47.png",
+        "id": "id.47"
+      },
+      "id.61": {
+        "active": false,
+        "display-name": "id.61 name",
+        "icon": "http://i/id.61.png",
+        "id": "id.61"
+      },
+      "id.74": {
+        "active": false,
+        "display-name": "id.74 name",
+        "icon": "http://i/id.74.png",
+        "id": "id.74"
+      }
+    }
+  }
+}

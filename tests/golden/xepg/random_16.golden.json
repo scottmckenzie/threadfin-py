@@ -1,0 +1,247 @@
+{
+  "xepg": {
+    "x-ID.1": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 189",
+      "_values": " Channel 189",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "52a45ea10bd3dcb27d719874f029b5e9",
+      "group-title": "",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 189",
+      "tvg-chno": "1000",
+      "tvg-id": "id.189",
+      "tvg-logo": "http://l/189.png",
+      "tvg-name": "Channel 189",
+      "url": "http://p/M1/189",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1000",
+      "x-description": "",
+      "x-epg": "x-ID.1",
+      "x-group-title": "",
+      "x-hide-channel": false,
+      "x-mapping": "id.189",
+      "x-name": "Channel 189",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "X1.xml"
+    },
+    "x-ID.3": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 152",
+      "_values": " Channel 152",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "0f0345889b20b3869a89e70afd01a4d5",
+      "group-title": "",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 152",
+      "tvg-chno": "1002",
+      "tvg-id": "threadfin-152",
+      "tvg-logo": "http://l/152.png",
+      "tvg-name": "Channel 152",
+      "url": "http://p/M1/152",
+      "x-active": false,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1002",
+      "x-description": "",
+      "x-epg": "x-ID.3",
+      "x-group-title": "",
+      "x-hide-channel": false,
+      "x-mapping": "-",
+      "x-name": "Channel 152",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "-"
+    },
+    "x-ID.6": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 55",
+      "_values": "Sports Channel 55",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "15b5864f634627959ead64f5f7cd64fa",
+      "group-title": "Sports",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 55",
+      "tvg-chno": "1005",
+      "tvg-id": "id.55",
+      "tvg-logo": "http://l/55.png",
+      "tvg-name": "Channel 55",
+      "url": "http://p/M1/55",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1005",
+      "x-description": "",
+      "x-epg": "x-ID.6",
+      "x-group-title": "Sports",
+      "x-hide-channel": false,
+      "x-mapping": "id.55",
+      "x-name": "Channel 55",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "X1.xml"
+    },
+    "x-ID.7": {
+      "_file.m3u.id": "M1",
+      "_file.m3u.name": "Provider M1",
+      "_file.m3u.path": "/data/M1.m3u",
+      "_uuid.key": "tvg-name",
+      "_uuid.value": "Channel 154",
+      "_values": " Channel 154",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "da776b5450fadf326a47f7d43b1677b2",
+      "group-title": "",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "Channel 154",
+      "tvg-chno": "6",
+      "tvg-id": "id.154",
+      "tvg-logo": "",
+      "tvg-name": "Channel 154",
+      "url": "http://p/M1/154",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "6",
+      "x-description": "",
+      "x-epg": "x-ID.7",
+      "x-group-title": "",
+      "x-hide-channel": false,
+      "x-mapping": "id.154",
+      "x-name": "Channel 154",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "X1.xml"
+    }
+  },
+  "xepgCount": 5,
+  "mapping": {
+    "Threadfin Dummy": {
+      "120_Minutes": {
+        "display-name": "120 Minutes",
+        "icon": "",
+        "id": "120_Minutes"
+      },
+      "180_Minutes": {
+        "display-name": "180 Minutes",
+        "icon": "",
+        "id": "180_Minutes"
+      },
+      "240_Minutes": {
+        "display-name": "240 Minutes",
+        "icon": "",
+        "id": "240_Minutes"
+      },
+      "30_Minutes": {
+        "display-name": "30 Minutes",
+        "icon": "",
+        "id": "30_Minutes"
+      },
+      "360_Minutes": {
+        "display-name": "360 Minutes",
+        "icon": "",
+        "id": "360_Minutes"
+      },
+      "60_Minutes": {
+        "display-name": "60 Minutes",
+        "icon": "",
+        "id": "60_Minutes"
+      },
+      "90_Minutes": {
+        "display-name": "90 Minutes",
+        "icon": "",
+        "id": "90_Minutes"
+      },
+      "PPV": {
+        "display-name": "PPV Event",
+        "icon": "",
+        "id": "PPV"
+      }
+    },
+    "X1.xml": {
+      "id.1": {
+        "active": false,
+        "display-name": "id.1 name",
+        "icon": "http://i/id.1.png",
+        "id": "id.1"
+      },
+      "id.132": {
+        "active": false,
+        "display-name": "id.132 name",
+        "icon": "http://i/id.132.png",
+        "id": "id.132"
+      },
+      "id.152": {
+        "active": false,
+        "display-name": "id.152 name",
+        "icon": "http://i/id.152.png",
+        "id": "id.152"
+      },
+      "id.154": {
+        "active": false,
+        "display-name": "id.154 name",
+        "icon": "http://i/id.154.png",
+        "id": "id.154"
+      },
+      "id.189": {
+        "active": false,
+        "display-name": "id.189 name",
+        "icon": "http://i/id.189.png",
+        "id": "id.189"
+      },
+      "id.2": {
+        "active": false,
+        "display-name": "id.2 name",
+        "icon": "http://i/id.2.png",
+        "id": "id.2"
+      },
+      "id.55": {
+        "active": false,
+        "display-name": "id.55 name",
+        "icon": "http://i/id.55.png",
+        "id": "id.55"
+      },
+      "id.96": {
+        "active": false,
+        "display-name": "id.96 name",
+        "icon": "http://i/id.96.png",
+        "id": "id.96"
+      }
+    }
+  }
+}

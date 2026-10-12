@@ -1,0 +1,93 @@
+{
+  "xepg": {
+    "x-ID.0": {
+      "_file.m3u.id": "H1",
+      "_file.m3u.name": "Tuner",
+      "_file.m3u.path": "/d/H1.json",
+      "_uuid.key": "ID-H1",
+      "_values": "Tuner WXYZ",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "channelUniqueID": "3f2fd5348ce522f2844bd0cfd3cfcbda",
+      "group-title": "Tuner",
+      "is_backup_channel": false,
+      "live": false,
+      "name": "WXYZ",
+      "tvg-chno": "1000",
+      "tvg-id": "WXYZ",
+      "tvg-logo": "",
+      "tvg-name": "WXYZ",
+      "url": "http://t/2.1",
+      "x-active": true,
+      "x-backup-channel-1": "",
+      "x-backup-channel-2": "",
+      "x-backup-channel-3": "",
+      "x-category": "",
+      "x-channelID": "1000",
+      "x-description": "",
+      "x-epg": "x-ID.0",
+      "x-group-title": "Tuner",
+      "x-hide-channel": false,
+      "x-mapping": "WXYZ",
+      "x-name": "WXYZ",
+      "x-ppv-extra": "",
+      "x-update-channel-icon": false,
+      "x-update-channel-name": false,
+      "x-xmltv-file": "X1.xml"
+    }
+  },
+  "xepgCount": 1,
+  "mapping": {
+    "Threadfin Dummy": {
+      "120_Minutes": {
+        "display-name": "120 Minutes",
+        "icon": "",
+        "id": "120_Minutes"
+      },
+      "180_Minutes": {
+        "display-name": "180 Minutes",
+        "icon": "",
+        "id": "180_Minutes"
+      },
+      "240_Minutes": {
+        "display-name": "240 Minutes",
+        "icon": "",
+        "id": "240_Minutes"
+      },
+      "30_Minutes": {
+        "display-name": "30 Minutes",
+        "icon": "",
+        "id": "30_Minutes"
+      },
+      "360_Minutes": {
+        "display-name": "360 Minutes",
+        "icon": "",
+        "id": "360_Minutes"
+      },
+      "60_Minutes": {
+        "display-name": "60 Minutes",
+        "icon": "",
+        "id": "60_Minutes"
+      },
+      "90_Minutes": {
+        "display-name": "90 Minutes",
+        "icon": "",
+        "id": "90_Minutes"
+      },
+      "PPV": {
+        "display-name": "PPV Event",
+        "icon": "",
+        "id": "PPV"
+      }
+    },
+    "X1.xml": {
+      "WXYZ": {
+        "active": false,
+        "display-name": "WXYZ name",
+        "icon": "http://i/WXYZ.png",
+        "id": "WXYZ"
+      }
+    }
+  }
+}

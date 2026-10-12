@@ -1,0 +1,39 @@
+{
+ "settings": {
+  "mapping.first.channel": 1000,
+  "files": {
+   "m3u": {},
+   "hdhr": {
+    "H1": {
+     "name": "Tuner"
+    }
+   },
+   "xmltv": {
+    "X1": {
+     "name": "e"
+    }
+   }
+  },
+  "filter": {}
+ },
+ "xmltv": {
+  "X1": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><tv generator-info-name=\"t\"><channel id=\"WXYZ\"><display-name>WXYZ name</display-name><icon src=\"http://i/WXYZ.png\"/></channel><programme start=\"20260101000000 +0000\" stop=\"20260101010000 +0000\" channel=\"WXYZ\"><title>WXYZ show 0</title></programme><programme start=\"20260102000000 +0000\" stop=\"20260102010000 +0000\" channel=\"WXYZ\"><title>WXYZ show 1</title></programme><programme start=\"20260103000000 +0000\" stop=\"20260103010000 +0000\" channel=\"WXYZ\"><title>WXYZ show 2</title></programme><programme start=\"20260104000000 +0000\" stop=\"20260104010000 +0000\" channel=\"WXYZ\"><title>WXYZ show 3</title></programme><programme start=\"20260105000000 +0000\" stop=\"20260105010000 +0000\" channel=\"WXYZ\"><title>WXYZ show 4</title></programme></tv>"
+ },
+ "xepg": {},
+ "active": [
+  {
+   "_file.m3u.id": "H1",
+   "_file.m3u.name": "Tuner",
+   "_file.m3u.path": "/d/H1.json",
+   "group-title": "Tuner",
+   "name": "WXYZ",
+   "tvg-id": "WXYZ",
+   "url": "http://t/2.1",
+   "ID-H1": "2.1",
+   "_uuid.key": "ID-H1",
+   "_values": "Tuner WXYZ",
+   "liveEvent": "false"
+  }
+ ],
+ "inactive": []
+}

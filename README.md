@@ -15,7 +15,10 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | Stream filters | done, golden-tested against Go (70 cases) |
 | Providers (URL / file / HDHomeRun fetch, gzip, local copies, counters) | done, tested against a local HTTP server |
 | Stream database (active / inactive, previews, groups, compatibility) | done, golden-tested against Go (30 cases) |
-| XEPG / XMLTV mapping and output, HDHR emulation, SSDP, auth, backup | not started |
+| XMLTV channel mapping, channel database (XEPG) | done, golden-tested against Go (69 cases) |
+| XMLTV guide output (provider, dummy and live-event guides) | done, golden-tested against Go (50 cases) |
+| M3U playlist output + stream id registry | done, golden-tested against Go (39 cases) |
+| Orchestration, `/stream/` redirect, HDHR emulation, SSDP, auth, backup | not started |
 | REST API + HTMX UI | not started |
 
 ## Tests

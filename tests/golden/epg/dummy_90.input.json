@@ -1,0 +1,47 @@
+{
+ "tz": "Australia/Sydney",
+ "settings": {
+  "enableNonAscii": false,
+  "xepg.replace.missing.images": true,
+  "xepg.replace.channel.title": false
+ },
+ "xmltv": {},
+ "xepg": {
+  "x-ID.1": {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M1.m3u",
+   "group-title": "G",
+   "name": "Dummy Chan",
+   "tvg-id": "id.1",
+   "tvg-logo": "http://l/logo.png",
+   "tvg-name": "Dummy Chan",
+   "tvg-chno": "1",
+   "url": "http://p/1",
+   "_uuid.key": "",
+   "_values": "Dummy Chan",
+   "x-active": true,
+   "x-category": "",
+   "x-channelID": "1",
+   "x-epg": "x-ID.1",
+   "x-group-title": "G",
+   "x-mapping": "90_Minutes",
+   "x-xmltv-file": "Threadfin Dummy",
+   "x-ppv-extra": "",
+   "x-backup-channel-1": "",
+   "x-backup-channel-2": "",
+   "x-backup-channel-3": "",
+   "x-hide-channel": false,
+   "x-name": "Dummy Chan",
+   "x-update-channel-icon": false,
+   "x-update-channel-name": false,
+   "x-description": "",
+   "live": false,
+   "is_backup_channel": false,
+   "backup_channel_1": null,
+   "backup_channel_2": null,
+   "backup_channel_3": null,
+   "channelUniqueID": ""
+  }
+ }
+}

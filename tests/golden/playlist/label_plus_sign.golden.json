@@ -1,0 +1,15 @@
+{
+  "m3u": "#EXTM3U url-tvg=\"http://localhost:34400/xmltv/threadfin.xml\" x-tvg-url=\"http://localhost:34400/xmltv/threadfin.xml\"\n#EXTINF:0 channelID=\"x-ID.1\" tvg-chno=\"1\" tvg-name=\"Chan 1\" tvg-id=\"1\" tvg-logo=\"http://l/1.png\" group-title=\"G\",Chan 1\nhttp://localhost:34400/stream/901577c2ec3d2b82465e08454d852ba4\n",
+  "registry": {
+    "901577c2ec3d2b82465e08454d852ba4": {
+      "channelNumber": "1",
+      "name": "Chan 1",
+      "playlistID": "M1",
+      "url": "http://p/1",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "901577c2ec3d2b82465e08454d852ba4"
+    }
+  }
+}

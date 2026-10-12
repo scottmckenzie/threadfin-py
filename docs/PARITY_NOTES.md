@@ -98,9 +98,58 @@ Go `buildDatabaseDVR` on 30 cases.
 | A malformed HDHomeRun lineup entry panicked. | **fixed**: skipped and reported |
 | The last provider's error was the only one returned from a refresh-all or database build, so one bad provider's failure depended on random map order. | **fixed**: every provider's outcome is reported (`RefreshResult`, `StreamDatabase.errors`) and the rest still loads |
 | The timeout covered the whole request; no size limit. | kept (total deadline, enforced even for slow trickling bodies); **new**: size limit |
-| `strings.Contains(source, "http://")` decided between URL and file. | **changed**: the scheme must be http/https; local file sources can be switched off (`allow_local_files`) for the API layer |
+| `strings.Contains(source, "http://")` decided between URL and local file; local files could be read. | **changed**: sources must be http/https URLs; local files are not supported |
 | Group labels and values were sorted as two independent lists (a label could end up beside the wrong value, e.g. groups `a` and `a (1)`). | **fixed**: one list of `(name, count)` sorted by name |
 | Providers were visited in random map order. | **changed**: settings order, M3U before HDHR |
 | With no filters and at most 480 streams everything is active; above that everything is inactive plus a warning. Plex warning above 480 active. | kept |
 | Loopback hosts bypass proxies. | kept |
 
+
+## Channel database (`xmltv.py`, `xepg.py`)
+
+Golden-tested against the real Go update/mapping code on 69 cases (4 deliberate divergences, each
+asserted to still diverge).
+
+| Go behaviour | Status |
+|---|---|
+| Channel identity is `md5(url + tvg-id + playlist id)` (tvg-id left out when empty); ids are `x-ID.N`; the database is sorted by id. | kept |
+| Channels that vanish from the provider are removed; deactivated channels are not updated from the provider. | kept |
+| New channels start inactive unless their tvg-id appears in an XMLTV file or is a live event. | kept |
+| Matching falls back to the UUID (`_uuid.value`, the tvg-name) when the hash changes. | kept; the stale record is no longer left behind (**fixed**) |
+| A group filter without a starting number crashed / produced `0` numbers. | **fixed**: always numbered |
+| Provider channel numbers colliding with generated ones produced duplicate numbers. | **fixed**: collisions are moved |
+| A cleared backup channel kept a stale pointer. | **fixed** |
+| Channel numbers are formatted with `%g`. | kept (`go_g`) |
+
+## XMLTV guide (`epg.py`)
+
+Compared element by element (parsed XML) with the real `createXMLTVFile` on 50 cases.
+
+| Go behaviour | Status |
+|---|---|
+| Programmes keep only title, sub-title, desc, category, country, episode-num, icon, credits, rating, star-rating, language, video, date, previously-shown, new, live, premiere. | kept |
+| Dummy guides: 4 days of fixed slots, labelled with *today's* UTC offset (no DST adjustment). | kept |
+| Live-event (`PPV`) guides: "CHANNEL OFFLINE" before and after the event. The start time parsed from the channel name **never worked** in Go: the event always starts at 06:00 if the name contains an ASCII digit and at midnight otherwise. | kept as it behaves; real parsing is available as a follow-up |
+| Empty `<credits>`, `<video>`, `<date>` and the private channel children `<live>`/`<active>` were written. | **dropped** (no information) |
+| `generator`/`source` were child elements of `<tv>`. | **changed**: attributes (the XMLTV DTD form) |
+| Elements follow Go struct order. | **changed**: XMLTV DTD order |
+| Control characters in names were written raw (invalid XML). | **fixed**: replaced with U+FFFD |
+| A dummy guide with a zero length looped forever. | **fixed**: 30 minutes |
+| The file was written in place. | **changed**: atomic replace, optional gzip copy |
+| Several channels mapped to one provider channel re-read the file per channel. | **changed**: one streaming pass per provider file |
+
+## M3U output and stream ids (`playlist.py`)
+
+Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream registry).
+
+| Go behaviour | Status |
+|---|---|
+| Entries link to `/stream/<md5(playlistID-url)>`; `urls.json` maps the id back to the provider URL and backups. | kept; `/stream/` will answer with a redirect |
+| A group is capped at `expected - deactivated` entries (expected from the provider label `Name (N)`). | kept |
+| The optional group filter compares `x-group-title` while the emitted group prefers `x-category`. | kept |
+| An identical `group|stream` pair is written once. | kept |
+| Channels with equal numbers came out in arbitrary order (`sort.Slice` is unstable). | **fixed**: tie-break by XEPG id |
+| A `"` or newline in a name broke the `#EXTINF` line. | **fixed**: `'` / space |
+| The registry kept the first channel name ever seen for an id. | **changed**: refreshed on every build (first wins *within* a build, as in Go) |
+| Provider URLs were rewritten to https when "force https" was on. | not ported (streams are redirected, not proxied) |
+| Backup channels fail over inside Threadfin's stream buffer. | **not possible** with a plain redirect; the backup entries are kept in the registry only |
