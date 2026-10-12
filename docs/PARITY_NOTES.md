@@ -153,3 +153,16 @@ Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream 
 | The registry kept the first channel name ever seen for an id. | **changed**: refreshed on every build (first wins *within* a build, as in Go) |
 | Provider URLs were rewritten to https when "force https" was on. | not ported (streams are redirected, not proxied) |
 | Backup channels fail over inside Threadfin's stream buffer. | **not possible** with a plain redirect; the backup entries are kept in the registry only |
+
+## Build pipeline and endpoints (`service.py`, `web.py`)
+
+Tested end to end with a local provider server and a real uvicorn instance.
+
+| Go behaviour | Status |
+|---|---|
+| `buildXEPG`: clear stream registry, update/map/clean the channel database, write guide, write playlist. | kept (registry is rebuilt from scratch on every build) |
+| `threadfin.m3u` was written at build time with one fixed host; requests with a query rebuilt it. | **changed**: the playlist is generated per request with the host the client used (`httpThreadfinDomain` / `forceHttps` domain still win) |
+| `/stream/<id>` passed through the stream buffer. | **changed**: 302 to the provider URL (UDPxy rewrite of `udp://@` kept) |
+| `/m3u/threadfin.m3u?group-title=A,B`, `/xmltv/threadfin.xml`. | kept; `.xml.gz` is also served |
+| A build ran only when started by a schedule/UI; after restart group caps were gone until the next build. | **changed**: a build runs on start-up from the local copies (no download) |
+| Authentication on `/m3u`, `/xmltv`. | not yet (next layer) |

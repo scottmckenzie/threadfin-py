@@ -104,6 +104,10 @@ class StreamRegistry:
             info = StreamInfo(**{**{f: getattr(info, f) for f in info.__slots__}, "url": info.url.strip("\r\n")})
         return info
 
+    def replace_with(self, other: StreamRegistry) -> None:
+        """Swap in another registry's entries (a build starts from an empty one, as in Go)."""
+        self.entries = dict(other.entries)
+
     def prune(self, keep: Iterable[str]) -> None:
         keep = set(keep)
         self.entries = {k: v for k, v in self.entries.items() if k in keep}
