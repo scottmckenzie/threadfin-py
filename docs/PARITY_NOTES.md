@@ -62,9 +62,9 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
 * The upstream `vendor/` directory is incomplete (no `modules.txt`, missing
   `avfs`, `go-version`, `x/text`), so the Go app cannot be built from a plain
   clone. The golden scripts fetch modules from GitHub (`GOPROXY=direct`).
-* This sandbox could not reach PyPI, so `pytest`, `ruff`, `mypy` and `fastapi`
-  were not installable. Tests use `unittest` (also runs under pytest). Linting
-  and type-checking have not been run yet.
+* The port was started in a sandbox without PyPI, so tests use `unittest` (they
+  also run under pytest) and providers use stdlib `urllib`. Linting (`ruff`) and
+  type-checking (`mypy`) have not been run yet.
 
 ## Stream filters (`src/threadfin/filters.py`)
 
@@ -186,4 +186,5 @@ Golden-tested against the real Go functions on 29 cases (discover, status, lineu
 | The domain in the answers came from the request (`Host`), or the configured public domain. | kept |
 | `ScanInProgress` mirrored the build lock. | kept |
 | `authentication.pms` protects `/lineup.json`. | not yet (auth layer) |
+| SSDP announced the device on the LAN (setting `ssdp`). | **dropped**: the setting is still read and written for config compatibility but has no effect |
 | Unknown paths returned the device XML. | **changed**: 404 (only `/` is the device XML) |

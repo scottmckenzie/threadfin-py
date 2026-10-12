@@ -20,14 +20,36 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | M3U playlist output + stream id registry | done, golden-tested against Go (39 cases) |
 | Build pipeline, `/stream/` redirect, `/m3u/`, `/xmltv/` endpoints | done, tested end to end |
 | HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
-| SSDP, auth, backup, scheduler | not started |
+| Auth, backup, scheduler | not started |
+| SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
 | REST API + HTMX UI | not started |
 
 ## Tests
 
-    PYTHONPATH=src python3 -m unittest discover -s tests
+    python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
+    .venv/bin/python -m unittest discover -s tests
 
 Needs Python 3.12+ and (for one integration test) `ffmpeg`/`ffprobe`. Golden files in
 `tests/golden/` were produced by the real Go code; regenerate them with the scripts in
 `tools/go_golden/` (needs Go and network access). See `docs/PARITY_NOTES.md` for the
-Go quirks that were kept or fixed on purpose.
+Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the development method.
+
+## Roadmap
+
+1. Auth (Go: `authentication.go`): basic auth for web / api / m3u / xml / pms from
+   `authentication.json`; protects `/lineup.json`, `/m3u/`, `/xmltv/` and the API.
+2. Backup / restore (Go: `backup.go`; settings `backup.keep`, `backup.path`).
+3. Scheduler (Go: `maintenance.go`; setting `update` = list of `HHMM` times; `files.update`).
+4. REST API + HTMX UI, including the probe UI (inventory: `webserver.go` WebSocket
+   commands, `webUI.go`, `html/`). Add `jinja2` (and `python-multipart` if forms post)
+   to `pyproject.toml`.
+5. Image cache (Go: `images.go`, `internal/imgcache`): only an identity hook exists so far.
+6. Entry point: no CLI, `__main__` or `[project.scripts]` yet to start the server
+   (uvicorn on `web.create_app`).
+
+## Open questions
+
+- Live-event (PPV) start times never worked in Go (always 06:00 if the name contains a
+  digit, else midnight). Implement the intended date / time / timezone parsing?
+- Backup channels cannot fail over with a plain 302; they are kept in the registry only.
+- Until auth is built, `/m3u/`, `/xmltv/` and `/lineup.json` are open.
