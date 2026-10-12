@@ -1,0 +1,271 @@
+{
+  "error": false,
+  "rules": [
+    {
+      "CaseSensitive": false,
+      "LiveEvent": false,
+      "Rule": "a b {de} !{Ünï,}",
+      "Type": "group-title"
+    },
+    {
+      "CaseSensitive": false,
+      "LiveEvent": true,
+      "Rule": "z.z {ABC} !{4k,Ünï}",
+      "Type": "group-title"
+    },
+    {
+      "CaseSensitive": false,
+      "LiveEvent": false,
+      "Rule": "abc !{ABC}",
+      "Type": "custom-filter"
+    },
+    {
+      "CaseSensitive": false,
+      "LiveEvent": false,
+      "Rule": "z.z",
+      "Type": "custom-filter"
+    }
+  ],
+  "results": [
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": true,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": true,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": true,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": true,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": true
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    },
+    {
+      "active": false,
+      "liveEvent": false
+    }
+  ]
+}

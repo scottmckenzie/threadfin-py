@@ -1,7 +1,7 @@
 # threadfin-py
 
 Python port of [Threadfin](https://github.com/Threadfin/Threadfin) (M3U proxy and EPG
-mapper for Plex / Emby / Jellyfin). **Work in progress**: the foundation layer is done.
+mapper for Plex / Emby / Jellyfin). **Work in progress**: the data layer is done.
 
 Scope decisions: no stream buffer (`/stream/` will redirect to the provider URL),
 no WebSocket UI (REST API + server-rendered HTMX pages instead), channel probe kept
@@ -12,7 +12,10 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | M3U parser | done, golden- and differential-tested against Go; skipped entries are reported |
 | Config / settings / system paths | done, golden-tested against Go |
 | Channel probe + stored results | done |
-| Providers, filters, XEPG / XMLTV, HDHR, SSDP, auth, backup | not started |
+| Stream filters | done, golden-tested against Go (70 cases) |
+| Providers (URL / file / HDHomeRun fetch, gzip, local copies, counters) | done, tested against a local HTTP server |
+| Stream database (active / inactive, previews, groups, compatibility) | done, golden-tested against Go (30 cases) |
+| XEPG / XMLTV mapping and output, HDHR emulation, SSDP, auth, backup | not started |
 | REST API + HTMX UI | not started |
 
 ## Tests

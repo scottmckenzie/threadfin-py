@@ -1,0 +1,18 @@
+{
+  "error": false,
+  "all": [],
+  "active": [],
+  "inactive": [],
+  "previewActive": [],
+  "previewInactive": [],
+  "groupsText": [],
+  "groupsValue": [],
+  "compatibility": {
+    "M1": {
+      "group.title": 0,
+      "stream.id": 0,
+      "streams": 0,
+      "tvg.id": 0
+    }
+  }
+}

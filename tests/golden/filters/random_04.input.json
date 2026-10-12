@@ -1,0 +1,305 @@
+{
+ "filters": {
+  "0": {
+   "active": true,
+   "type": "custom-filter",
+   "filter": "sport",
+   "include": "ABC",
+   "exclude": "",
+   "caseSensitive": false,
+   "liveEvent": false,
+   "name": "n",
+   "description": "",
+   "startingNumber": "1",
+   "x-category": ""
+  }
+ },
+ "streams": [
+  {
+   "name": "abc de hd",
+   "group-title": "de",
+   "_values": "de DE abc de hd"
+  },
+  {
+   "name": "de",
+   "group-title": "a b",
+   "_values": "a b de"
+  },
+  {
+   "name": "a b news",
+   "group-title": "abc",
+   "_values": "abc de a b news"
+  },
+  {
+   "name": "ABC 4k Abc",
+   "group-title": "hd",
+   "_values": "hd Abc ABC 4k Abc"
+  },
+  {
+   "name": "z.z Abc ",
+   "group-title": "de",
+   "_values": "de z.z Abc "
+  },
+  {
+   "name": "z.z abc",
+   "group-title": "über",
+   "_values": "über über z.z abc"
+  },
+  {
+   "name": "über a b z.z",
+   "group-title": "über",
+   "_values": "über 4k über a b z.z"
+  },
+  {
+   "name": "hd sport",
+   "group-title": "hd",
+   "_values": "hd abc hd sport"
+  },
+  {
+   "name": "",
+   "group-title": "z.z",
+   "_values": "z.z news"
+  },
+  {
+   "name": "Ünï hd",
+   "group-title": "Ünï",
+   "_values": "Ünï Ünï Ünï hd"
+  },
+  {
+   "name": " hd Ünï",
+   "_values": "4k  hd Ünï"
+  },
+  {
+   "name": "z.z news",
+   "group-title": "hd",
+   "_values": "hd 4k z.z news"
+  },
+  {
+   "name": "DE Ünï Abc",
+   "_values": "DE DE Ünï Abc"
+  },
+  {
+   "name": "x Ünï",
+   "group-title": "hd",
+   "_values": "hd Abc x Ünï"
+  },
+  {
+   "name": "ABC",
+   "group-title": "de",
+   "_values": "de DE ABC"
+  },
+  {
+   "name": "z.z DE",
+   "_values": "news z.z DE"
+  },
+  {
+   "name": "sport DE z.z",
+   "group-title": "ABC",
+   "_values": "ABC news sport DE z.z"
+  },
+  {
+   "name": "news z.z abc",
+   "_values": "4k news z.z abc"
+  },
+  {
+   "name": "Ünï news",
+   "group-title": "de",
+   "_values": "de news Ünï news"
+  },
+  {
+   "name": "de",
+   "group-title": "Abc",
+   "_values": "Abc de de"
+  },
+  {
+   "name": "Abc",
+   "group-title": "a b",
+   "_values": "a b a b Abc"
+  },
+  {
+   "name": "a b x",
+   "group-title": "hd",
+   "_values": "hd z.z a b x"
+  },
+  {
+   "name": "a b",
+   "group-title": "news",
+   "_values": "news 4k a b"
+  },
+  {
+   "name": "de sport news",
+   "group-title": "DE",
+   "_values": "DE a b de sport news"
+  },
+  {
+   "name": "x  DE",
+   "_values": "x  DE"
+  },
+  {
+   "name": "Ünï abc news",
+   "_values": "Ünï abc news"
+  },
+  {
+   "name": "über",
+   "group-title": "abc",
+   "_values": "abc de über"
+  },
+  {
+   "name": "hd",
+   "group-title": "sport",
+   "_values": "sport ABC hd"
+  },
+  {
+   "name": "news 4k",
+   "group-title": "z.z",
+   "_values": "z.z a b news 4k"
+  },
+  {
+   "name": "z.z  ABC",
+   "group-title": "sport",
+   "_values": "sport Ünï z.z  ABC"
+  },
+  {
+   "name": "news",
+   "group-title": "ABC",
+   "_values": "ABC z.z news"
+  },
+  {
+   "name": "x",
+   "_values": "Abc x"
+  },
+  {
+   "name": "sport Abc",
+   "_values": "hd sport Abc"
+  },
+  {
+   "name": "über 4k",
+   "group-title": "sport",
+   "_values": "sport DE über 4k"
+  },
+  {
+   "name": "über",
+   "group-title": "Ünï",
+   "_values": "Ünï abc über"
+  },
+  {
+   "name": "news  DE",
+   "group-title": "DE",
+   "_values": "DE Ünï news  DE"
+  },
+  {
+   "name": "Ünï 4k",
+   "_values": "Ünï 4k"
+  },
+  {
+   "name": "de ",
+   "_values": "news de "
+  },
+  {
+   "name": " Abc über",
+   "group-title": "de",
+   "_values": "de Abc  Abc über"
+  },
+  {
+   "name": "de abc hd",
+   "group-title": "a b",
+   "_values": "a b DE de abc hd"
+  },
+  {
+   "name": "über",
+   "group-title": "x",
+   "_values": "x a b über"
+  },
+  {
+   "name": "de  ABC",
+   "group-title": "Ünï",
+   "_values": "Ünï de  ABC"
+  },
+  {
+   "name": "4k",
+   "group-title": "abc",
+   "_values": "abc a b 4k"
+  },
+  {
+   "name": "DE news",
+   "group-title": "über",
+   "_values": "über ABC DE news"
+  },
+  {
+   "name": "sport",
+   "group-title": "sport",
+   "_values": "sport über sport"
+  },
+  {
+   "name": "4k Ünï",
+   "group-title": "Ünï",
+   "_values": "Ünï ABC 4k Ünï"
+  },
+  {
+   "name": "news",
+   "group-title": "z.z",
+   "_values": "z.z Ünï news"
+  },
+  {
+   "name": "hd",
+   "group-title": "hd",
+   "_values": "hd ABC hd"
+  },
+  {
+   "name": "Ünï",
+   "_values": "x Ünï"
+  },
+  {
+   "name": "ABC de",
+   "group-title": "über",
+   "_values": "über Abc ABC de"
+  },
+  {
+   "name": "news x",
+   "_values": "hd news x"
+  },
+  {
+   "name": "de sport",
+   "group-title": "a b",
+   "_values": "a b Abc de sport"
+  },
+  {
+   "name": "über hd",
+   "group-title": "a b",
+   "_values": "a b über über hd"
+  },
+  {
+   "name": "de",
+   "group-title": "4k",
+   "_values": "4k z.z de"
+  },
+  {
+   "name": "ABC ",
+   "group-title": "DE",
+   "_values": "DE über ABC "
+  },
+  {
+   "name": "z.z news",
+   "_values": "DE z.z news"
+  },
+  {
+   "name": "de über",
+   "group-title": "a b",
+   "_values": "a b Abc de über"
+  },
+  {
+   "name": "x",
+   "group-title": "sport",
+   "_values": "sport 4k x"
+  },
+  {
+   "name": "hd abc z.z",
+   "group-title": "de",
+   "_values": "de 4k hd abc z.z"
+  },
+  {
+   "name": "Abc",
+   "_values": "4k Abc"
+  }
+ ]
+}

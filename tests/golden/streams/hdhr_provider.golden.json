@@ -1,0 +1,79 @@
+{
+  "error": false,
+  "all": [
+    {
+      "ID-H1": "2.1",
+      "_file.m3u.id": "H1",
+      "_file.m3u.name": "Tuner One",
+      "_file.m3u.path": "/tmp/tfgolden4061770538/data/H1.json",
+      "_uuid.key": "ID-H1",
+      "_values": "Tuner One WXYZ",
+      "group-title": "Tuner One",
+      "liveEvent": "false",
+      "name": "WXYZ",
+      "tvg-id": "WXYZ",
+      "url": "http://t/2.1"
+    },
+    {
+      "ID-H1": "3.1",
+      "_file.m3u.id": "H1",
+      "_file.m3u.name": "Tuner One",
+      "_file.m3u.path": "/tmp/tfgolden4061770538/data/H1.json",
+      "_uuid.key": "ID-H1",
+      "_values": "Tuner One ABC",
+      "group-title": "Tuner One",
+      "liveEvent": "false",
+      "name": "ABC",
+      "tvg-id": "ABC",
+      "url": "http://t/3.1"
+    }
+  ],
+  "active": [
+    {
+      "ID-H1": "2.1",
+      "_file.m3u.id": "H1",
+      "_file.m3u.name": "Tuner One",
+      "_file.m3u.path": "/tmp/tfgolden4061770538/data/H1.json",
+      "_uuid.key": "ID-H1",
+      "_values": "Tuner One WXYZ",
+      "group-title": "Tuner One",
+      "liveEvent": "false",
+      "name": "WXYZ",
+      "tvg-id": "WXYZ",
+      "url": "http://t/2.1"
+    },
+    {
+      "ID-H1": "3.1",
+      "_file.m3u.id": "H1",
+      "_file.m3u.name": "Tuner One",
+      "_file.m3u.path": "/tmp/tfgolden4061770538/data/H1.json",
+      "_uuid.key": "ID-H1",
+      "_values": "Tuner One ABC",
+      "group-title": "Tuner One",
+      "liveEvent": "false",
+      "name": "ABC",
+      "tvg-id": "ABC",
+      "url": "http://t/3.1"
+    }
+  ],
+  "inactive": [],
+  "previewActive": [
+    "ABC [Tuner One]",
+    "WXYZ [Tuner One]"
+  ],
+  "previewInactive": [],
+  "groupsText": [
+    "Tuner One (2)"
+  ],
+  "groupsValue": [
+    "Tuner One"
+  ],
+  "compatibility": {
+    "H1": {
+      "group.title": 100,
+      "stream.id": 100,
+      "streams": 2,
+      "tvg.id": 100
+    }
+  }
+}

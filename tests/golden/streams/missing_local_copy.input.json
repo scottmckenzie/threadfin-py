@@ -1,0 +1,13 @@
+{
+ "providers": [
+  {
+   "kind": "m3u",
+   "id": "M1",
+   "name": "M1",
+   "content": "",
+   "missing": true
+  }
+ ],
+ "filters": {},
+ "ignoreFilters": false
+}

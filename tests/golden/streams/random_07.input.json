@@ -1,0 +1,13 @@
+{
+ "filters": {},
+ "ignoreFilters": false,
+ "providers": [
+  {
+   "kind": "m3u",
+   "id": "M0",
+   "name": "M0",
+   "content": "#EXTM3U\n#EXTINF:-1 tvg-id=\"b\" tvg-name=\"x y 0\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"Kids (HD)\",x y 0\nhttp://p/0\n#EXTINF:-1 tvg-id=\"a\" tvg-name=\"x y 1\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"News\",x y 1\nhttp://p/1\n#EXTINF:-1 tvg-id=\"b\" tvg-name=\"BBC 2\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"Movies\",BBC 2\nhttp://p/2\n#EXTINF:-1 tvg-id=\"b\" tvg-name=\"ESPN 3\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"Kids (HD)\",ESPN 3\nhttp://p/3\n#EXTINF:-1 tvg-id=\"a\" tvg-name=\"CNN 4\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"Ünïcode\",CNN 4\nhttp://p/4\n#EXTINF:-1 tvg-id=\"\" tvg-name=\"Arte 5\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"Kids (HD)\",Arte 5\nhttp://p/5\n#EXTINF:-1 tvg-id=\"\" tvg-name=\"Arte 6\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"sports\",Arte 6\nhttp://p/6\n#EXTINF:-1 tvg-id=\"a\" tvg-name=\"CNN 7\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"A b\",CNN 7\nhttp://p/7\n#EXTINF:-1 tvg-id=\"a\" tvg-name=\"CNN 8\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"A b\",CNN 8\nhttp://p/8\n#EXTINF:-1 tvg-id=\"b\" tvg-name=\"Ünï 9\" tvg-chno=\"\" tvg-logo=\"\" group-title=\"A b\",Ünï 9\nhttp://p/9\n",
+   "missing": false
+  }
+ ]
+}

@@ -193,3 +193,29 @@ def _parse_channel(chunk: str) -> Stream | _Skip:
             stream["_uuid.value"] = val
             break
     return stream
+
+
+def _attribute(key: str, value: str) -> str:
+    """``key="value"``, switching quote style when the value itself contains ``"``."""
+    if '"' not in value:
+        return f'{key}="{value}"'
+    if "'" not in value:
+        return f"{key}='{value}'"
+    return f'{key}="{value.replace(chr(34), chr(39))}"'  # both kinds: lossy, but still parseable
+
+
+def serialize_m3u(streams: list[Stream]) -> str:
+    """Write the local playlist copy the Go app keeps for each provider.
+
+    Only ``tvg-id``, ``tvg-name``, ``tvg-chno``, ``tvg-logo``, ``group-title`` and the name
+    survive (as in Go), so custom filters see the same text as before. Unlike Go, values
+    containing ``"`` are written with single quotes instead of producing a broken line.
+    """
+    out = ["#EXTM3U\n"]
+    for s in streams:
+        attributes = " ".join(
+            _attribute(key, s.get(key, ""))
+            for key in ("tvg-id", "tvg-name", "tvg-chno", "tvg-logo", "group-title")
+        )
+        out.append(f"#EXTINF:-1 {attributes},{s.get('name', '')}\n{s.get('url', '')}\n")
+    return "".join(out)

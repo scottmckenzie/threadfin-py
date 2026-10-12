@@ -29,11 +29,8 @@ exactly the entries this parser skips and reports. Fixtures where Go's output is
 wrong are listed in `INTENTIONAL_DIVERGENCES` in `tests/test_m3u_parser.py`, and a test
 checks that each one still really differs.
 
-**For the provider layer (not built yet):** surface `ParseResult.skipped` in the log and UI
-("N entries ignored: no name / no url"). Also, Go re-saves each fetched playlist as a normalised
-local copy, writing `tvg-name="<value>"` and so on. A single-quoted value that contains a
-double quote (`tvg-name='He said "hi"'`) is now parsed correctly but would break that
-re-serialisation, so values must be escaped (or the copy stored as JSON) when that layer is ported.
+Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshResult.skipped` and
+`StreamDatabase.skipped`, and the playlist copy escapes double quotes (see below).
 
 ## Settings (`src/threadfin/settings.py`)
 
@@ -68,3 +65,42 @@ re-serialisation, so values must be escaped (or the copy stored as JSON) when th
 * This sandbox could not reach PyPI, so `pytest`, `ruff`, `mypy` and `fastapi`
   were not installable. Tests use `unittest` (also runs under pytest). Linting
   and type-checking have not been run yet.
+
+## Stream filters (`src/threadfin/filters.py`)
+
+Checked on 70 cases (incl. 40 randomised) against the real Go `createFilterRules` / `filterThisStream`.
+
+| Go behaviour | Status |
+|---|---|
+| The first filter whose rule matches decides (exclude/include lists can only reject, never fall through to a later filter). | kept |
+| `liveEvent` is the flag of the deciding filter, or of the last filter looked at when nothing matched. | kept |
+| `{include}` / `!{exclude}` are cut out of the rule with the regexes `[{]+[^.]+[}]`; text with a `.` inside the braces is not recognised (`UK {a.b}` stays a plain rule that matches nothing); `!!{x}` and `{{x}}` mangle the condition. | kept |
+| Condition lists: `", "` and `" ,"` are collapsed, an empty keyword (trailing comma) matches everything. | kept |
+| Case-insensitive mode lowercases per character (Go `ToLower`), which differs from Python's `str.lower()` for `İ` and for final sigma. | kept (own `go_lower`) |
+| Filters were visited in **random map order**, and as the first match decides, results and `liveEvent` could change between runs. | **fixed**: numeric key order |
+| A `custom-filter` inherited the `liveEvent` flag of whichever filter was compiled before it (a reused variable). | **fixed**: custom filters are never live-event filters |
+| Settings keys are matched case-insensitively and a wrong JSON type (a number for `filter`, a string for `caseSensitive`) aborts the whole build. | kept (as `FilterError`) |
+
+## Providers (`src/threadfin/providers.py`, `streams_db.py`)
+
+Download/refresh logic is tested against a local HTTP server; the stream database against the real
+Go `buildDatabaseDVR` on 30 cases.
+
+| Go behaviour | Status |
+|---|---|
+| Keys added to a new provider record (`name`, `tuner`=1, `file.threadfin`, `counter.*`, `provider.availability`=100 ...) fill only missing keys. | kept |
+| Availability is `int(errors*100/downloads*-1 + 100)` (truncation: 1 error in 3 gives 66). | kept |
+| A failed refresh keeps the old local copy and bumps `counter.error` and `counter.download`; a failed *new* provider is not kept. | kept |
+| The local copy is a normalised playlist holding only `tvg-id`, `tvg-name`, `tvg-chno`, `tvg-logo`, `group-title`, name and URL, so custom filters only see those values. | kept |
+| ...but a value containing `"` produced a broken line in that copy. | **fixed**: written with single quotes (both kinds: inner `"` becomes `'`) |
+| gzip bodies are unpacked; corrupt or truncated gzip falls back to the raw bytes. | kept; **new**: size limit on the unpacked data |
+| `Content-Disposition` without `=` panicked, and `filename="a.m3u"; size=3` became `a.m3u size`. | **fixed**: proper header parsing (also `filename*=`), path parts stripped |
+| A malformed HDHomeRun lineup entry panicked. | **fixed**: skipped and reported |
+| The last provider's error was the only one returned from a refresh-all or database build, so one bad provider's failure depended on random map order. | **fixed**: every provider's outcome is reported (`RefreshResult`, `StreamDatabase.errors`) and the rest still loads |
+| The timeout covered the whole request; no size limit. | kept (total deadline, enforced even for slow trickling bodies); **new**: size limit |
+| `strings.Contains(source, "http://")` decided between URL and file. | **changed**: the scheme must be http/https; local file sources can be switched off (`allow_local_files`) for the API layer |
+| Group labels and values were sorted as two independent lists (a label could end up beside the wrong value, e.g. groups `a` and `a (1)`). | **fixed**: one list of `(name, count)` sorted by name |
+| Providers were visited in random map order. | **changed**: settings order, M3U before HDHR |
+| With no filters and at most 480 streams everything is active; above that everything is inactive plus a warning. Plex warning above 480 active. | kept |
+| Loopback hosts bypass proxies. | kept |
+

@@ -1,0 +1,88 @@
+{
+ "filters": {
+  "0": {
+   "active": true,
+   "type": "custom-filter",
+   "filter": "bbc",
+   "include": "",
+   "exclude": "",
+   "caseSensitive": true,
+   "liveEvent": false,
+   "name": "n",
+   "description": "",
+   "startingNumber": "1",
+   "x-category": ""
+  }
+ },
+ "streams": [
+  {
+   "name": "ESPN HD",
+   "group-title": "Sports",
+   "_values": "Sports ESPN HD"
+  },
+  {
+   "name": "espn 2",
+   "group-title": "sports",
+   "_values": "sports espn 2"
+  },
+  {
+   "name": "BBC One",
+   "group-title": "UK",
+   "_values": "UK BBC One"
+  },
+  {
+   "name": "BBC Two DEU",
+   "group-title": "UK",
+   "_values": "UK BBC Two DEU"
+  },
+  {
+   "name": "Sky Sports DE",
+   "group-title": "Sports DE",
+   "_values": "Sports DE Sky Sports DE"
+  },
+  {
+   "name": "Arte",
+   "group-title": "DEU",
+   "_values": "DEU Arte"
+  },
+  {
+   "name": "CNN",
+   "group-title": "News",
+   "_values": "News CNN"
+  },
+  {
+   "name": "Fox News HD",
+   "group-title": "News",
+   "_values": "News Fox News HD"
+  },
+  {
+   "name": "Ünïcode Kanal",
+   "group-title": "Größe",
+   "_values": "Größe Ünïcode Kanal"
+  },
+  {
+   "name": "İstanbul TV",
+   "group-title": "TR",
+   "_values": "TR İstanbul TV"
+  },
+  {
+   "name": "ΟΔΥΣΣΕΥΣ",
+   "group-title": "GR",
+   "_values": "GR ΟΔΥΣΣΕΥΣ"
+  },
+  {
+   "name": "CR\rLF",
+   "group-title": "Odd",
+   "_values": "Odd CR\rLF"
+  },
+  {
+   "name": "No group",
+   "_values": "No group"
+  },
+  {
+   "name": "Dotted.Name",
+   "group-title": "a.b",
+   "_values": "a.b Dotted.Name"
+  }
+ ]
+}

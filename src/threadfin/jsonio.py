@@ -37,18 +37,22 @@ def load_json_object(path: str | os.PathLike[str]) -> dict[str, Any]:
     return data
 
 
-def write_text_atomic(path: str | os.PathLike[str], text: str) -> None:
-    """Write ``text`` to ``path`` via a temp file in the same directory."""
+def write_bytes_atomic(path: str | os.PathLike[str], data: bytes) -> None:
+    """Write ``data`` to ``path`` via a temp file in the same directory."""
     target = Path(path)
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(text)
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
         os.chmod(tmp_name, 0o644)
         os.replace(tmp_name, target)
     except BaseException:
         Path(tmp_name).unlink(missing_ok=True)
         raise
+
+
+def write_text_atomic(path: str | os.PathLike[str], text: str) -> None:
+    write_bytes_atomic(path, text.encode("utf-8"))
 
 
 def save_json(path: str | os.PathLike[str], data: Any) -> None:
