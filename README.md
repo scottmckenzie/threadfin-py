@@ -21,7 +21,7 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | Build pipeline, `/stream/` redirect, `/m3u/`, `/xmltv/` endpoints | done, tested end to end |
 | HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
 | Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth) | done, golden-tested against Go (14 step-by-step cases); web/API login comes with the UI |
-| Backup, scheduler | not started |
+| Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written; download/upload come with the UI |
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
 | REST API + HTMX UI | not started |
 
@@ -37,15 +37,15 @@ Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the developmen
 
 ## Roadmap
 
-1. Backup / restore (Go: `backup.go`; settings `backup.keep`, `backup.path`).
-2. Scheduler (Go: `maintenance.go`; setting `update` = list of `HHMM` times; `files.update`).
-3. REST API + HTMX UI, including the probe UI (inventory: `webserver.go` WebSocket
+1. REST API + HTMX UI, including the probe UI (inventory: `webserver.go` WebSocket
    commands, `webUI.go`, `html/`), with web login (cookie `Token`), the create-first-user
-   page, API token auth and user management on top of `auth.py`. Add `jinja2` (and `python-multipart` if forms post)
+   page, API token auth and user management on top of `auth.py`, backup download
+   (`create_backup`, Go served it from `/download/`) and restore upload (`Service.restore`). Add `jinja2` (and `python-multipart` if forms post)
    to `pyproject.toml`.
-4. Image cache (Go: `images.go`, `internal/imgcache`): only an identity hook exists so far.
-5. Entry point: no CLI, `__main__` or `[project.scripts]` yet to start the server
-   (uvicorn on `web.create_app`).
+2. Image cache (Go: `images.go`, `internal/imgcache`): only an identity hook exists so far.
+3. Entry point: no CLI, `__main__` or `[project.scripts]` yet to start the server
+   (uvicorn on `web.create_app`), including Go's `-restore <archive>` (confirm, then
+   `backup.restore_backup`).
 
 ## Open questions
 

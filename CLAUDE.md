@@ -23,6 +23,7 @@ dependency. One integration test needs `ffmpeg`/`ffprobe`.
   do anything (e.g. `ssdp`).
 - Providers are http(s) URLs only (no local-file sources).
 - No SSDP discovery.
+- No binary self-update (`ThreadfinAutoUpdate` is kept in the config but ignored).
 - Unnamed channels are skipped and reported; apostrophe and double-quote name bugs are fixed.
 
 ## Method: golden-file parity

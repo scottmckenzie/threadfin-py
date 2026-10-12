@@ -1,0 +1,94 @@
+{
+  "result": "",
+  "err": "",
+  "panic": "",
+  "tree": {
+    "cfg": {
+      "dir": true
+    },
+    "cfg/authentication.json": {
+      "mode": "0600",
+      "content": "{\"users\": {}}"
+    },
+    "cfg/backup": {
+      "dir": true
+    },
+    "cfg/backup/threadfin_auto_backup_{ts}.zip": {
+      "mode": "0644",
+      "zip": [
+        {
+          "name": "authentication.json",
+          "dir": false,
+          "mode": "0600",
+          "method": 8,
+          "content": "{\"users\": {}}"
+        },
+        {
+          "name": "data/images/",
+          "dir": true,
+          "mode": "",
+          "method": 0,
+          "content": ""
+        },
+        {
+          "name": "pms.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"a\": 1}"
+        },
+        {
+          "name": "settings.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"port\": \"34400\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+        },
+        {
+          "name": "urls.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"id\": {}}"
+        },
+        {
+          "name": "xepg.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"x-1\": {}}"
+        }
+      ]
+    },
+    "cfg/data": {
+      "dir": true
+    },
+    "cfg/data/M123.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U"
+    },
+    "cfg/data/images": {
+      "dir": true
+    },
+    "cfg/data/threadfin.xml": {
+      "mode": "0644",
+      "content": "\u003ctv/\u003e"
+    },
+    "cfg/pms.json": {
+      "mode": "0644",
+      "content": "{\"a\": 1}"
+    },
+    "cfg/settings.json": {
+      "mode": "0644",
+      "content": "{\"port\": \"34400\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+    },
+    "cfg/urls.json": {
+      "mode": "0644",
+      "content": "{\"id\": {}}"
+    },
+    "cfg/xepg.json": {
+      "mode": "0644",
+      "content": "{\"x-1\": {}}"
+    }
+  }
+}

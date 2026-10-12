@@ -1,0 +1,31 @@
+{
+ "op": "restore",
+ "files": {
+  "cfg/authentication.json": "{\"users\": {}}",
+  "cfg/pms.json": "{\"a\": 1}",
+  "cfg/settings.json": "{\"port\": \"34400\", \"version\": \"0.5.0\", \"backup.keep\": 10}",
+  "cfg/xepg.json": "{\"x-1\": {}}",
+  "cfg/urls.json": "{\"id\": {}}",
+  "cfg/data/images/logo.png": "PNG",
+  "cfg/data/images/sub/inner.png": "INNER",
+  "cfg/data/threadfin.xml": "<tv/>",
+  "cfg/data/M123.m3u": "#EXTM3U"
+ },
+ "modes": {
+  "cfg/authentication.json": "0600",
+  "cfg/data/images/logo.png": "0640"
+ },
+ "dirs": [],
+ "keep": 10,
+ "path": "{work}/cfg/backup/",
+ "port": "34400",
+ "urlBase": "http://192.168.1.2:34400",
+ "archive": [
+  {
+   "name": "settings.json",
+   "content": "{\"port\": \"8080\", \"version\": \"0.5.0\", \"backup.keep\": 10}",
+   "mode": "",
+   "dir": false
+  }
+ ]
+}

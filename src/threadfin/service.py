@@ -4,23 +4,28 @@
 (``xepg.json``) -> ``threadfin.xml`` (+ ``.gz``) -> stream registry (``urls.json``). The playlist
 is generated per request from the channel database, so the links in it always carry the host the
 client used to reach this server (Go baked one address into ``threadfin.m3u`` at build time).
-``Service.update()`` is the scheduled/manual "download all providers, then build".
+``Service.update()`` is the manual "download all providers, then build"; ``scheduled_update()``
+(Go ``maintenance``) makes an automatic backup first, and ``start()`` (Go ``StartSystem``) runs it
+on start-up when ``files.update`` is on. ``restore()`` unpacks a backup and reloads everything.
 """
 
 from __future__ import annotations
 
 import asyncio
+import os
+import shutil
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 
 from .auth import Authentication
+from .backup import AutoBackupResult, BackupError, RestoreResult, auto_backup, restore_backup
 from .epg import EPGOptions, XMLTVStats, write_xmltv
 from .filters import FilterError
 from .hdhr import Device, PMSIds, lineup_pms, lineup_xepg
 from .playlist import PlaylistOptions, StreamInfo, StreamRegistry, build_playlist
 from .providers import ProviderManager, RefreshResult
-from .settings import Settings, save_settings
+from .settings import Settings, load_settings, save_settings
 from .streams_db import StreamDatabase, build_stream_database
 from .system import SystemInfo
 from .xepg import XEPGChannel, build_xepg, load_xepg, save_xepg
@@ -50,15 +55,36 @@ class Service:
         self.manager = manager or ProviderManager(
             settings, system.folder_data, self.save_settings, app_name=system.app_name
         )
-        self.channels: dict[str, XEPGChannel] = {}
-        self.registry = StreamRegistry(system.file_urls)
-        self.auth = Authentication(system.file_authentication)
         self.stream_db = StreamDatabase()
         self.report = BuildReport()
         self._lock = threading.Lock()
         self.building = False
-        if system.file_xepg.exists():
-            self.channels = load_xepg(str(system.file_xepg))
+        self.updating = False
+        self._load_state()
+
+    def _load_state(self) -> None:
+        """Users, stream registry and channel database from the config folder."""
+        self.auth = Authentication(self.system.file_authentication)
+        self.registry = StreamRegistry(self.system.file_urls)
+        self.channels: dict[str, XEPGChannel] = {}
+        if self.system.file_xepg.exists():
+            self.channels = load_xepg(str(self.system.file_xepg))
+
+    def reload(self) -> None:
+        """Re-read every file from the config folder (after a restore).
+
+        The settings object is updated in place: the provider manager and the web app hold it.
+        """
+        fresh = load_settings(self.system)
+        for name in Settings.model_fields:
+            setattr(self.settings, name, getattr(fresh, name))
+        self.settings.__pydantic_extra__ = dict(fresh.__pydantic_extra__ or {})
+        self._load_state()
+
+    @property
+    def busy(self) -> bool:
+        """A download or build is running (Go ``ScanInProgress``)."""
+        return self.building or self.updating
 
     # --- settings -------------------------------------------------------------
     def save_settings(self) -> None:
@@ -149,15 +175,75 @@ class Service:
 
     async def update(self) -> BuildReport:
         """Download every provider, then rebuild."""
-        results: list[RefreshResult] = []
-        for kind in ("m3u", "hdhr", "xmltv") if self.xepg_mode else ("m3u", "hdhr"):
-            results += await self.manager.refresh(kind)
-        report = await asyncio.to_thread(self.build)
+        self.updating = True
+        try:
+            results: list[RefreshResult] = []
+            for kind in ("m3u", "hdhr", "xmltv") if self.xepg_mode else ("m3u", "hdhr"):
+                results += await self.manager.refresh(kind)
+            report = await asyncio.to_thread(self.build)
+        finally:
+            self.updating = False
         for result in results:
             if not result.ok:
                 report.provider_errors[result.provider_id] = result.error or "download failed"
         self.report = report
         return report
+
+    # --- maintenance --------------------------------------------------------------
+    def auto_backup(self) -> AutoBackupResult:
+        return auto_backup(self.system, self.settings)
+
+    def clear_image_cache(self) -> None:
+        """Go empties the image cache before every scheduled build unless ``cache.images`` is on."""
+        folder = self.system.folder_images_cache
+        if self.settings.cache_images or not folder.is_dir():
+            return
+        for child in folder.iterdir():
+            if child.is_dir() and not child.is_symlink():
+                shutil.rmtree(child, ignore_errors=True)
+            else:
+                child.unlink(missing_ok=True)
+
+    async def scheduled_update(self) -> BuildReport:
+        """Automatic backup, then download and build (Go ``maintenance`` / ``StartSystem(true)``).
+
+        A failed backup is reported as a warning and does not stop the update, as in Go.
+        """
+        backup_warning = ""
+        try:
+            await asyncio.to_thread(self.auto_backup)
+        except OSError as exc:
+            backup_warning = f"backup: {exc}"
+        await asyncio.to_thread(self.clear_image_cache)
+        report = await self.update()
+        if backup_warning:
+            report.warnings.insert(0, backup_warning)
+        return report
+
+    async def start(self) -> BuildReport:
+        """Start-up: update from the providers if ``files.update`` is on and there are any, else
+        build from the local copies."""
+        if self.settings.files_update and (self.manager.records("m3u") or self.manager.records("hdhr")):
+            return await self.scheduled_update()
+        return await asyncio.to_thread(self.build)
+
+    async def restore(self, archive: str | os.PathLike[str]) -> RestoreResult:
+        """Restore a backup, reload everything and update (Go ``ThreadfinRestore``).
+
+        A changed port only takes effect after a restart (``RestoreResult.web_url``).
+        """
+        if self.busy:
+            raise BackupError("an update is running, try again when it has finished")
+
+        def unpack() -> RestoreResult:
+            with self._lock:  # no build while the files change under it
+                result = restore_backup(self.system, archive, self.settings.port)
+                self.reload()
+                return result
+
+        result = await asyncio.to_thread(unpack)
+        await self.scheduled_update()
+        return result
 
     # --- serving ----------------------------------------------------------------
     def playlist(self, base_url: str, groups: list[str] | None = None) -> str:

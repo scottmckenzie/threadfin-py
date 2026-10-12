@@ -164,7 +164,7 @@ Tested end to end with a local provider server and a real uvicorn instance.
 | `threadfin.m3u` was written at build time with one fixed host; requests with a query rebuilt it. | **changed**: the playlist is generated per request with the host the client used (`httpThreadfinDomain` / `forceHttps` domain still win) |
 | `/stream/<id>` passed through the stream buffer. | **changed**: 302 to the provider URL (UDPxy rewrite of `udp://@` kept) |
 | `/m3u/threadfin.m3u?group-title=A,B`, `/xmltv/threadfin.xml`. | kept; `.xml.gz` is also served |
-| A build ran only when started by a schedule/UI; after restart group caps were gone until the next build. | **changed**: a build runs on start-up from the local copies (no download) |
+| A build ran only when started by a schedule/UI; after restart group caps were gone until the next build. | **changed**: start-up always builds, from the local copies unless the start-up update below downloads first |
 | Authentication on `/m3u`, `/xmltv`. | not yet (next layer) |
 
 ## HDHomeRun emulation (`hdhr.py`)
@@ -212,3 +212,33 @@ results, error texts and `authentication.json` after every step.
 | Changing only the password (no username) in the user editor was silently ignored. | kept (the new UI always sends the username) |
 | `authentication.json` written with mode 0600. | kept, written atomically |
 | Web-UI login (cookie `Token`), create-first-user page, API token auth and the configuration-wizard bypass. | not yet: wired up with the REST API + UI; the store functions are ported and tested |
+
+## Backup, restore and scheduler (`backup.py`, `scheduler.py`, `service.py`)
+
+Golden-tested against the real `ThreadfinAutoBackup`, `ThreadfinBackup` and `ThreadfinRestore` on 32
+cases (`tests/golden/backup`), comparing the result, the error and the whole file tree afterwards,
+archives entry by entry (name, permissions, compression, content). 6 cases differ on purpose and 3
+were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
+
+| Go behaviour | Status |
+|---|---|
+| Automatic backup before every scheduled update and the start-up update, into `backup.path`, named `threadfin_auto_backup_YYYYMMDD_HHMM.zip`: the system files plus `data/images/`. | kept |
+| Rotation: every `*.zip` whose name *contains* `threadfin_auto_backup` counts; the oldest by name are deleted so `backup.keep - 1` remain, then one is added; `backup.keep` 0 deletes them all and writes none. | kept (also matches e.g. `my_threadfin_auto_backup.zip`) |
+| Manual backup (UI download), `threadfin_backup_YYYYMMDD_HHMM.zip` in the temp folder: the system files plus the whole `data/` folder. | kept |
+| Archive layout: system files at the top level, folders relative to the config folder with `name/` entries, files deflated, Unix permissions kept (`authentication.json` stays 0600). | kept, archives are compatible both ways; written atomically |
+| A missing system file (e.g. no `pms.json`) silently ended the archive there: everything after it, images included, was left out. | **fixed**: missing files are skipped |
+| `backup.path` without a trailing separator (hand-edited `settings.json`) wrote `<path>threadfin_auto_backup_...zip` *next to* the folder, never rotated, and failed if the folder did not exist. | **fixed**: the path is always a folder, created if missing |
+| A failed backup is shown and the update goes on. | kept (warning in the build report) |
+| Restore checks `settings.json` in the archive: `version` at least `0.1.0`, compared as text. | kept (text comparison too) |
+| Restore with `version` or `port` missing or not a string panicked (with `port` missing, after the files were already replaced). | **fixed**: missing/invalid version is the "at least version" error; a missing port means the default; a `settings.json` this port cannot load is refused |
+| Entries were unpacked with `filepath.Join`, so `../evil.txt` was written outside the config folder (and outside the temp folder during the check). | **fixed**: the archive is refused and nothing is written |
+| Files in folders without their own folder entry failed to unpack (`no such file or directory`). | **fixed**: folders are created |
+| The archive was unpacked into the temp folder first; on error, and when the port was unchanged, that copy was left behind. | **changed**: checked in memory, no temp copy; the archive is validated completely before the first file is written |
+| Folder entries written by Go on Windows (`data\images\`). | **fixed**: `\` is a separator (Go on Linux created files with backslashes in their names) |
+| Permissions come from the archive as created under umask 022; archives without Unix permissions give 0644. | kept |
+| Same port: reload settings, re-init and `StartSystem(true)` (backup, download, build). Different port: files replaced but the running instance kept its old settings (and could save them over the restored ones), and the UI showed the new `/web/` URL. | **changed**: always reloads everything (settings object updated in place, users, stream ids, channel database), then backup + download + build; `RestoreResult.web_url()` gives Go's new-URL text when the port changed (the new port needs a restart). Refused while an update is running |
+| Restore from the command line (`-restore`, asks `yes`/`no`). | not yet: comes with the entry point |
+| Scheduler: once a minute, every `HHMM` in `update` that equals the local time runs backup, download (`m3u`, `hdhr`, plus `xmltv` in XEPG mode), image-cache clean-up (unless `cache.images`), build. Skipped while a scan is in progress. | kept |
+| The loop slept 60 s *after* each check and update, so it drifted and could skip a minute (e.g. `0301` after a long `0300` update); a time listed twice ran twice. | **fixed**: wakes at each minute boundary, at most one run per minute |
+| Daily binary self-update at a random time between 00:10 and 01:58 (`ThreadfinAutoUpdate`). | **dropped** (the setting is kept in `settings.json`) |
+| Start-up: with `files.update` on and at least one **M3U** provider: backup, download, build; otherwise build from the local copies. | **fixed**: HDHomeRun providers count too (an HDHomeRun-only setup was never refreshed on start) |

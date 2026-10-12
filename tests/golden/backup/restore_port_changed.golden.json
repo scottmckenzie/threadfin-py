@@ -1,0 +1,134 @@
+{
+  "result": "http://192.168.1.2:34500/web/",
+  "err": "",
+  "panic": "",
+  "tree": {
+    "cfg": {
+      "dir": true
+    },
+    "cfg/authentication.json": {
+      "mode": "0600",
+      "content": "{\"restored\": true}"
+    },
+    "cfg/data": {
+      "dir": true
+    },
+    "cfg/data/M123.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U"
+    },
+    "cfg/data/M999.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U restored"
+    },
+    "cfg/data/images": {
+      "dir": true
+    },
+    "cfg/data/images/logo.png": {
+      "mode": "0640",
+      "content": "PNG"
+    },
+    "cfg/data/images/new.png": {
+      "mode": "0644",
+      "content": "NEW"
+    },
+    "cfg/data/images/sub": {
+      "dir": true
+    },
+    "cfg/data/images/sub/inner.png": {
+      "mode": "0644",
+      "content": "INNER"
+    },
+    "cfg/data/threadfin.xml": {
+      "mode": "0644",
+      "content": "\u003ctv/\u003e"
+    },
+    "cfg/pms.json": {
+      "mode": "0644",
+      "content": "{\"b\": 2}"
+    },
+    "cfg/settings.json": {
+      "mode": "0644",
+      "content": "{\"port\": \"34500\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+    },
+    "cfg/urls.json": {
+      "mode": "0644",
+      "content": "{}"
+    },
+    "cfg/xepg.json": {
+      "mode": "0644",
+      "content": "{\"x-2\": {}}"
+    },
+    "tmp": {
+      "dir": true
+    },
+    "upload.zip": {
+      "mode": "0644",
+      "zip": [
+        {
+          "name": "authentication.json",
+          "dir": false,
+          "mode": "0600",
+          "method": 8,
+          "content": "{\"restored\": true}"
+        },
+        {
+          "name": "data/",
+          "dir": true,
+          "mode": "",
+          "method": 0,
+          "content": ""
+        },
+        {
+          "name": "data/M999.m3u",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "#EXTM3U restored"
+        },
+        {
+          "name": "data/images/",
+          "dir": true,
+          "mode": "",
+          "method": 0,
+          "content": ""
+        },
+        {
+          "name": "data/images/new.png",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "NEW"
+        },
+        {
+          "name": "pms.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"b\": 2}"
+        },
+        {
+          "name": "settings.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"port\": \"34500\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+        },
+        {
+          "name": "urls.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{}"
+        },
+        {
+          "name": "xepg.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"x-2\": {}}"
+        }
+      ]
+    }
+  }
+}

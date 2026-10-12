@@ -12,12 +12,16 @@ Authentication (see auth.py), each switched on by its setting:
 ``authentication.pms``: ``/lineup.json`` needs HTTP Basic credentials. Refused requests get a 403
 without a ``WWW-Authenticate`` challenge, as in Go.
 
+On start-up the service updates from the providers (``files.update``) or builds from the local
+copies, then the scheduler runs the ``update`` times (see scheduler.py).
+
 The management API/UI is added on top of this app.
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -28,6 +32,7 @@ from starlette.routing import Route
 
 from . import hdhr
 from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError
+from .scheduler import Scheduler
 from .service import Service
 
 
@@ -70,7 +75,7 @@ def basic_auth_ok(request: Request, service: Service, level: str) -> bool:
     return True
 
 
-def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
+def create_app(service: Service, *, build_on_start: bool = True, schedule: bool = True) -> Starlette:
     async def stream(request: Request) -> Response:
         target = service.stream_target(request.path_params["stream_id"])
         if target is None:
@@ -126,8 +131,15 @@ def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
         if build_on_start:
-            await asyncio.to_thread(service.build)  # restores group caps / registry after a restart
-        yield
+            await service.start()  # also restores group caps / registry after a restart
+        task = asyncio.create_task(Scheduler(service).run(), name="scheduler") if schedule else None
+        try:
+            yield
+        finally:
+            if task is not None:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
 
     app = Starlette(
         routes=[

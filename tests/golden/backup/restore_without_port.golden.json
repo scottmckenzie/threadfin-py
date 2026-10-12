@@ -1,0 +1,171 @@
+{
+  "result": "",
+  "err": "",
+  "panic": "interface conversion: interface {} is nil, not string",
+  "tree": {
+    "cfg": {
+      "dir": true
+    },
+    "cfg/authentication.json": {
+      "mode": "0600",
+      "content": "{\"restored\": true}"
+    },
+    "cfg/data": {
+      "dir": true
+    },
+    "cfg/data/M123.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U"
+    },
+    "cfg/data/M999.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U restored"
+    },
+    "cfg/data/images": {
+      "dir": true
+    },
+    "cfg/data/images/logo.png": {
+      "mode": "0640",
+      "content": "PNG"
+    },
+    "cfg/data/images/new.png": {
+      "mode": "0644",
+      "content": "NEW"
+    },
+    "cfg/data/images/sub": {
+      "dir": true
+    },
+    "cfg/data/images/sub/inner.png": {
+      "mode": "0644",
+      "content": "INNER"
+    },
+    "cfg/data/threadfin.xml": {
+      "mode": "0644",
+      "content": "\u003ctv/\u003e"
+    },
+    "cfg/pms.json": {
+      "mode": "0644",
+      "content": "{\"b\": 2}"
+    },
+    "cfg/settings.json": {
+      "mode": "0644",
+      "content": "{\"version\": \"0.5.0\", \"backup.keep\": 10}"
+    },
+    "cfg/urls.json": {
+      "mode": "0644",
+      "content": "{}"
+    },
+    "cfg/xepg.json": {
+      "mode": "0644",
+      "content": "{\"x-2\": {}}"
+    },
+    "tmp": {
+      "dir": true
+    },
+    "tmp/restore": {
+      "dir": true
+    },
+    "tmp/restore/authentication.json": {
+      "mode": "0600",
+      "content": "{\"restored\": true}"
+    },
+    "tmp/restore/data": {
+      "dir": true
+    },
+    "tmp/restore/data/M999.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U restored"
+    },
+    "tmp/restore/data/images": {
+      "dir": true
+    },
+    "tmp/restore/data/images/new.png": {
+      "mode": "0644",
+      "content": "NEW"
+    },
+    "tmp/restore/pms.json": {
+      "mode": "0644",
+      "content": "{\"b\": 2}"
+    },
+    "tmp/restore/settings.json": {
+      "mode": "0644",
+      "content": "{\"version\": \"0.5.0\", \"backup.keep\": 10}"
+    },
+    "tmp/restore/urls.json": {
+      "mode": "0644",
+      "content": "{}"
+    },
+    "tmp/restore/xepg.json": {
+      "mode": "0644",
+      "content": "{\"x-2\": {}}"
+    },
+    "upload.zip": {
+      "mode": "0644",
+      "zip": [
+        {
+          "name": "authentication.json",
+          "dir": false,
+          "mode": "0600",
+          "method": 8,
+          "content": "{\"restored\": true}"
+        },
+        {
+          "name": "data/",
+          "dir": true,
+          "mode": "",
+          "method": 0,
+          "content": ""
+        },
+        {
+          "name": "data/M999.m3u",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "#EXTM3U restored"
+        },
+        {
+          "name": "data/images/",
+          "dir": true,
+          "mode": "",
+          "method": 0,
+          "content": ""
+        },
+        {
+          "name": "data/images/new.png",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "NEW"
+        },
+        {
+          "name": "pms.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"b\": 2}"
+        },
+        {
+          "name": "settings.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"version\": \"0.5.0\", \"backup.keep\": 10}"
+        },
+        {
+          "name": "urls.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{}"
+        },
+        {
+          "name": "xepg.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"x-2\": {}}"
+        }
+      ]
+    }
+  }
+}

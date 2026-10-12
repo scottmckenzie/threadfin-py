@@ -1,0 +1,73 @@
+{
+  "result": "threadfin_backup_{ts}.zip",
+  "err": "",
+  "panic": "",
+  "tree": {
+    "cfg": {
+      "dir": true
+    },
+    "cfg/authentication.json": {
+      "mode": "0644",
+      "content": "{\"users\": {}}"
+    },
+    "cfg/pms.json": {
+      "mode": "0644",
+      "content": "{\"a\": 1}"
+    },
+    "cfg/settings.json": {
+      "mode": "0644",
+      "content": "{\"port\": \"34400\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+    },
+    "cfg/urls.json": {
+      "mode": "0644",
+      "content": "{\"id\": {}}"
+    },
+    "cfg/xepg.json": {
+      "mode": "0644",
+      "content": "{\"x-1\": {}}"
+    },
+    "tmp": {
+      "dir": true
+    },
+    "tmp/threadfin_backup_{ts}.zip": {
+      "mode": "0644",
+      "zip": [
+        {
+          "name": "authentication.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"users\": {}}"
+        },
+        {
+          "name": "pms.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"a\": 1}"
+        },
+        {
+          "name": "settings.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"port\": \"34400\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+        },
+        {
+          "name": "urls.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"id\": {}}"
+        },
+        {
+          "name": "xepg.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"x-1\": {}}"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "result": "http://192.168.1.2:1/web/",
+  "err": "",
+  "panic": "",
+  "tree": {
+    "cfg": {
+      "dir": true
+    },
+    "cfg/authentication.json": {
+      "mode": "0600",
+      "content": "{\"users\": {}}"
+    },
+    "cfg/data": {
+      "dir": true
+    },
+    "cfg/data/M123.m3u": {
+      "mode": "0644",
+      "content": "#EXTM3U"
+    },
+    "cfg/data/images": {
+      "dir": true
+    },
+    "cfg/data/images/logo.png": {
+      "mode": "0640",
+      "content": "PNG"
+    },
+    "cfg/data/images/sub": {
+      "dir": true
+    },
+    "cfg/data/images/sub/inner.png": {
+      "mode": "0644",
+      "content": "INNER"
+    },
+    "cfg/data/run.sh": {
+      "mode": "0755",
+      "content": "#!/bin/sh"
+    },
+    "cfg/data/threadfin.xml": {
+      "mode": "0644",
+      "content": "\u003ctv/\u003e"
+    },
+    "cfg/pms.json": {
+      "mode": "0644",
+      "content": "{\"a\": 1}"
+    },
+    "cfg/settings.json": {
+      "mode": "0644",
+      "content": "{\"port\": \"1\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+    },
+    "cfg/urls.json": {
+      "mode": "0644",
+      "content": "{\"id\": {}}"
+    },
+    "cfg/xepg.json": {
+      "mode": "0644",
+      "content": "{\"x-1\": {}}"
+    },
+    "tmp": {
+      "dir": true
+    },
+    "upload.zip": {
+      "mode": "0644",
+      "zip": [
+        {
+          "name": "data/",
+          "dir": true,
+          "mode": "",
+          "method": 0,
+          "content": ""
+        },
+        {
+          "name": "data/run.sh",
+          "dir": false,
+          "mode": "0755",
+          "method": 8,
+          "content": "#!/bin/sh"
+        },
+        {
+          "name": "settings.json",
+          "dir": false,
+          "mode": "0644",
+          "method": 8,
+          "content": "{\"port\": \"1\", \"version\": \"0.5.0\", \"backup.keep\": 10}"
+        }
+      ]
+    }
+  }
+}
