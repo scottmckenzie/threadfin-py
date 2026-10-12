@@ -1,0 +1,13 @@
+{
+ "settings": {
+  "epgSource": "PMS",
+  "tuner": 1,
+  "uuid": "2020-abc"
+ },
+ "name": "Threadfin",
+ "version": "1.2.3",
+ "domain": "localhost:34400",
+ "scanInProgress": 0,
+ "xepg": {},
+ "streams": []
+}

@@ -166,3 +166,24 @@ Tested end to end with a local provider server and a real uvicorn instance.
 | `/m3u/threadfin.m3u?group-title=A,B`, `/xmltv/threadfin.xml`. | kept; `.xml.gz` is also served |
 | A build ran only when started by a schedule/UI; after restart group caps were gone until the next build. | **changed**: a build runs on start-up from the local copies (no download) |
 | Authentication on `/m3u`, `/xmltv`. | not yet (next layer) |
+
+## HDHomeRun emulation (`hdhr.py`)
+
+`/discover.json`, `/lineup_status.json`, `/lineup.json`, `/device.xml` (also `/capability` and `/`).
+Golden-tested against the real Go functions on 29 cases (discover, status, lineup, device XML,
+`pms.json` and the stream registry).
+
+| Go behaviour | Status |
+|---|---|
+| `DeviceID` is the settings UUID, with `:<tuner count>` appended when there is more than one tuner. | kept |
+| `epgSource` `XEPG`: lineup = active, visible channels, numbered by `x-channelID`. `PMS`: lineup = all active streams, numbered by the provider's own number (`_uuid.value`) or a stable `id-N` per channel name in `pms.json` (lowest unused N). | kept |
+| In `PMS` mode no guide or playlist is built and XMLTV providers are not downloaded. | kept |
+| The XEPG lineup came out in random order (Go map iteration), so DVR software saw a shuffled channel list. | **fixed**: sorted by channel number |
+| An empty XEPG lineup was the JSON `null`. | **fixed**: `[]` |
+| Without `pms.json` every channel got an empty guide number. | **fixed**: starts empty and numbers are assigned |
+| `Manufacturer` is `"Golang"`, `ModelName` `HDTC-2US`, device XML starts with a one-space-indented `<root>`. | kept (byte-identical) |
+| Every URL in the lineup was `/stream/<id>` of the registry; the registry was rebuilt only by a build. | kept; in `PMS` mode the build also registers the active streams so lineup links survive a rebuild |
+| The domain in the answers came from the request (`Host`), or the configured public domain. | kept |
+| `ScanInProgress` mirrored the build lock. | kept |
+| `authentication.pms` protects `/lineup.json`. | not yet (auth layer) |
+| Unknown paths returned the device XML. | **changed**: 404 (only `/` is the device XML) |

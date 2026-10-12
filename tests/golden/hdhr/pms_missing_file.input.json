@@ -1,0 +1,43 @@
+{
+ "settings": {
+  "epgSource": "PMS",
+  "tuner": 1,
+  "uuid": "2020-abc"
+ },
+ "name": "Threadfin",
+ "version": "1.2.3",
+ "domain": "localhost:34400",
+ "scanInProgress": 0,
+ "xepg": {},
+ "streams": [
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M1.m3u",
+   "group-title": "G",
+   "name": "Stream 1",
+   "tvg-id": "id.1",
+   "tvg-logo": "",
+   "tvg-name": "Stream 1",
+   "tvg-chno": "",
+   "url": "http://s/1",
+   "_uuid.key": "",
+   "_values": "Stream 1"
+  },
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M1.m3u",
+   "group-title": "G",
+   "name": "Stream 2",
+   "tvg-id": "id.2",
+   "tvg-logo": "",
+   "tvg-name": "Stream 2",
+   "tvg-chno": "",
+   "url": "http://s/2",
+   "_uuid.key": "",
+   "_values": "Stream 2"
+  }
+ ],
+ "noPmsFile": true
+}

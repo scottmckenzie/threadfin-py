@@ -1,0 +1,22 @@
+{
+  "discover": "{\n  \"BaseURL\": \"http://localhost:34400\",\n  \"DeviceAuth\": \"threadfin\",\n  \"DeviceID\": \"2020-abc\",\n  \"FirmwareName\": \"bin_1.2.3\",\n  \"FirmwareVersion\": \"1.2.3\",\n  \"FriendlyName\": \"Threadfin\",\n  \"LineupURL\": \"http://localhost:34400/lineup.json\",\n  \"Manufacturer\": \"Golang\",\n  \"ModelNumber\": \"1.2.3\",\n  \"TunerCount\": 1\n}",
+  "lineupStatus": "{\n  \"ScanInProgress\": 0,\n  \"ScanPossible\": 0,\n  \"Source\": \"Cable\",\n  \"SourceList\": [\n    \"Cable\"\n  ]\n}",
+  "lineup": "[\n  {\n    \"GuideName\": \"Stream 1\",\n    \"GuideNumber\": \"id-0\",\n    \"URL\": \"http://localhost:34400/stream/5ddf37750ddcd093cb0bf861ff2b03c5\"\n  },\n  {\n    \"GuideName\": \"Stream 2\",\n    \"GuideNumber\": \"id-1\",\n    \"URL\": \"http://localhost:34400/stream/5ddf37750ddcd093cb0bf861ff2b03c5\"\n  }\n]",
+  "capability": "\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n \u003croot xmlns=\"urn:schemas-upnp-org:device-1-0\"\u003e\n   \u003cURLBase\u003ehttp://localhost:34400\u003c/URLBase\u003e\n   \u003cspecVersion\u003e\n     \u003cmajor\u003e1\u003c/major\u003e\n     \u003cminor\u003e0\u003c/minor\u003e\n   \u003c/specVersion\u003e\n   \u003cdevice\u003e\n     \u003cdeviceType\u003eurn:schemas-upnp-org:device:MediaServer:1\u003c/deviceType\u003e\n     \u003cfriendlyName\u003eThreadfin\u003c/friendlyName\u003e\n     \u003cmanufacturer\u003eSilicondust\u003c/manufacturer\u003e\n     \u003cmodelName\u003eHDTC-2US\u003c/modelName\u003e\n     \u003cmodelNumber\u003eHDTC-2US\u003c/modelNumber\u003e\n     \u003cserialNumber\u003e\u003c/serialNumber\u003e\n     \u003cUDN\u003euuid:2020-abc\u003c/UDN\u003e\n   \u003c/device\u003e\n \u003c/root\u003e",
+  "pms": {
+    "Stream 1": "id-0",
+    "Stream 2": "id-1"
+  },
+  "registry": {
+    "5ddf37750ddcd093cb0bf861ff2b03c5": {
+      "channelNumber": "id-0",
+      "name": "Stream 1",
+      "playlistID": "M1",
+      "url": "http://x",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "5ddf37750ddcd093cb0bf861ff2b03c5"
+    }
+  }
+}

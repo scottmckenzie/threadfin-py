@@ -19,7 +19,8 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | XMLTV guide output (provider, dummy and live-event guides) | done, golden-tested against Go (50 cases) |
 | M3U playlist output + stream id registry | done, golden-tested against Go (39 cases) |
 | Build pipeline, `/stream/` redirect, `/m3u/`, `/xmltv/` endpoints | done, tested end to end |
-| HDHR emulation, SSDP, auth, backup, scheduler | not started |
+| HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
+| SSDP, auth, backup, scheduler | not started |
 | REST API + HTMX UI | not started |
 
 ## Tests

@@ -1,0 +1,29 @@
+{
+ "settings": {
+  "epgSource": "PMS",
+  "tuner": 1,
+  "uuid": "2020-abc"
+ },
+ "name": "Threadfin",
+ "version": "1.2.3",
+ "domain": "localhost:34400",
+ "scanInProgress": 0,
+ "xepg": {},
+ "streams": [
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M2.m3u",
+   "group-title": "G",
+   "name": "N8",
+   "tvg-id": "id.1",
+   "tvg-logo": "",
+   "tvg-name": "N8",
+   "tvg-chno": "",
+   "url": "http://s/5",
+   "_uuid.key": "ID-M2",
+   "_values": "N8",
+   "_uuid.value": "u1"
+  }
+ ]
+}

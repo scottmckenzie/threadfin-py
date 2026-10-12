@@ -1,0 +1,79 @@
+{
+  "discover": "{\n  \"BaseURL\": \"http://localhost:34400\",\n  \"DeviceAuth\": \"threadfin\",\n  \"DeviceID\": \"2020-abc:2\",\n  \"FirmwareName\": \"bin_1.2.3\",\n  \"FirmwareVersion\": \"1.2.3\",\n  \"FriendlyName\": \"Threadfin\",\n  \"LineupURL\": \"http://localhost:34400/lineup.json\",\n  \"Manufacturer\": \"Golang\",\n  \"ModelNumber\": \"1.2.3\",\n  \"TunerCount\": 2\n}",
+  "lineupStatus": "{\n  \"ScanInProgress\": 0,\n  \"ScanPossible\": 0,\n  \"Source\": \"Cable\",\n  \"SourceList\": [\n    \"Cable\"\n  ]\n}",
+  "lineup": "[\n  {\n    \"GuideName\": \"Chan 2\",\n    \"GuideNumber\": \"2\",\n    \"URL\": \"http://localhost:34400/stream/d16d9a86dbce553c83ba5c80b82da7ee\"\n  },\n  {\n    \"GuideName\": \"Chan 4\",\n    \"GuideNumber\": \"4\",\n    \"URL\": \"http://localhost:34400/stream/0a96d0d0a1ea99052ff52766dc31a5d2\"\n  },\n  {\n    \"GuideName\": \"Chan 6\",\n    \"GuideNumber\": \"6\",\n    \"URL\": \"http://localhost:34400/stream/9fa282d80ffd7b6f6ab0fa8997449082\"\n  },\n  {\n    \"GuideName\": \"Chan 7\",\n    \"GuideNumber\": \"7\",\n    \"URL\": \"http://localhost:34400/stream/4b16c20d11a360a129527b4381e1e00f\"\n  },\n  {\n    \"GuideName\": \"Chan 8\",\n    \"GuideNumber\": \"8\",\n    \"URL\": \"http://localhost:34400/stream/22416b5901cb78abd6d2150a261709f1\"\n  },\n  {\n    \"GuideName\": \"Chan 3\",\n    \"GuideNumber\": \"3\",\n    \"URL\": \"http://localhost:34400/stream/61fa5f70e69243c7f8b877a052ebcb6a\"\n  },\n  {\n    \"GuideName\": \"Chan 5\",\n    \"GuideNumber\": \"5\",\n    \"URL\": \"http://localhost:34400/stream/d16d9a86dbce553c83ba5c80b82da7ee\"\n  },\n  {\n    \"GuideName\": \"Chan 10\",\n    \"GuideNumber\": \"10\",\n    \"URL\": \"http://localhost:34400/stream/660838e2d0f2dcea73952d71ff485651\"\n  }\n]",
+  "capability": "\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n \u003croot xmlns=\"urn:schemas-upnp-org:device-1-0\"\u003e\n   \u003cURLBase\u003ehttp://localhost:34400\u003c/URLBase\u003e\n   \u003cspecVersion\u003e\n     \u003cmajor\u003e1\u003c/major\u003e\n     \u003cminor\u003e0\u003c/minor\u003e\n   \u003c/specVersion\u003e\n   \u003cdevice\u003e\n     \u003cdeviceType\u003eurn:schemas-upnp-org:device:MediaServer:1\u003c/deviceType\u003e\n     \u003cfriendlyName\u003eThreadfin\u003c/friendlyName\u003e\n     \u003cmanufacturer\u003eSilicondust\u003c/manufacturer\u003e\n     \u003cmodelName\u003eHDTC-2US\u003c/modelName\u003e\n     \u003cmodelNumber\u003eHDTC-2US\u003c/modelNumber\u003e\n     \u003cserialNumber\u003e\u003c/serialNumber\u003e\n     \u003cUDN\u003euuid:2020-abc:2\u003c/UDN\u003e\n   \u003c/device\u003e\n \u003c/root\u003e",
+  "pms": {},
+  "registry": {
+    "0a96d0d0a1ea99052ff52766dc31a5d2": {
+      "channelNumber": "4",
+      "name": "Chan 4",
+      "playlistID": "M1",
+      "url": "http://p/4",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "0a96d0d0a1ea99052ff52766dc31a5d2"
+    },
+    "22416b5901cb78abd6d2150a261709f1": {
+      "channelNumber": "8",
+      "name": "Chan 8",
+      "playlistID": "M2",
+      "url": "http://p/7",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "22416b5901cb78abd6d2150a261709f1"
+    },
+    "4b16c20d11a360a129527b4381e1e00f": {
+      "channelNumber": "7",
+      "name": "Chan 7",
+      "playlistID": "M2",
+      "url": "http://p/6",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "4b16c20d11a360a129527b4381e1e00f"
+    },
+    "61fa5f70e69243c7f8b877a052ebcb6a": {
+      "channelNumber": "3",
+      "name": "Chan 3",
+      "playlistID": "M2",
+      "url": "http://p/1",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "61fa5f70e69243c7f8b877a052ebcb6a"
+    },
+    "660838e2d0f2dcea73952d71ff485651": {
+      "channelNumber": "10",
+      "name": "Chan 10",
+      "playlistID": "M1",
+      "url": "http://p/6",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "660838e2d0f2dcea73952d71ff485651"
+    },
+    "9fa282d80ffd7b6f6ab0fa8997449082": {
+      "channelNumber": "6",
+      "name": "Chan 6",
+      "playlistID": "M1",
+      "url": "http://p/3",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "9fa282d80ffd7b6f6ab0fa8997449082"
+    },
+    "d16d9a86dbce553c83ba5c80b82da7ee": {
+      "channelNumber": "2",
+      "name": "Chan 2",
+      "playlistID": "M2",
+      "url": "http://p/8",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "d16d9a86dbce553c83ba5c80b82da7ee"
+    }
+  }
+}

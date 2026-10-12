@@ -16,6 +16,7 @@ from datetime import datetime
 
 from .epg import EPGOptions, XMLTVStats, write_xmltv
 from .filters import FilterError
+from .hdhr import Device, PMSIds, lineup_pms, lineup_xepg
 from .playlist import PlaylistOptions, StreamInfo, StreamRegistry, build_playlist
 from .providers import ProviderManager, RefreshResult
 from .settings import Settings, save_settings
@@ -53,6 +54,7 @@ class Service:
         self.stream_db = StreamDatabase()
         self.report = BuildReport()
         self._lock = threading.Lock()
+        self.building = False
         if system.file_xepg.exists():
             self.channels = load_xepg(str(system.file_xepg))
 
@@ -69,12 +71,21 @@ class Service:
         """Rebuild channel database, guide and stream registry from the provider copies on disk."""
         with self._lock:  # one build at a time; the web side only reads finished state
             report = BuildReport()
+            self.building = True
             try:
                 self._build(report, (now or datetime.now().astimezone()))
             except FilterError as exc:
                 report.ok, report.error = False, f"filter: {exc}"
+            finally:
+                self.building = False
             self.report = report
             return report
+
+    @property
+    def xepg_mode(self) -> bool:
+        """``epgSource`` XEPG builds guide + playlist; PMS only serves the lineup."""
+        return self.settings.epg_source == "XEPG"
+
 
     def _build(self, report: BuildReport, now: datetime) -> None:
         settings, system = self.settings, self.system
@@ -83,6 +94,10 @@ class Service:
         report.warnings += db.warnings
         report.provider_errors = dict(db.errors)
         report.streams = len(db.all)
+
+        if not self.xepg_mode:
+            self._register_streams(db)
+            return
 
         files = [(path.name, path) for path in self.manager.local_files("xmltv") if path.exists()]
         mapping, errors = build_mapping(files)
@@ -117,16 +132,23 @@ class Service:
         report.xmltv_errors.update(stats.errors)
         report.programmes, report.channels = stats.programmes, stats.channels
 
-        # the registry starts empty on every build: ids of vanished channels stop resolving
+        self._register_streams(db)
+
+    def _register_streams(self, db: StreamDatabase) -> None:
+        """The registry starts empty on every build: ids of vanished channels stop resolving."""
         fresh = StreamRegistry()
-        build_playlist(self.channels, PlaylistOptions(group_labels=tuple(g.label for g in db.groups)), fresh)
+        if self.xepg_mode:
+            build_playlist(self.channels, PlaylistOptions(group_labels=tuple(g.label for g in db.groups)), fresh)
+            lineup_xepg(self.channels, fresh, "")
+        else:
+            lineup_pms(db.active, PMSIds(self.system.file_pms), fresh, "")
         self.registry.replace_with(fresh)
         self.registry.save()
 
     async def update(self) -> BuildReport:
         """Download every provider, then rebuild."""
         results: list[RefreshResult] = []
-        for kind in ("m3u", "hdhr", "xmltv"):
+        for kind in ("m3u", "hdhr", "xmltv") if self.xepg_mode else ("m3u", "hdhr"):
             results += await self.manager.refresh(kind)
         report = await asyncio.to_thread(self.build)
         for result in results:
@@ -141,6 +163,20 @@ class Service:
             base_url=base_url, group_labels=tuple(g.label for g in self.stream_db.groups)
         )
         return build_playlist(self.channels, options, StreamRegistry(), groups or ())
+
+    def device(self, base_url: str) -> Device:
+        return Device(
+            self.system.name, self.system.app_name, self.system.version,
+            self.settings.uuid, self.settings.tuner, base_url,
+        )  # fmt: skip
+
+    def lineup(self, base_url: str) -> list[dict[str, str]]:
+        if self.xepg_mode:
+            entries = lineup_xepg(self.channels, self.registry, base_url)
+        else:
+            entries = lineup_pms(self.stream_db.active, PMSIds(self.system.file_pms), self.registry, base_url)
+        self.registry.save()
+        return entries
 
     def stream_target(self, stream_id: str) -> str | None:
         """Where ``/stream/<id>`` redirects to (None if unknown)."""

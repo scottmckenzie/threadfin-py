@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import gzip
 import http.client
+import json
 import socket
 import tempfile
 import threading
@@ -54,7 +55,9 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
-class EndToEnd(unittest.IsolatedAsyncioTestCase):
+class Base(unittest.IsolatedAsyncioTestCase):
+    SOURCE = "XEPG"
+
     async def asyncSetUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.provider = ThreadingHTTPServer(("127.0.0.1", 0), Provider)
@@ -65,6 +68,7 @@ class EndToEnd(unittest.IsolatedAsyncioTestCase):
         system.create_folders()
         system.create_files()
         self.settings = load_settings(system)
+        self.settings.epg_source = self.SOURCE
         self.service = Service(system, self.settings)
         await self.service.manager.add("m3u", {"file.source": f"{self.src}/p.m3u", "name": "P"})
         await self.service.manager.add("xmltv", {"file.source": f"{self.src}/g.xml"})
@@ -95,6 +99,38 @@ class EndToEnd(unittest.IsolatedAsyncioTestCase):
             return response.status, dict(response.getheaders()), response.read()
         finally:
             conn.close()
+
+
+class EndToEnd(Base):
+    async def test_hdhr_endpoints(self) -> None:
+        base = f"http://127.0.0.1:{self.port}"
+        status, headers, body = await asyncio.to_thread(self.get, "/discover.json")
+        info = json.loads(body)
+        self.assertEqual((status, info["BaseURL"], info["LineupURL"]), (200, base, base + "/lineup.json"))
+        self.assertEqual(info["DeviceID"], self.settings.uuid)
+        _, _, body = await asyncio.to_thread(self.get, "/lineup_status.json")
+        self.assertEqual(json.loads(body)["ScanInProgress"], 0)
+        _, _, body = await asyncio.to_thread(self.get, "/lineup.json")
+        lineup = json.loads(body)
+        self.assertEqual([(e["GuideNumber"], e["GuideName"]) for e in lineup], [("1000", "Alpha"), ("1001", "Beta")])
+        status, headers, _ = await asyncio.to_thread(self.get, lineup[0]["URL"].removeprefix(base))
+        self.assertEqual((status, headers["location"]), (302, "http://s/1"))
+        for path in ("/device.xml", "/capability", "/"):
+            _, headers, body = await asyncio.to_thread(self.get, path)
+            self.assertIn("application/xml", headers["content-type"])
+            self.assertIn(f"<UDN>uuid:{self.settings.uuid}</UDN>", body.decode())
+
+    async def test_scan_in_progress_while_building(self) -> None:
+        self.service.building = True
+        _, _, body = await asyncio.to_thread(self.get, "/lineup_status.json")
+        self.assertEqual(json.loads(body)["ScanInProgress"], 1)
+        self.service.building = False
+
+    async def test_lineup_follows_tuner_setting(self) -> None:
+        self.settings.tuner = 3
+        _, _, body = await asyncio.to_thread(self.get, "/discover.json")
+        info = json.loads(body)
+        self.assertEqual((info["TunerCount"], info["DeviceID"]), (3, self.settings.uuid + ":3"))
 
     async def test_build_report(self) -> None:
         self.assertTrue(self.report.ok, self.report)
@@ -166,6 +202,46 @@ class EndToEnd(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.service.stream_target(uid), "http://10.0.0.1:4022/udp/239.0.0.1:1234/")
         self.service.registry.entries[uid].url = "udp://239.0.0.1:1234"  # no '@': not multicast syntax
         self.assertEqual(self.service.stream_target(uid), "udp://239.0.0.1:1234")
+
+
+class PMSMode(Base):
+    SOURCE = "PMS"
+
+    async def test_no_guide_or_playlist_work(self) -> None:
+        self.assertTrue(self.report.ok, self.report)
+        self.assertFalse(self.service.xmltv_path.exists())
+        self.assertEqual(self.service.channels, {})
+        self.assertEqual(self.report.streams, 3)
+
+    async def test_lineup_uses_provider_streams(self) -> None:
+        _, _, body = await asyncio.to_thread(self.get, "/lineup.json")
+        lineup = json.loads(body)
+        self.assertEqual([e["GuideName"] for e in lineup], ["Alpha", "Beta", "Gamma \"Q\""])
+        self.assertEqual([e["GuideNumber"] for e in lineup], ["Alpha", "Beta", "Gamma"])  # tvg-name is the provider's own number
+        _, _, again = await asyncio.to_thread(self.get, "/lineup.json")
+        self.assertEqual(json.loads(again), lineup)
+        base = f"http://127.0.0.1:{self.port}"
+        status, headers, _ = await asyncio.to_thread(self.get, lineup[2]["URL"].removeprefix(base))
+        self.assertEqual((status, headers["location"]), (302, "http://s/3"))
+
+    async def test_update_skips_guide_downloads(self) -> None:
+        kinds: list[str] = []
+        real = self.service.manager.refresh
+
+        async def spy(kind: str, provider_id: str | None = None):
+            kinds.append(kind)
+            return await real(kind, provider_id)
+
+        self.service.manager.refresh = spy  # type: ignore[method-assign]
+        await self.service.update()
+        self.assertEqual(kinds, ["m3u", "hdhr"])
+
+    async def test_links_survive_a_rebuild(self) -> None:
+        _, _, body = await asyncio.to_thread(self.get, "/lineup.json")
+        link = json.loads(body)[0]["URL"].removeprefix(f"http://127.0.0.1:{self.port}")
+        await asyncio.to_thread(self.service.build)
+        status, _, _ = await asyncio.to_thread(self.get, link)
+        self.assertEqual(status, 302)
 
 
 if __name__ == "__main__":

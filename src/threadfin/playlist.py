@@ -89,13 +89,25 @@ class StreamRegistry:
 
     def register(self, channel: XEPGChannel, *, keep: bool = False) -> str:
         """Record the channel's stream; ``keep`` leaves an existing entry untouched."""
-        uid = stream_id(channel.file_m3u_id, channel.url)
+        return self.add(
+            channel.file_m3u_id, channel.x_channel_id, channel.x_name, channel.url,
+            (channel.backup_channel_1, channel.backup_channel_2, channel.backup_channel_3), keep=keep,
+        )  # fmt: skip
+
+    def add(
+        self,
+        playlist_id: str,
+        number: str,
+        name: str,
+        url: str,
+        backups: tuple[BackupStream | None, BackupStream | None, BackupStream | None] = (None, None, None),
+        *,
+        keep: bool = False,
+    ) -> str:
+        uid = stream_id(playlist_id, url)
         if keep and uid in self.entries:
             return uid
-        self.entries[uid] = StreamInfo(
-            channel.x_channel_id, channel.x_name, channel.file_m3u_id, channel.url,
-            channel.backup_channel_1, channel.backup_channel_2, channel.backup_channel_3, uid,
-        )
+        self.entries[uid] = StreamInfo(number, name, playlist_id, url, *backups, uid)
         return uid
 
     def lookup(self, uid: str) -> StreamInfo | None:
@@ -145,7 +157,7 @@ def _value(text: str) -> str:
     return text.replace('"', "'").replace("\r", " ").replace("\n", " ")
 
 
-def _order(channel: XEPGChannel) -> tuple[int, float, str, str]:
+def channel_order(channel: XEPGChannel) -> tuple[int, float, str, str]:
     number = parse_float(channel.tvg_chno)
     if number is not None:
         return (0, number, "", channel.x_epg)
@@ -172,7 +184,7 @@ def build_playlist(
         if not item.tvg_name:
             item.tvg_name = item.name
         entries.append(item)
-    entries.sort(key=_order)
+    entries.sort(key=channel_order)
 
     xmltv = options.xmltv_url or f"{options.base_url}/xmltv/threadfin.xml"
     out = [f'#EXTM3U url-tvg="{xmltv}" x-tvg-url="{xmltv}"\n']

@@ -4,7 +4,10 @@
 ``/m3u/threadfin.m3u``  playlist, optional ``?group-title=A,B``
 ``/xmltv/threadfin.xml`` the guide (``.gz`` served pre-compressed)
 
-Authentication, HDHomeRun emulation and the management API/UI are added on top of this app.
+``/discover.json``, ``/lineup_status.json``, ``/lineup.json``, ``/device.xml``, ``/capability``, ``/``
+                        HDHomeRun emulation (see hdhr.py)
+
+Authentication and the management API/UI are added on top of this app.
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.routing import Route
 
+from . import hdhr
 from .service import Service
 
 
@@ -63,6 +67,22 @@ def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
             return PlainTextResponse("404 page not found\n", status_code=404)
         return FileResponse(path, media_type="application/gzip")
 
+    def device(request: Request) -> hdhr.Device:
+        return service.device(base_url(request, service))
+
+    async def discover(request: Request) -> Response:
+        return Response(hdhr.to_json(hdhr.discover(device(request))), media_type="application/json")
+
+    async def lineup_status(request: Request) -> Response:
+        return Response(hdhr.to_json(hdhr.lineup_status(service.building)), media_type="application/json")
+
+    async def lineup(request: Request) -> Response:
+        entries = await asyncio.to_thread(service.lineup, base_url(request, service))
+        return Response(hdhr.to_json(entries), media_type="application/json")
+
+    async def capability(request: Request) -> Response:
+        return Response(hdhr.capability_xml(device(request)), media_type="application/xml")
+
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
         if build_on_start:
@@ -75,6 +95,12 @@ def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
             Route("/m3u/threadfin.m3u", m3u, methods=["GET", "HEAD"]),
             Route("/xmltv/threadfin.xml", xmltv, methods=["GET", "HEAD"]),
             Route("/xmltv/threadfin.xml.gz", xmltv_gz, methods=["GET", "HEAD"]),
+            Route("/discover.json", discover, methods=["GET", "HEAD"]),
+            Route("/lineup_status.json", lineup_status, methods=["GET", "HEAD"]),
+            Route("/lineup.json", lineup, methods=["GET", "HEAD"]),
+            Route("/device.xml", capability, methods=["GET", "HEAD"]),
+            Route("/capability", capability, methods=["GET", "HEAD"]),
+            Route("/", capability, methods=["GET", "HEAD"]),
         ],
         lifespan=lifespan,
     )

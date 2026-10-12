@@ -1,0 +1,59 @@
+{
+  "discover": "{\n  \"BaseURL\": \"http://localhost:34400\",\n  \"DeviceAuth\": \"threadfin\",\n  \"DeviceID\": \"2020-abc:2\",\n  \"FirmwareName\": \"bin_1.2.3\",\n  \"FirmwareVersion\": \"1.2.3\",\n  \"FriendlyName\": \"Threadfin\",\n  \"LineupURL\": \"http://localhost:34400/lineup.json\",\n  \"Manufacturer\": \"Golang\",\n  \"ModelNumber\": \"1.2.3\",\n  \"TunerCount\": 2\n}",
+  "lineupStatus": "{\n  \"ScanInProgress\": 0,\n  \"ScanPossible\": 0,\n  \"Source\": \"Cable\",\n  \"SourceList\": [\n    \"Cable\"\n  ]\n}",
+  "lineup": "[\n  {\n    \"GuideName\": \"Chan 1\",\n    \"GuideNumber\": \"1\",\n    \"URL\": \"http://localhost:34400/stream/901577c2ec3d2b82465e08454d852ba4\"\n  },\n  {\n    \"GuideName\": \"Chan 5\",\n    \"GuideNumber\": \"5\",\n    \"URL\": \"http://localhost:34400/stream/731a6b4f59434773073c05ef538606d8\"\n  },\n  {\n    \"GuideName\": \"Chan 11\",\n    \"GuideNumber\": \"11\",\n    \"URL\": \"http://localhost:34400/stream/2b570df8df26ab84b84ec22e9160427a\"\n  },\n  {\n    \"GuideName\": \"Chan 2\",\n    \"GuideNumber\": \"2\",\n    \"URL\": \"http://localhost:34400/stream/725e87b2130b1e5fba122f29852b0305\"\n  },\n  {\n    \"GuideName\": \"Chan 6\",\n    \"GuideNumber\": \"6\",\n    \"URL\": \"http://localhost:34400/stream/725e87b2130b1e5fba122f29852b0305\"\n  },\n  {\n    \"GuideName\": \"Chan 9\",\n    \"GuideNumber\": \"9\",\n    \"URL\": \"http://localhost:34400/stream/07f46f8c518908ee29989e84443259ae\"\n  }\n]",
+  "capability": "\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n \u003croot xmlns=\"urn:schemas-upnp-org:device-1-0\"\u003e\n   \u003cURLBase\u003ehttp://localhost:34400\u003c/URLBase\u003e\n   \u003cspecVersion\u003e\n     \u003cmajor\u003e1\u003c/major\u003e\n     \u003cminor\u003e0\u003c/minor\u003e\n   \u003c/specVersion\u003e\n   \u003cdevice\u003e\n     \u003cdeviceType\u003eurn:schemas-upnp-org:device:MediaServer:1\u003c/deviceType\u003e\n     \u003cfriendlyName\u003eThreadfin\u003c/friendlyName\u003e\n     \u003cmanufacturer\u003eSilicondust\u003c/manufacturer\u003e\n     \u003cmodelName\u003eHDTC-2US\u003c/modelName\u003e\n     \u003cmodelNumber\u003eHDTC-2US\u003c/modelNumber\u003e\n     \u003cserialNumber\u003e\u003c/serialNumber\u003e\n     \u003cUDN\u003euuid:2020-abc:2\u003c/UDN\u003e\n   \u003c/device\u003e\n \u003c/root\u003e",
+  "pms": {},
+  "registry": {
+    "07f46f8c518908ee29989e84443259ae": {
+      "channelNumber": "9",
+      "name": "Chan 9",
+      "playlistID": "M2",
+      "url": "http://p/4",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "07f46f8c518908ee29989e84443259ae"
+    },
+    "2b570df8df26ab84b84ec22e9160427a": {
+      "channelNumber": "11",
+      "name": "Chan 11",
+      "playlistID": "M1",
+      "url": "http://p/7",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "2b570df8df26ab84b84ec22e9160427a"
+    },
+    "725e87b2130b1e5fba122f29852b0305": {
+      "channelNumber": "2",
+      "name": "Chan 2",
+      "playlistID": "M2",
+      "url": "http://p/2",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "725e87b2130b1e5fba122f29852b0305"
+    },
+    "731a6b4f59434773073c05ef538606d8": {
+      "channelNumber": "5",
+      "name": "Chan 5",
+      "playlistID": "M1",
+      "url": "http://p/2",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "731a6b4f59434773073c05ef538606d8"
+    },
+    "901577c2ec3d2b82465e08454d852ba4": {
+      "channelNumber": "1",
+      "name": "Chan 1",
+      "playlistID": "M1",
+      "url": "http://p/1",
+      "backup_channel_1": null,
+      "backup_channel_2": null,
+      "backup_channel_3": null,
+      "urlID": "901577c2ec3d2b82465e08454d852ba4"
+    }
+  }
+}

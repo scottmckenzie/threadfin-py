@@ -1,0 +1,58 @@
+{
+ "settings": {
+  "epgSource": "PMS",
+  "tuner": 1,
+  "uuid": "2020-abc"
+ },
+ "name": "Threadfin",
+ "version": "1.2.3",
+ "domain": "localhost:34400",
+ "scanInProgress": 0,
+ "xepg": {},
+ "streams": [
+  {
+   "_file.m3u.id": "M1",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M1.m3u",
+   "group-title": "G",
+   "name": "N5",
+   "tvg-id": "id.1",
+   "tvg-logo": "",
+   "tvg-name": "N5",
+   "tvg-chno": "",
+   "url": "http://s/4",
+   "_uuid.key": "",
+   "_values": "N5"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M2.m3u",
+   "group-title": "G",
+   "name": "N3",
+   "tvg-id": "id.2",
+   "tvg-logo": "",
+   "tvg-name": "N3",
+   "tvg-chno": "",
+   "url": "http://s/4",
+   "_uuid.key": "ID-M2",
+   "_values": "N3",
+   "_uuid.value": "u2"
+  },
+  {
+   "_file.m3u.id": "M2",
+   "_file.m3u.name": "P",
+   "_file.m3u.path": "/d/M2.m3u",
+   "group-title": "G",
+   "name": "N8",
+   "tvg-id": "id.3",
+   "tvg-logo": "",
+   "tvg-name": "N8",
+   "tvg-chno": "",
+   "url": "http://s/2",
+   "_uuid.key": "ID-M2",
+   "_values": "N8",
+   "_uuid.value": "u3"
+  }
+ ]
+}
