@@ -7,7 +7,12 @@
 ``/discover.json``, ``/lineup_status.json``, ``/lineup.json``, ``/device.xml``, ``/capability``, ``/``
                         HDHomeRun emulation (see hdhr.py)
 
-Authentication and the management API/UI are added on top of this app.
+Authentication (see auth.py), each switched on by its setting:
+``authentication.m3u`` / ``authentication.xml``: ``/m3u/`` / ``/xmltv/`` need ``?username=..&password=..``;
+``authentication.pms``: ``/lineup.json`` needs HTTP Basic credentials. Refused requests get a 403
+without a ``WWW-Authenticate`` challenge, as in Go.
+
+The management API/UI is added on top of this app.
 """
 
 from __future__ import annotations
@@ -22,6 +27,7 @@ from starlette.responses import FileResponse, PlainTextResponse, RedirectRespons
 from starlette.routing import Route
 
 from . import hdhr
+from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError
 from .service import Service
 
 
@@ -38,6 +44,32 @@ def base_url(request: Request, service: Service) -> str:
     return f"{scheme}://{host}"
 
 
+def forbidden() -> Response:
+    return PlainTextResponse("Forbidden [403]\n", status_code=403)
+
+
+def url_auth_ok(request: Request, service: Service, level: str) -> bool:
+    """``?username=..&password=..`` check for /m3u/ and /xmltv/ (Go takes the first value of each)."""
+    enabled = service.settings.authentication_m3u if level == LEVEL_M3U else service.settings.authentication_xml
+    if not enabled:
+        return True
+    username = next(iter(request.query_params.getlist("username")), "")
+    password = next(iter(request.query_params.getlist("password")), "")
+    try:
+        service.auth.url_auth(username, password, level)
+    except AuthError:
+        return False
+    return True
+
+
+def basic_auth_ok(request: Request, service: Service, level: str) -> bool:
+    try:
+        service.auth.basic_auth(request.headers.get("authorization", ""), level)
+    except AuthError:
+        return False
+    return True
+
+
 def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
     async def stream(request: Request) -> Response:
         target = service.stream_target(request.path_params["stream_id"])
@@ -46,6 +78,8 @@ def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
         return RedirectResponse(target, status_code=302)
 
     async def m3u(request: Request) -> Response:
+        if not url_auth_ok(request, service, LEVEL_M3U):
+            return forbidden()
         raw = request.query_params.get("group-title", "")
         groups = [g for g in raw.split(",")] if raw else []
         text = await asyncio.to_thread(service.playlist, base_url(request, service), groups)
@@ -56,12 +90,16 @@ def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
         )
 
     async def xmltv(request: Request) -> Response:
+        if not url_auth_ok(request, service, LEVEL_XML):
+            return forbidden()
         path = service.xmltv_path
         if not path.exists():
             return PlainTextResponse("404 page not found\n", status_code=404)
         return FileResponse(path, media_type="application/xml; charset=utf-8")
 
     async def xmltv_gz(request: Request) -> Response:
+        if not url_auth_ok(request, service, LEVEL_XML):
+            return forbidden()
         path = service.xmltv_path.with_name(service.xmltv_path.name + ".gz")
         if not path.exists():
             return PlainTextResponse("404 page not found\n", status_code=404)
@@ -77,6 +115,8 @@ def create_app(service: Service, *, build_on_start: bool = True) -> Starlette:
         return Response(hdhr.to_json(hdhr.lineup_status(service.building)), media_type="application/json")
 
     async def lineup(request: Request) -> Response:
+        if service.settings.authentication_pms and not basic_auth_ok(request, service, LEVEL_PMS):
+            return forbidden()
         entries = await asyncio.to_thread(service.lineup, base_url(request, service))
         return Response(hdhr.to_json(entries), media_type="application/json")
 

@@ -30,8 +30,12 @@ dependency. One integration test needs `ffmpeg`/`ffprobe`.
 Go harnesses in `tools/go_golden/` (`zz_*.go`, injected into a copy of the Go `src`, run with
 `GOFLAGS=-mod=mod GOPROXY=direct GOSUMDB=off`) generate goldens from the real Go code into
 `tests/golden/<area>/`. Regenerate with `tools/go_golden/run_<area>_golden.sh /path/to/Threadfin`
-(needs Go and network access). Python tests compare against the goldens; deliberate divergences are
-listed explicitly in the tests and in `docs/PARITY_NOTES.md`.
+(needs Go and network access; on current macOS use Go 1.24+ with `GOTOOLCHAIN=local`, since
+Go 1.22 binaries abort with "missing LC_UUID"). The Go `authentication` package keeps state in
+globals, so `authdump` runs each case in its own process.
+
+Python tests compare against the goldens; deliberate divergences are listed explicitly in the tests
+and in `docs/PARITY_NOTES.md`.
 
 When porting a new area: add a Go harness and goldens first, then the Python code and tests, then
 record kept/fixed/changed behaviour in `docs/PARITY_NOTES.md` and update the status table in

@@ -14,6 +14,7 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from .auth import Authentication
 from .epg import EPGOptions, XMLTVStats, write_xmltv
 from .filters import FilterError
 from .hdhr import Device, PMSIds, lineup_pms, lineup_xepg
@@ -51,6 +52,7 @@ class Service:
         )
         self.channels: dict[str, XEPGChannel] = {}
         self.registry = StreamRegistry(system.file_urls)
+        self.auth = Authentication(system.file_authentication)
         self.stream_db = StreamDatabase()
         self.report = BuildReport()
         self._lock = threading.Lock()

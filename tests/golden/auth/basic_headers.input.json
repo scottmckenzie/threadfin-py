@@ -1,0 +1,193 @@
+{
+ "settings": {
+  "authentication.m3u": true,
+  "authentication.xml": true,
+  "authentication.pms": true
+ },
+ "db": {
+  "dbVersion": "1.0",
+  "hash": "sha256",
+  "users": {
+   "id-ALICE00001": {
+    "_id": "id-ALICE00001",
+    "_salt": "SSSSSSSSSSSSSSSSSSSS",
+    "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+    "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+    "data": {
+     "authentication.web": true,
+     "authentication.pms": true,
+     "authentication.m3u": true,
+     "authentication.xml": true,
+     "authentication.api": false,
+     "username": "alice",
+     "defaultUser": true
+    }
+   },
+   "id-BOB0000001": {
+    "_id": "id-BOB0000001",
+    "_salt": "SSSSSSSSSSSSSSSSSSSS",
+    "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+    "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+    "data": {
+     "authentication.web": true,
+     "username": "bob"
+    }
+   },
+   "id-CAROL000001": {
+    "_id": "id-CAROL000001",
+    "_salt": "SSSSSSSSSSSSSSSSSSSS",
+    "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+    "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+    "data": {
+     "authentication.web": true,
+     "authentication.pms": true,
+     "authentication.m3u": true,
+     "authentication.xml": true,
+     "authentication.api": false,
+     "username": "alice",
+     "defaultUser": true
+    }
+   },
+   "id-CAROL000002": {
+    "_id": "id-CAROL000002",
+    "_salt": "SSSSSSSSSSSSSSSSSSSS",
+    "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+    "_password": "JrDYvQ/vSOLixvKPFoAM/oUqtSzjcrE6eeq5WC8pl/Q=",
+    "data": {
+     "authentication.web": true,
+     "authentication.pms": true,
+     "authentication.m3u": true,
+     "authentication.xml": true,
+     "authentication.api": false,
+     "username": "alice",
+     "defaultUser": true
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "op": "init"
+  },
+  {
+   "op": "basic",
+   "header": null,
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Bearer abc",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "basic YWxpY2U6c2VjcmV0",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6c2VjcmV0",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6c2VjcmV0",
+   "level": "authentication.web"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6c2VjcmV0",
+   "level": "authentication.api"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6c2VjcmV0",
+   "level": "authentication.unknown"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Ym9iOnBhOnNz",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Ym9iOnBhOnNz",
+   "level": "authentication.web"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U=",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic  YWxpY2U6c2VjcmV0",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic !!!!",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6c2VjcmV0!!",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6c2VjcmV0",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Og==",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWxpY2U6",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic QUxJQ0U6c2VjcmV0",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Y2Fyb2w6cHc=",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Y2Fyb2w6cHc",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Y2Fyb2w6c",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Y2Fyb2w6cHcx",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic Y2Fyb2w6cHcx",
+   "level": "authentication.pms"
+  }
+ ]
+}

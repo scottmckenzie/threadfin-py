@@ -1,0 +1,23 @@
+{
+ "settings": {
+  "authentication.m3u": true,
+  "authentication.xml": true,
+  "authentication.pms": true
+ },
+ "db": {},
+ "steps": [
+  {
+   "op": "init"
+  },
+  {
+   "op": "firstUser",
+   "username": "admin",
+   "password": "pw"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWRtaW46cHc=",
+   "level": "authentication.pms"
+  }
+ ]
+}

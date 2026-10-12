@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import gzip
 import http.client
 import json
@@ -17,6 +18,7 @@ from pathlib import Path
 
 import uvicorn
 
+from threadfin.auth import LEVEL_M3U, LEVEL_PMS
 from threadfin.service import Service
 from threadfin.settings import load_settings
 from threadfin.system import SystemInfo
@@ -91,10 +93,10 @@ class Base(unittest.IsolatedAsyncioTestCase):
         self.provider.server_close()
         self.tmp.cleanup()
 
-    def get(self, path: str) -> tuple[int, dict[str, str], bytes]:
+    def get(self, path: str, headers: dict[str, str] | None = None) -> tuple[int, dict[str, str], bytes]:
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
         try:
-            conn.request("GET", path)
+            conn.request("GET", path, headers=headers or {})
             response = conn.getresponse()
             return response.status, dict(response.getheaders()), response.read()
         finally:
@@ -246,3 +248,68 @@ class PMSMode(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AuthEndpoints(Base):
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
+        self.service.auth.create_first_user("admin", "pw")  # every level but the API
+        self.service.auth.save_new_user({"username": "viewer", "password": "v:1", LEVEL_M3U: True})
+
+    async def status(self, path: str, headers: dict[str, str] | None = None) -> int:
+        status, _, body = await asyncio.to_thread(self.get, path, headers)
+        if status == 403:
+            self.assertEqual(body, b"Forbidden [403]\n")
+        return status
+
+    async def test_open_while_disabled(self) -> None:
+        for path in ("/m3u/threadfin.m3u", "/xmltv/threadfin.xml", "/xmltv/threadfin.xml.gz", "/lineup.json"):
+            self.assertEqual(await self.status(path), 200, path)
+
+    async def test_m3u_and_xmltv_url_credentials(self) -> None:
+        self.settings.authentication_m3u = True
+        self.settings.authentication_xml = True
+        cases = [
+            ("/m3u/threadfin.m3u", 403),
+            ("/m3u/threadfin.m3u?username=admin&password=bad", 403),
+            ("/m3u/threadfin.m3u?username=admin&password=pw", 200),
+            ("/m3u/threadfin.m3u?username=admin&password=pw&group-title=News", 200),
+            ("/m3u/threadfin.m3u?username=viewer&password=v%3A1", 200),
+            ("/m3u/threadfin.m3u?username=admin&username=viewer&password=pw", 200),  # first value wins
+            ("/m3u/threadfin.m3u?username=viewer&username=admin&password=pw", 403),
+            ("/xmltv/threadfin.xml?username=admin&password=pw", 200),
+            ("/xmltv/threadfin.xml.gz?username=admin&password=pw", 200),
+            ("/xmltv/threadfin.xml?username=viewer&password=v%3A1", 403),  # no xml level
+            ("/xmltv/threadfin.xml.gz", 403),
+            ("/lineup.json", 200),  # authentication.pms is off
+        ]
+        for path, want in cases:
+            self.assertEqual(await self.status(path), want, path)
+
+    async def test_m3u_and_xmltv_settings_are_separate(self) -> None:
+        self.settings.authentication_xml = True
+        self.assertEqual(await self.status("/m3u/threadfin.m3u"), 200)
+        self.assertEqual(await self.status("/xmltv/threadfin.xml"), 403)
+        self.settings.authentication_xml, self.settings.authentication_m3u = False, True
+        self.assertEqual(await self.status("/m3u/threadfin.m3u"), 403)
+        self.assertEqual(await self.status("/xmltv/threadfin.xml"), 200)
+
+    async def test_lineup_basic_auth(self) -> None:
+        self.settings.authentication_pms = True
+        cases = [
+            ({}, 403),
+            ({"Authorization": "Basic " + base64.b64encode(b"admin:pw").decode()}, 200),
+            ({"Authorization": "Basic " + base64.b64encode(b"admin:bad").decode()}, 403),
+            ({"Authorization": "Basic " + base64.b64encode(b"viewer:v:1").decode()}, 403),  # no pms level
+            ({"Authorization": "Basic " + base64.b64encode(b"admin").decode()}, 403),  # Go: crashed
+            ({"Authorization": "Basic !!!"}, 403),
+            ({"Authorization": "Bearer x"}, 403),
+        ]
+        for headers, want in cases:
+            self.assertEqual(await self.status("/lineup.json", headers), want, headers)
+        # the other HDHomeRun endpoints stay open (Plex discovers the tuner before it has credentials)
+        for path in ("/discover.json", "/lineup_status.json", "/device.xml"):
+            self.assertEqual(await self.status(path), 200, path)
+        # the viewer was denied pms, which Go records as false
+        viewer = next(u for u in self.service.auth.users.values() if u["data"].get("username") == "viewer")
+        self.assertIs(viewer["data"][LEVEL_PMS], False)

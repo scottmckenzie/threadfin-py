@@ -1,0 +1,306 @@
+[
+ {
+  "op": "init",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-ALICE00001": {
+     "_id": "id-ALICE00001",
+     "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "alice"
+     }
+    },
+    "id-BOB0000001": {
+     "_id": "id-BOB0000001",
+     "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+     "data": {
+      "authentication.api": false,
+      "authentication.pms": false,
+      "authentication.web": true,
+      "authentication.xml": false,
+      "username": "bob"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "newUser",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-ALICE00001": {
+     "_id": "id-ALICE00001",
+     "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "alice"
+     }
+    },
+    "id-BOB0000001": {
+     "_id": "id-BOB0000001",
+     "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+     "data": {
+      "authentication.api": false,
+      "authentication.pms": false,
+      "authentication.web": true,
+      "authentication.xml": false,
+      "username": "bob"
+     }
+    },
+    "id-XSXUJNKEP3": {
+     "_id": "id-XSXUJNKEP3",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "-alz5hNhFJ4gP4av0Tx0",
+     "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+     "data": {
+      "authentication.m3u": true,
+      "authentication.xml": false,
+      "username": "carol"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "url",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-ALICE00001": {
+     "_id": "id-ALICE00001",
+     "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "alice"
+     }
+    },
+    "id-BOB0000001": {
+     "_id": "id-BOB0000001",
+     "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+     "data": {
+      "authentication.api": false,
+      "authentication.pms": false,
+      "authentication.web": true,
+      "authentication.xml": false,
+      "username": "bob"
+     }
+    },
+    "id-XSXUJNKEP3": {
+     "_id": "id-XSXUJNKEP3",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "-alz5hNhFJ4gP4av0Tx0",
+     "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+     "data": {
+      "authentication.m3u": true,
+      "authentication.xml": false,
+      "username": "carol"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "url",
+  "result": null,
+  "err": "No authorization",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-ALICE00001": {
+     "_id": "id-ALICE00001",
+     "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "alice"
+     }
+    },
+    "id-BOB0000001": {
+     "_id": "id-BOB0000001",
+     "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+     "data": {
+      "authentication.api": false,
+      "authentication.pms": false,
+      "authentication.web": true,
+      "authentication.xml": false,
+      "username": "bob"
+     }
+    },
+    "id-XSXUJNKEP3": {
+     "_id": "id-XSXUJNKEP3",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "-alz5hNhFJ4gP4av0Tx0",
+     "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+     "data": {
+      "authentication.m3u": true,
+      "authentication.xml": false,
+      "username": "carol"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "newUser",
+  "result": null,
+  "err": "User already exists",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-ALICE00001": {
+     "_id": "id-ALICE00001",
+     "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "alice"
+     }
+    },
+    "id-BOB0000001": {
+     "_id": "id-BOB0000001",
+     "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+     "data": {
+      "authentication.api": false,
+      "authentication.pms": false,
+      "authentication.web": true,
+      "authentication.xml": false,
+      "username": "bob"
+     }
+    },
+    "id-XSXUJNKEP3": {
+     "_id": "id-XSXUJNKEP3",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "-alz5hNhFJ4gP4av0Tx0",
+     "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+     "data": {
+      "authentication.m3u": true,
+      "authentication.xml": false,
+      "username": "carol"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "newUser",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-ALICE00001": {
+     "_id": "id-ALICE00001",
+     "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "alice"
+     }
+    },
+    "id-BOB0000001": {
+     "_id": "id-BOB0000001",
+     "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+     "_salt": "SSSSSSSSSSSSSSSSSSSS",
+     "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+     "data": {
+      "authentication.api": false,
+      "authentication.pms": false,
+      "authentication.web": true,
+      "authentication.xml": false,
+      "username": "bob"
+     }
+    },
+    "id-W2S5BXGEMX": {
+     "_id": "id-W2S5BXGEMX",
+     "_password": "5MB/voXXOhYUbQEpBo9ZfvKAEuDwXNCaj2iqvqHH/iE=",
+     "_salt": "i0CwhPLnXeIcMLUszVrL",
+     "_username": "5MB/voXXOhYUbQEpBo9ZfvKAEuDwXNCaj2iqvqHH/iE=",
+     "data": {
+      "username": ""
+     }
+    },
+    "id-XSXUJNKEP3": {
+     "_id": "id-XSXUJNKEP3",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "-alz5hNhFJ4gP4av0Tx0",
+     "_username": "tr+LkOQ251vzCKzFaKDXwgyIllnrOFynO2vTixUnJTY=",
+     "data": {
+      "authentication.m3u": true,
+      "authentication.xml": false,
+      "username": "carol"
+     }
+    }
+   }
+  }
+ }
+]

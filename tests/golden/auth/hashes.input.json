@@ -1,0 +1,45 @@
+{
+ "settings": {
+  "authentication.m3u": true,
+  "authentication.xml": true,
+  "authentication.pms": true
+ },
+ "db": null,
+ "steps": [
+  {
+   "op": "init"
+  },
+  {
+   "op": "hash",
+   "secret": ""
+  },
+  {
+   "op": "hash",
+   "secret": "a"
+  },
+  {
+   "op": "hash",
+   "secret": "secret"
+  },
+  {
+   "op": "hash",
+   "secret": "pässwörd"
+  },
+  {
+   "op": "hash",
+   "secret": "日本語"
+  },
+  {
+   "op": "hash",
+   "secret": "with:colon"
+  },
+  {
+   "op": "hash",
+   "secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  {
+   "op": "hash",
+   "secret": " spaced "
+  }
+ ]
+}

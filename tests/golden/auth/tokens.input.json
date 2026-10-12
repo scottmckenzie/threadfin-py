@@ -1,0 +1,53 @@
+{
+ "settings": {
+  "authentication.m3u": true,
+  "authentication.xml": true,
+  "authentication.pms": true
+ },
+ "db": {
+  "dbVersion": "1.0",
+  "hash": "sha256",
+  "users": {
+   "id-ALICE00001": {
+    "_id": "id-ALICE00001",
+    "_salt": "SSSSSSSSSSSSSSSSSSSS",
+    "_username": "yz2RNBwHSPzz8TkfAQIkZUpbUy0J6wgP8EQ9QJmrnfI=",
+    "_password": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+    "data": {
+     "authentication.web": true,
+     "authentication.pms": true,
+     "authentication.m3u": true,
+     "authentication.xml": true,
+     "authentication.api": false,
+     "username": "alice",
+     "defaultUser": true
+    }
+   },
+   "id-BOB0000001": {
+    "_id": "id-BOB0000001",
+    "_salt": "SSSSSSSSSSSSSSSSSSSS",
+    "_username": "NjY7jbCMENIk7xgjABu/96zlNP34Rmw8hXRS5x83/RU=",
+    "_password": "qoQM6VLgSbUhHBIE+cqIxjCY1/5rNO7IOq+hG3KmM6A=",
+    "data": {
+     "authentication.web": true,
+     "username": "bob"
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "op": "init"
+  },
+  {
+   "op": "tokenRotate",
+   "username": "alice",
+   "password": "secret"
+  },
+  {
+   "op": "tokenRotate",
+   "username": "alice",
+   "password": "bad"
+  }
+ ]
+}

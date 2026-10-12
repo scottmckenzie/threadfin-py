@@ -185,6 +185,30 @@ Golden-tested against the real Go functions on 29 cases (discover, status, lineu
 | Every URL in the lineup was `/stream/<id>` of the registry; the registry was rebuilt only by a build. | kept; in `PMS` mode the build also registers the active streams so lineup links survive a rebuild |
 | The domain in the answers came from the request (`Host`), or the configured public domain. | kept |
 | `ScanInProgress` mirrored the build lock. | kept |
-| `authentication.pms` protects `/lineup.json`. | not yet (auth layer) |
+| `authentication.pms` protects `/lineup.json`. | kept (see Authentication) |
 | SSDP announced the device on the LAN (setting `ssdp`). | **dropped**: the setting is still read and written for config compatibility but has no effect |
 | Unknown paths returned the device XML. | **changed**: 404 (only `/` is the device XML) |
+
+## Authentication (`auth.py`, `web.py`)
+
+Golden-tested against the real Go functions on 14 step-by-step cases (`tests/golden/auth`: hashes,
+first user, new user, user-data changes and deletion, Basic headers, URL credentials, tokens), comparing
+results, error texts and `authentication.json` after every step.
+
+| Go behaviour | Status |
+|---|---|
+| `authentication.json` format (`dbVersion`, `hash`, `users` by `id-XXXXXXXXXX`, hashed `_username` / `_password`, `data`). Created as `{}` by the system-file step, filled with the empty database on start. | kept |
+| The "hash" is `base64(HMAC-SHA256(key=secret, msg="_remote_db"))`; the stored per-user `_salt` is never used. | kept (changing it would lock out every existing user) |
+| On start every user gets `authentication.web/pms/xml/api: false` where missing (not `m3u`). | kept |
+| A level that is missing or not a boolean is denied and written back as `false`; a user with empty data is denied without a write. | kept |
+| `/m3u/` and `/xmltv/` (also `.gz`) take `?username=&password=` when `authentication.m3u` / `.xml` is on; the first value of a repeated parameter counts. | kept |
+| `/lineup.json` takes HTTP Basic credentials when `authentication.pms` is on; `Basic` is case-sensitive; refusals are `403 Forbidden [403]` without a `WWW-Authenticate` challenge. | kept |
+| A Basic header without `:`, with an empty payload or with invalid Base64 crashed the request (index out of range). | **fixed**: 403 |
+| Base64 was decoded leniently: valid Base64 followed by garbage still logged in. | **fixed**: strict decoding, 403 |
+| The first-user form ignored "Default user already exists" and, given an existing user's credentials, gave that user every level. | **fixed**: refused once a user exists |
+| A user could be created with an empty username and password (which then matched requests without credentials). | **fixed**: refused |
+| Every Basic / URL check minted a session token that stayed in memory forever. | **changed**: only logins issue tokens; expired tokens are purged |
+| Tokens: in memory, 60 minutes, replaced by a new one on every check. | kept (deleting a user also ends its sessions) |
+| Changing only the password (no username) in the user editor was silently ignored. | kept (the new UI always sends the username) |
+| `authentication.json` written with mode 0600. | kept, written atomically |
+| Web-UI login (cookie `Token`), create-first-user page, API token auth and the configuration-wizard bypass. | not yet: wired up with the REST API + UI; the store functions are ported and tested |

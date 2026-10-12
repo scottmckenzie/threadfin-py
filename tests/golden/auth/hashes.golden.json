@@ -1,0 +1,101 @@
+[
+ {
+  "op": "init",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "5MB/voXXOhYUbQEpBo9ZfvKAEuDwXNCaj2iqvqHH/iE=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "xvbqm39IcD1ARc38/Ge+nHLWNocjlkacC95OkBYJWKw=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "hDE+k25LEgApXxw1YhGXRihA/1CBd2e52Hf3iSV3Vfs=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "LTJvmJrobA5srW2685KtutKponVeZbq/MXzQvEAagY0=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "DMIW/alWu5EAtq26rIVaqHBoXmUUhqc7brO4eF4/JxA=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "7bYV2qCFjhmEQMYh5Crkz0th+MKY9PmTiwk0lL2VOdQ=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "KFWJXQRFJ8viGd1OuVrMYyfTtoyDpmjZ3SbvoJwF/E4=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "hash",
+  "result": "0KIzbf0myZDJ/ogQ3EBY594kY8DH7ski+HxBIstIi0Y=",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ }
+]

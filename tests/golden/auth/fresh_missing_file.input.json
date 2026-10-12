@@ -1,0 +1,60 @@
+{
+ "settings": {
+  "authentication.m3u": true,
+  "authentication.xml": true,
+  "authentication.pms": true
+ },
+ "db": null,
+ "steps": [
+  {
+   "op": "init"
+  },
+  {
+   "op": "firstUser",
+   "username": "admin",
+   "password": "pw"
+  },
+  {
+   "op": "login",
+   "username": "admin",
+   "password": "pw",
+   "level": "authentication.web"
+  },
+  {
+   "op": "login",
+   "username": "admin",
+   "password": "pw",
+   "level": "authentication.api"
+  },
+  {
+   "op": "login",
+   "username": "admin",
+   "password": "nope"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWRtaW46cHc=",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "basic",
+   "header": "Basic YWRtaW46d3Jvbmc=",
+   "level": "authentication.pms"
+  },
+  {
+   "op": "url",
+   "query": "username=admin&password=pw",
+   "type": "m3u"
+  },
+  {
+   "op": "url",
+   "query": "username=admin&password=pw",
+   "type": "xml"
+  },
+  {
+   "op": "url",
+   "query": "",
+   "type": "m3u"
+  }
+ ]
+}

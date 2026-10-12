@@ -1,0 +1,256 @@
+[
+ {
+  "op": "init",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {}
+  }
+ },
+ {
+  "op": "firstUser",
+  "result": true,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "login",
+  "result": true,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "login",
+  "result": true,
+  "err": "No authorization",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "login",
+  "result": false,
+  "err": "User authentication failed",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "basic",
+  "result": "admin",
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "basic",
+  "result": "admin",
+  "err": "User authentication failed",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "url",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "url",
+  "result": null,
+  "err": "",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ },
+ {
+  "op": "url",
+  "result": null,
+  "err": "User authentication failed",
+  "panic": "",
+  "db": {
+   "dbVersion": "1.0",
+   "hash": "sha256",
+   "users": {
+    "id-NAMW8O64HO": {
+     "_id": "id-NAMW8O64HO",
+     "_password": "YP1/9hd6Vj4cSPezxHG2wmQUH3qAn73k3l+QVDOdgEg=",
+     "_salt": "fcMiOpyebqLH5KVrfCV6",
+     "_username": "9/9OKfuXT0tdvpU7tlyjsVR9ZOcad3zK+EXueNJiwhg=",
+     "data": {
+      "authentication.api": false,
+      "authentication.m3u": true,
+      "authentication.pms": true,
+      "authentication.web": true,
+      "authentication.xml": true,
+      "defaultUser": true,
+      "username": "admin"
+     }
+    }
+   }
+  }
+ }
+]
