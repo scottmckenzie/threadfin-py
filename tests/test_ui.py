@@ -114,6 +114,16 @@ class Filters(AppTestCase):
 
 
 class Mapping(AppTestCase):
+    def test_every_filter_control_reloads_the_list(self) -> None:
+        """htmx ``from:find <selector>`` listens on the first match only: name each control."""
+        page = self.client.get("/web/mapping").text
+        form = re.search(r'<form class="toolbar"[^>]*hx-trigger="([^"]+)">(.*?)</form>', page, re.S)
+        assert form is not None
+        trigger, body = form.groups()
+        for tag, name in re.findall(r'<(input|select) name="([^"]+)"', body):
+            with self.subTest(name):
+                self.assertIn(f"from:find {tag}[name={name}]", trigger)
+
     def test_rows_and_search(self) -> None:
         rows = self.client.get("/web/mapping/rows").text
         self.assertEqual(rows.count('name="ids"'), 3)

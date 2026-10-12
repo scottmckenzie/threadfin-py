@@ -2,7 +2,7 @@
 {% block content %}
 <section class="card">
   <div class="heading"><h1>Mapping</h1></div>
-  <form class="toolbar" hx-get="/web/mapping/rows" hx-target="#rows" hx-trigger="load, submit, input delay:300ms from:find input[name=q], change from:find select, refresh-list from:body">
+  <form class="toolbar" hx-get="/web/mapping/rows" hx-target="#rows" hx-trigger="load, submit, input delay:300ms from:find input[name=q], change from:find select[name=state], change from:find select[name=group], refresh-list from:body">
     <input name="q" type="search" placeholder="Search name, number, tvg-id" aria-label="Search">
     <select name="state" aria-label="Show">
       <option value="active">Active</option><option value="inactive">Inactive</option>
