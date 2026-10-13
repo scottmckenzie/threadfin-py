@@ -88,7 +88,7 @@ def xmltv_files(service: Service) -> list[tuple[str, str]]:
             continue
         record = records.get(name.removesuffix(".xml"), {})
         files.append((name, str(record.get("name") or name)))
-    return sorted(files, key=lambda f: f[1].lower()) + [(DUMMY_FILE, DUMMY_FILE)]
+    return [*sorted(files, key=lambda f: f[1].lower()), (DUMMY_FILE, DUMMY_FILE)]
 
 
 MAX_MATCHES = 50
@@ -607,7 +607,7 @@ def routes(service: Service) -> list[BaseRoute]:
         except ERRORS as exc:
             return render(request, "partials/restore_result.html", error=str(exc))
         finally:
-            Path(tmp).unlink(missing_ok=True)
+            await asyncio.to_thread(Path(tmp).unlink, missing_ok=True)
         return render(request, "partials/restore_result.html", error="",
                       web_url=result.web_url(base_url(request, service)))  # fmt: skip
 

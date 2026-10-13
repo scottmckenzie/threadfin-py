@@ -134,7 +134,7 @@ class GoldenGuide(unittest.TestCase):
                     [(e.get("channel"), e.get("start")) for e in wp],
                     "programme order",
                 )
-                for g, w in zip(gp, wp):
+                for g, w in zip(gp, wp, strict=True):
                     self.assertEqual(normalise(g), normalise(w))
 
 
@@ -179,7 +179,8 @@ class Units(unittest.TestCase):
             out = Path(td) / "t.xml"
             write_xmltv(out, {"x-ID.1": channel()}, td, EPGOptions(), datetime(2026, 10, 12, 10, tzinfo=SYD),
                         gzip_path=Path(td) / "t.xml.gz")
-            self.assertEqual(gzip.open(Path(td) / "t.xml.gz").read(), out.read_bytes())
+            with gzip.open(Path(td) / "t.xml.gz") as unpacked:
+                self.assertEqual(unpacked.read(), out.read_bytes())
             self.assertEqual([p.name for p in Path(td).glob(".*")], [])
             ElementTree.parse(out)
 

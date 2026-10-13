@@ -181,7 +181,7 @@ def _parse_channel(chunk: str) -> Stream | _Skip:
         return _Skip(NO_NAME, url)
 
     if stream.get("tvg-id", "") in ("", "(no tvg-id)"):
-        digest = hashlib.md5(url.encode("utf-8")).hexdigest()  # noqa: S324
+        digest = hashlib.md5(url.encode("utf-8")).hexdigest()
         stream["tvg-id"] = f"threadfin-{digest}"
 
     stream["name"] = name

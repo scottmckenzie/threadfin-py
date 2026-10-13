@@ -14,7 +14,6 @@ code. Differences from Go:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from .filters import build_filter_rules, filter_stream

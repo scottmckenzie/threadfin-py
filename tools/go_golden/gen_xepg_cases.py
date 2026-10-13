@@ -85,9 +85,12 @@ case("filter_starting_number_and_category",
 case("provider_chno_collision_fix", [stream(1, chno="1001"), stream(2), stream(3)])
 case("filter_without_starting_number_fix", [stream(1, "News")], settings=base(filter={"0": F("News", "", "")}))
 case("existing_unchanged", S[:3], xepg={f"x-ID.{i}": channel(f"x-ID.{i}", S[i], str(1000 + i)) for i in range(3)})
-st_changed = copy.deepcopy(S[:3]); st_changed[1]["url"] = "http://p/M1/moved"
+st_changed = copy.deepcopy(S[:3])
+st_changed[1]["url"] = "http://p/M1/moved"
 case("existing_url_changed_same_tvgid", st_changed, xepg={f"x-ID.{i}": channel(f"x-ID.{i}", S[i], str(1000 + i)) for i in range(3)})
-st_uuid = copy.deepcopy(S[:3]); st_uuid[1]["url"] = "http://p/M1/new"; st_uuid[1]["tvg-id"] = "threadfin-new"
+st_uuid = copy.deepcopy(S[:3])
+st_uuid[1]["url"] = "http://p/M1/new"
+st_uuid[1]["tvg-id"] = "threadfin-new"
 case("existing_found_by_uuid", st_uuid, xepg={f"x-ID.{i}": channel(f"x-ID.{i}", S[i], str(1000 + i)) for i in range(3)})
 case("deactivated_channel_not_updated", S[:2], xepg={
     "x-ID.0": channel("x-ID.0", S[0], "1000"),
@@ -118,7 +121,8 @@ case("backup_cleared_keeps_stale_pointer_in_go", S[:2], xepg={"x-ID.0": channel(
                                                                "x-ID.1": channel("x-ID.1", S[1], "1001")})
 case("hidden_channel_changes_not_saved", S[:2], xepg={"x-ID.0": channel("x-ID.0", S[0], "1000", **{"x-hide-channel": True, "x-backup-channel-1": "Channel 2"}),
                                                        "x-ID.1": channel("x-ID.1", S[1], "1001")})
-dup_a = channel("x-ID.0", S[0], "1000"); dup_b = channel("x-ID.1", S[0], "1001", **{"x-xmltv-file": "X1.xml", "x-mapping": "id.1"})
+dup_a = channel("x-ID.0", S[0], "1000")
+dup_b = channel("x-ID.1", S[0], "1001", **{"x-xmltv-file": "X1.xml", "x-mapping": "id.1"})
 case("duplicate_pair_prefers_mapped", S[:1], xepg={"x-ID.0": dup_a, "x-ID.1": dup_b}, xml=X5)
 case("duplicate_pair_prefers_active", S[:1], xepg={"x-ID.0": channel("x-ID.0", S[0], "1000", **{"x-active": False}), "x-ID.1": dup_a | {"x-epg": "x-ID.1", "x-channelID": "1001"}})
 case("identical_streams_make_one_channel", [stream(1), stream(1)])
@@ -163,14 +167,16 @@ for n in range(30):
             st["url"] += "/moved"
         if rng.random() < 0.2:
             st["name"] = st["name"] + " v2"
-        xid = f"x-ID.{next_id}"; next_id += rng.randint(1, 2)
+        xid = f"x-ID.{next_id}"
+        next_id += rng.randint(1, 2)
         xepg[xid] = channel(xid, old, str(1000 + next_id), **{
             "x-active": rng.random() < 0.7, "x-hide-channel": rng.random() < 0.1,
             "x-update-channel-name": rng.random() < 0.3, "x-update-channel-icon": rng.random() < 0.3,
             "x-xmltv-file": rng.choice(["-", "X1.xml", ""]), "x-mapping": rng.choice(["-", "", f"id.{rng.randint(1, 50)}"]),
             "live": rng.random() < 0.2})
     for _ in range(rng.randint(0, 2)):  # channels of streams that no longer exist
-        xid = f"x-ID.{next_id}"; next_id += 1
+        xid = f"x-ID.{next_id}"
+        next_id += 1
         ghost = stream(500 + next_id)
         xepg[xid] = channel(xid, ghost, str(1000 + next_id))
     wanted = [f"id.{i}" for i in rng.sample(ids, min(len(ids), 6))] + ["id.1", "id.2"]

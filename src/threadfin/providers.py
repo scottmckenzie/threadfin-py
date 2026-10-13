@@ -21,7 +21,6 @@ Differences from Go (all fixes, see docs/PARITY_NOTES.md):
 from __future__ import annotations
 
 import asyncio
-import gzip
 import http
 import http.client
 import ipaddress

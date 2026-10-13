@@ -36,8 +36,15 @@ filterwarnings = ["error"]
 addopts = "-ra"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "ASYNC"]
+ignore = [
+    "E501",    # line length is the formatter's job
+    "SIM108",  # if/else blocks are often clearer than a long ternary
+]
 
 [tool.mypy]
 python_version = "3.12"

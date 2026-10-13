@@ -87,7 +87,7 @@ for n in range(40):
     ss = []
     for _ in range(60):
         name = " ".join(rng.sample(words, rng.randint(1, 3)))
-        grp = rng.choice(words + ["", ""])
+        grp = rng.choice([*words, "", ""])
         vals = " ".join(w for w in [grp, rng.choice(words), name] if w)
         ss.append(S(name, grp, vals))
     cases[f"random_{n:02d}"] = {"filters": fl, "streams": ss}

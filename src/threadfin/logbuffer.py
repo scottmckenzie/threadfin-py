@@ -34,7 +34,7 @@ class LogBuffer(logging.Handler):
             message = record.getMessage()
             if record.exc_info and record.exc_info[1] is not None:
                 message += f": {record.exc_info[1]}"
-        except Exception:  # noqa: BLE001 - a broken log call must not break the caller
+        except Exception:
             message = str(record.msg)
         entry = LogEntry(datetime.fromtimestamp(record.created), record.levelname, message)
         with self._lock_entries:

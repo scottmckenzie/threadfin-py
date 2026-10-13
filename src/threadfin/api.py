@@ -349,7 +349,7 @@ def routes(service: Service) -> list[BaseRoute]:
                 handle.write(data)
             result = await service.restore(tmp)
         finally:
-            Path(tmp).unlink(missing_ok=True)
+            await asyncio.to_thread(Path(tmp).unlink, missing_ok=True)
         return JSONResponse({"portChanged": result.port_changed,
                              "webURL": result.web_url(base_url(request, service))})  # fmt: skip
 

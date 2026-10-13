@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
@@ -188,7 +189,8 @@ class RealFfprobeTests(unittest.IsolatedAsyncioTestCase):
     async def test_probe_generated_stream(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             media = Path(tmp) / "t.ts"
-            subprocess.run(
+            await asyncio.to_thread(
+                subprocess.run,
                 ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=320x240:rate=25",
                  "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
                  "-t", "1", "-c:v", "mpeg2video", "-c:a", "mp2", "-f", "mpegts", str(media)],

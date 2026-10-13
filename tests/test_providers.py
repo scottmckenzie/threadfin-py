@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import gzip
 import os
 import tempfile
@@ -10,6 +11,7 @@ import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import ClassVar
 from unittest import mock
 
 from threadfin.m3u import parse_m3u
@@ -41,7 +43,7 @@ XMLTV = (
 
 
 class Handler(BaseHTTPRequestHandler):
-    seen_agents: list[str] = []
+    seen_agents: ClassVar[list[str]] = []
 
     def log_message(self, *args: object) -> None:  # silence
         pass
@@ -52,12 +54,10 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(k, v)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        try:
+        with contextlib.suppress(BrokenPipeError, ConnectionResetError):  # client gave up (timeout tests)
             self.wfile.write(body)
-        except (BrokenPipeError, ConnectionResetError):  # client gave up (timeout tests)
-            pass
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         Handler.seen_agents.append(self.headers.get("User-Agent", ""))
         path = self.path
         if path == "/list.m3u":

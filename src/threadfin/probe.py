@@ -252,7 +252,7 @@ async def run_ffprobe(
     url: str,
     *,
     ffprobe: str,
-    timeout: float = 20.0,
+    timeout: float = 20.0,  # noqa: ASYNC109 - also ffprobe's own -rw_timeout
     user_agent: str = "",
     allow_local: bool = False,
 ) -> ProbeRun:

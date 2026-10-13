@@ -148,9 +148,8 @@ class StoreTests(unittest.TestCase):
                 opened.append(conn)
                 return conn
 
-            with mock.patch("threadfin.probe_store.sqlite3.connect", spy):
-                with self.assertRaises(RuntimeError):
-                    ProbeStore(path)
+            with mock.patch("threadfin.probe_store.sqlite3.connect", spy), self.assertRaises(RuntimeError):
+                ProbeStore(path)
             self.assertEqual(len(opened), 1)
             with self.assertRaises(sqlite3.ProgrammingError):  # "Cannot operate on a closed database"
                 opened[0].execute("SELECT 1")

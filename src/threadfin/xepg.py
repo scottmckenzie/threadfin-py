@@ -21,9 +21,9 @@ from __future__ import annotations
 
 import hashlib
 import math
-from decimal import Decimal
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields
+from decimal import Decimal
 from typing import Any
 
 from .jsonio import load_json_object, save_json
@@ -167,7 +167,7 @@ class XEPGChannel:
 def channel_hash(url: str, tvg_id: str, playlist_id: str) -> str:
     """Stable channel identity: the URL, the ``tvg-id`` when there is one, and the playlist."""
     text = url + tvg_id + playlist_id if tvg_id else url + playlist_id
-    return hashlib.md5(text.encode("utf-8")).hexdigest()  # noqa: S324
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
 def load_xepg(path: str) -> dict[str, XEPGChannel]:
@@ -192,7 +192,7 @@ def go_g(value: float) -> str:
         return "0"
     if not math.isfinite(value):
         return "NaN" if math.isnan(value) else ("+Inf" if value > 0 else "-Inf")
-    sign, digits, exponent = Decimal(repr(abs(value))).as_tuple()
+    _, digits, exponent = Decimal(repr(abs(value))).as_tuple()
     text = "".join(map(str, digits)).rstrip("0") or "0"
     point = len(digits) + exponent  # value = 0.<digits> * 10**point
     exp10 = point - 1
@@ -383,7 +383,6 @@ def update_database(
         url = _stream_text(stream, "url")
         tvg_id = _stream_text(stream, "tvg-id")
         name = _stream_text(stream, "name")
-        tvg_name = _stream_text(stream, "tvg-name") or name
         playlist_id = _stream_text(stream, "_file.m3u.id")
         uuid_value = _stream_text(stream, "_uuid.value")
         live_event = _stream_text(stream, "liveEvent")

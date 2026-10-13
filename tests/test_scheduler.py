@@ -110,7 +110,7 @@ class Provider(BaseHTTPRequestHandler):
     def log_message(self, *args: object) -> None:
         pass
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         type(self).hits += 1
         body = M3U.encode()
         self.send_response(200)
