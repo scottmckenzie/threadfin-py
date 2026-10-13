@@ -83,3 +83,5 @@ Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the developmen
 ## Open questions
 
 - Backup channels cannot fail over with a plain 302; they are kept in the registry only.
+- Code review findings and recommended fixes (login throttling, password hashing, type errors ...):
+  see `docs/REVIEW_2026-10.md`.
