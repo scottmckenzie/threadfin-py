@@ -16,12 +16,13 @@ Python 3.12 (minimum 3.11). Use modern syntax:
 
 ## Setup and tests
 
-    python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
-    .venv/bin/python -W error -X dev -m unittest discover -s tests
+    uv sync                                  # .venv from pyproject.toml + uv.lock (Python 3.12)
+    PYTHONDEVMODE=1 uv run pytest            # warnings are errors (pyproject.toml)
 
-`.venv/bin/pytest` also works. Runtime dependencies are pydantic, starlette, uvicorn, jinja2 and
-python-multipart. Tests use `unittest` (web tests use Starlette's `TestClient`, which needs `httpx2`;
-shared set-up in `tests/webfixture.py`, so run tests through `discover -s tests`) and providers use
+Add dependencies with `uv add` / `uv add --dev` and commit `uv.lock`. Runtime dependencies are
+pydantic, starlette, uvicorn, jinja2 and python-multipart. Tests are `unittest.TestCase` classes run
+by pytest (web tests use Starlette's `TestClient`, which needs `httpx2`; shared set-up in
+`tests/webfixture.py`, on pytest's `pythonpath`) and providers use
 stdlib `urllib`; keep it that way unless there is a reason to add a dependency. One integration test
 needs `ffmpeg`/`ffprobe`. htmx is vendored in `src/threadfin/static/` (no CDN: the UI must work offline).
 
