@@ -6,7 +6,7 @@ in `docs/PARITY_NOTES.md`.
 
 ## Python Version
 
-Python 3.12 (minimum 3.11). Use modern syntax:
+Python 3.12 minimum (`requires-python` in pyproject.toml). Use modern syntax:
 - `X | None` instead of `Optional[X]`
 - `list[str]` instead of `List[str]`
 - `dict[str, Any]` instead of `Dict[str, Any]`
@@ -20,6 +20,8 @@ Python 3.12 (minimum 3.11). Use modern syntax:
     PYTHONDEVMODE=1 uv run pytest            # warnings are errors (pyproject.toml)
     uv run ruff check                        # rules in pyproject.toml; must pass
     uv run ruff format                       # `# fmt: skip` keeps hand-aligned tables
+
+A commit that only reformats goes in `.git-blame-ignore-revs` (once it is on `main`).
 
 Add dependencies with `uv add` / `uv add --dev` and commit `uv.lock`. Runtime dependencies are
 pydantic, starlette, uvicorn, jinja2 and python-multipart. Tests are `unittest.TestCase` classes run
