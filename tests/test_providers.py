@@ -32,7 +32,7 @@ from threadfin.settings import Settings
 
 M3U = (
     '#EXTM3U\n#EXTINF:-1 tvg-id="a" tvg-name="A" group-title="News" tvg-logo="http://x/l.png",Alpha\n'
-    "http://s/1\n#EXTINF:-1 group-title=\"Sports\",Beta\nhttp://s/2\n"
+    'http://s/1\n#EXTINF:-1 group-title="Sports",Beta\nhttp://s/2\n'
     '#EXTINF:-1 tvg-id="n",\nhttp://s/3\n'
 )
 XMLTV = (
@@ -189,7 +189,7 @@ class RefreshTests(ServerCase):
         self.assertTrue(result.ok)
         self.assertEqual(result.streams, 2)
         self.assertEqual([e.reason for e in result.skipped], ["no name"])
-        (pid, record), = self.settings.files.m3u.items()
+        ((pid, record),) = self.settings.files.m3u.items()
         self.assertEqual(pid[0], "M")
         self.assertEqual(len(pid), 20)
         self.assertEqual(record["name"], "list.m3u")
@@ -200,14 +200,12 @@ class RefreshTests(ServerCase):
         self.assertEqual(record["file.threadfin"], pid + ".m3u")
         self.assertEqual(record["type"], "m3u")
         copy = (self.data / f"{pid}.m3u").read_text()
-        self.assertTrue(copy.startswith("#EXTM3U\n#EXTINF:-1 tvg-id=\"a\" tvg-name=\"A\" tvg-chno=\"\""))
+        self.assertTrue(copy.startswith('#EXTM3U\n#EXTINF:-1 tvg-id="a" tvg-name="A" tvg-chno=""'))
         self.assertEqual([s["name"] for s in parse_m3u(copy)], ["Alpha", "Beta"])
         self.assertGreater(self.saves, 0)
 
     async def test_explicit_values_beat_defaults(self) -> None:
-        await self.manager.add(
-            "m3u", {"file.source": f"{self.base}/list.m3u", "name": "Mine", "tuner": 4}
-        )
+        await self.manager.add("m3u", {"file.source": f"{self.base}/list.m3u", "name": "Mine", "tuner": 4})
         record = next(iter(self.settings.files.m3u.values()))
         self.assertEqual((record["name"], record["tuner"]), ("Mine", 4))
 
@@ -235,11 +233,11 @@ class RefreshTests(ServerCase):
 
     async def test_failure_counters_and_availability(self) -> None:
         await self.manager.add("m3u", {"file.source": f"{self.base}/flaky"})
-        (pid, record), = self.settings.files.m3u.items()
+        ((pid, record),) = self.settings.files.m3u.items()
         copy = (self.data / f"{pid}.m3u").read_bytes()
 
         Handler.fail = True
-        result, = await self.manager.refresh("m3u", pid)
+        (result,) = await self.manager.refresh("m3u", pid)
         self.assertFalse(result.ok)
         self.assertEqual(result.error, f"503: {self.base}/flaky Service Unavailable")
         self.assertEqual((record["counter.error"], record["counter.download"]), (1, 2))
@@ -259,12 +257,12 @@ class RefreshTests(ServerCase):
         self.assertEqual(sorted(r.ok for r in results), [False, True])
 
     async def test_refresh_unknown_provider(self) -> None:
-        result, = await self.manager.refresh("m3u", "nope")
+        (result,) = await self.manager.refresh("m3u", "nope")
         self.assertFalse(result.ok)
 
     async def test_xmltv_compatibility_counts(self) -> None:
         await self.manager.add("xmltv", {"file.source": f"{self.base}/tv.xml"})
-        (pid, record), = self.settings.files.xmltv.items()
+        ((pid, record),) = self.settings.files.xmltv.items()
         self.assertEqual(record["compatibility"], {"xmltv.channels": 1, "xmltv.programs": 2})
         self.assertNotIn("tuner", record)
         self.assertTrue((self.data / f"{pid}.xml").exists())

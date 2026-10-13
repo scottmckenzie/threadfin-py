@@ -47,9 +47,7 @@ class BackupStream:
         if not isinstance(value, dict):
             return None
         playlist_id, url = value.get("PlaylistID"), value.get("URL")
-        return BackupStream(
-            playlist_id if isinstance(playlist_id, str) else "", url if isinstance(url, str) else ""
-        )
+        return BackupStream(playlist_id if isinstance(playlist_id, str) else "", url if isinstance(url, str) else "")
 
 
 # (attribute, JSON key, kind) in the order Go marshals them.
@@ -172,9 +170,7 @@ def channel_hash(url: str, tvg_id: str, playlist_id: str) -> str:
 
 def load_xepg(path: str) -> dict[str, XEPGChannel]:
     return {
-        key: XEPGChannel.from_json(value)
-        for key, value in load_json_object(path).items()
-        if isinstance(value, dict)
+        key: XEPGChannel.from_json(value) for key, value in load_json_object(path).items() if isinstance(value, dict)
     }
 
 
@@ -242,9 +238,7 @@ def group_filters(settings_filter: Mapping[str, Any]) -> list[GroupFilter]:
     for key in sorted(settings_filter, key=order):
         raw = settings_filter[key]
         if isinstance(raw, Mapping):
-            result.append(
-                GroupFilter(text(raw, "filter"), text(raw, "startingNumber"), text(raw, "x-category"))
-            )
+            result.append(GroupFilter(text(raw, "filter"), text(raw, "startingNumber"), text(raw, "x-category")))
     return result
 
 
@@ -264,9 +258,7 @@ class BuildResult:
     warnings: list[str] = field(default_factory=list)
 
 
-WARNING_NO_ACTIVE_CHANNELS = (
-    "No channels are active. Open the mapping page and activate the channels you want."
-)
+WARNING_NO_ACTIVE_CHANNELS = "No channels are active. Open the mapping page and activate the channels you want."
 
 
 # --- duplicates -------------------------------------------------------------------

@@ -77,11 +77,12 @@ class BehaviourTests(unittest.TestCase):
 
     def test_limit_boundaries(self) -> None:
         def run(count: int, **kw: object):
-            content = "#EXTM3U\n" + "".join(
-                f'#EXTINF:-1 tvg-id="i{i}",C{i}\nhttp://s/{i}\n' for i in range(count)
-            )
-            case = {"filters": {}, "ignoreFilters": bool(kw.get("ignore")),
-                    "providers": [{"kind": "m3u", "id": "M1", "name": "P", "content": content, "missing": False}]}
+            content = "#EXTM3U\n" + "".join(f'#EXTINF:-1 tvg-id="i{i}",C{i}\nhttp://s/{i}\n' for i in range(count))
+            case = {
+                "filters": {},
+                "ignoreFilters": bool(kw.get("ignore")),
+                "providers": [{"kind": "m3u", "id": "M1", "name": "P", "content": content, "missing": False}],
+            }
             with tempfile.TemporaryDirectory() as tmp:
                 settings, manager = setup(case, Path(tmp))
                 return build_stream_database(manager, settings)
@@ -117,8 +118,11 @@ class BehaviourTests(unittest.TestCase):
             self.assertIn("M1: Local copy of the file no longer exists", db.errors["M1"])
 
     def test_invalid_copy_is_reported_not_raised(self) -> None:
-        case = {"filters": {}, "ignoreFilters": False,
-                "providers": [{"kind": "m3u", "id": "M1", "name": "Bad", "content": "<html>", "missing": False}]}
+        case = {
+            "filters": {},
+            "ignoreFilters": False,
+            "providers": [{"kind": "m3u", "id": "M1", "name": "Bad", "content": "<html>", "missing": False}],
+        }
         with tempfile.TemporaryDirectory() as tmp:
             settings, manager = setup(case, Path(tmp))
             db = build_stream_database(manager, settings)
@@ -126,8 +130,11 @@ class BehaviourTests(unittest.TestCase):
 
     def test_skipped_entries_are_surfaced(self) -> None:
         content = '#EXTM3U\n#EXTINF:-1 tvg-id="x",\nhttp://s/1\n#EXTINF:-1,Named\nhttp://s/2\n'
-        case = {"filters": {}, "ignoreFilters": False,
-                "providers": [{"kind": "m3u", "id": "M1", "name": "P", "content": content, "missing": False}]}
+        case = {
+            "filters": {},
+            "ignoreFilters": False,
+            "providers": [{"kind": "m3u", "id": "M1", "name": "P", "content": content, "missing": False}],
+        }
         with tempfile.TemporaryDirectory() as tmp:
             settings, manager = setup(case, Path(tmp))
             db = build_stream_database(manager, settings)

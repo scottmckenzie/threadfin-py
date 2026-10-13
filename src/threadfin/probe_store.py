@@ -94,9 +94,7 @@ class ProbeStore:
             self._db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             self._db.commit()
         elif version > SCHEMA_VERSION:
-            raise RuntimeError(
-                f"probe database is from a newer version (schema {version} > {SCHEMA_VERSION})"
-            )
+            raise RuntimeError(f"probe database is from a newer version (schema {version} > {SCHEMA_VERSION})")
 
     def close(self) -> None:
         with self._lock:

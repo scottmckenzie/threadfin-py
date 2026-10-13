@@ -104,16 +104,12 @@ class ApostropheTests(unittest.TestCase):
         self.assertEqual(len(report.streams), 2)
         # The third entry mentions "#EXTINF" inside its name, which splits it in two (as in Go):
         # a first half without a URL and a second half without a name. Both are reported now.
-        self.assertEqual(
-            [(e.line, e.reason) for e in report.skipped], [(6, "no url"), (6, "no name")]
-        )
+        self.assertEqual([(e.line, e.reason) for e in report.skipped], [(6, "no url"), (6, "no name")])
 
     def test_single_quoted_attributes_still_parse(self) -> None:
         text = "#EXTM3U\n#EXTINF:-1 tvg-id='a.1' tvg-name='Alpha' group-title='News',Alpha\nhttp://x/1\n"
         (stream,) = parse_m3u(text)
-        self.assertEqual(
-            (stream["tvg-id"], stream["tvg-name"], stream["group-title"]), ("a.1", "Alpha", "News")
-        )
+        self.assertEqual((stream["tvg-id"], stream["tvg-name"], stream["group-title"]), ("a.1", "Alpha", "News"))
 
 
 if __name__ == "__main__":

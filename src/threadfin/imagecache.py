@@ -49,7 +49,10 @@ CACHE_NAME = re.compile(r"[0-9a-f]{32}\.[A-Za-z0-9]{1,5}")
 # Headers for images served from this origin (cache and uploads): no content sniffing, and an SVG
 # cannot run scripts or load anything.
 SAFE_IMAGE_HEADERS = {"X-Content-Type-Options": "nosniff"}
-SVG_HEADERS = {**SAFE_IMAGE_HEADERS, "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox"}
+SVG_HEADERS = {
+    **SAFE_IMAGE_HEADERS,
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+}
 
 
 def image_headers(name: str) -> dict[str, str]:
@@ -74,7 +77,14 @@ def looks_like_image(data: bytes, name: str) -> bool:
     if name.lower().endswith(".svg"):
         text = head.lstrip(b"\xef\xbb\xbf \t\r\n").lower()
         return text.startswith(b"<svg") or (text.startswith(b"<?xml") and b"<svg" in data[:4096].lower())
-    signatures = (b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"\x00\x00\x01\x00", b"BM")  # png jpeg gif ico bmp
+    signatures = (
+        b"\x89PNG\r\n\x1a\n",
+        b"\xff\xd8\xff",
+        b"GIF87a",
+        b"GIF89a",
+        b"\x00\x00\x01\x00",
+        b"BM",
+    )  # png jpeg gif ico bmp
     return head.startswith(signatures) or (head.startswith(b"RIFF") and head[8:12] == b"WEBP")
 
 

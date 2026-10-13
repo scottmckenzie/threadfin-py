@@ -75,7 +75,10 @@ def _write_zip(target: Path, system: SystemInfo, folder: Path) -> None:
     """System files (missing ones skipped) plus ``folder`` (if it exists), written atomically."""
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
     try:
-        with os.fdopen(fd, "wb") as handle, zipfile.ZipFile(handle, "w", zipfile.ZIP_DEFLATED, strict_timestamps=False) as archive:
+        with (
+            os.fdopen(fd, "wb") as handle,
+            zipfile.ZipFile(handle, "w", zipfile.ZIP_DEFLATED, strict_timestamps=False) as archive,
+        ):
             for name in SYSTEM_FILES:
                 path = system.config / name
                 if path.is_file():

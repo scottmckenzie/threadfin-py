@@ -65,7 +65,10 @@ class StreamInfo:
             return item if isinstance(item, str) else ""
 
         return StreamInfo(
-            text("channelNumber"), text("name"), text("playlistID"), text("url"),
+            text("channelNumber"),
+            text("name"),
+            text("playlistID"),
+            text("url"),
             BackupStream.from_json(value.get("backup_channel_1")),
             BackupStream.from_json(value.get("backup_channel_2")),
             BackupStream.from_json(value.get("backup_channel_3")),

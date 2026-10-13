@@ -135,7 +135,6 @@ class Service:
         """``epgSource`` XEPG builds guide + playlist; PMS only serves the lineup."""
         return self.settings.epg_source == "XEPG"
 
-
     def _build(self, report: BuildReport, now: datetime) -> None:
         settings, system = self.settings, self.system
         self._image_session = None
@@ -536,7 +535,9 @@ class Service:
         options = PlaylistOptions(
             base_url=base_url,
             group_labels=tuple(g.label for g in self.stream_db.groups),
-            image_url=(lambda url: self.images.lookup(url, base_url)) if self.settings.cache_images else identity_image_url,
+            image_url=(lambda url: self.images.lookup(url, base_url))
+            if self.settings.cache_images
+            else identity_image_url,
         )
         return build_playlist(self.channels, options, StreamRegistry(), groups or ())
 

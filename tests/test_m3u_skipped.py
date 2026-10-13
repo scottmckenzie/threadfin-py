@@ -67,8 +67,7 @@ class SkippedEntryTests(unittest.TestCase):
 
     def test_line_numbers_with_crlf_and_blank_lines(self) -> None:
         text = (
-            '#EXTM3U\r\n\r\n#EXTINF:-1 tvg-id="a",Named\r\nhttp://x/1\r\n\r\n'
-            '#EXTINF:-1 tvg-id="b",\r\nhttp://x/2\r\n'
+            '#EXTM3U\r\n\r\n#EXTINF:-1 tvg-id="a",Named\r\nhttp://x/1\r\n\r\n#EXTINF:-1 tvg-id="b",\r\nhttp://x/2\r\n'
         )
         result = parse_m3u_report(text)
         self.assertEqual([s["name"] for s in result.streams], ["Named"])

@@ -74,7 +74,9 @@ class Golden(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             case = json.loads((GOLDEN / "xepg_empty.input.json").read_text("utf-8"))
             self.assertEqual(run(case, Path(td))["lineup"], [])  # Go: null
-            self.assertEqual(json.loads(json.loads((GOLDEN / "xepg_empty.golden.json").read_text("utf-8"))["lineup"]), None)
+            self.assertEqual(
+                json.loads(json.loads((GOLDEN / "xepg_empty.golden.json").read_text("utf-8"))["lineup"]), None
+            )
         with tempfile.TemporaryDirectory() as td:
             case = json.loads((GOLDEN / "pms_missing_file.input.json").read_text("utf-8"))
             numbers = [e["GuideNumber"] for e in run(case, Path(td))["lineup"]]
@@ -94,8 +96,17 @@ class Units(unittest.TestCase):
 
     def test_xepg_lineup_is_in_channel_order(self) -> None:
         def make(n: str) -> XEPGChannel:
-            return XEPGChannel.from_json({"x-active": True, "x-name": n, "x-channelID": n, "tvg-chno": n,
-                                          "x-epg": f"x-ID.{n}", "url": f"http://p/{n}", "_file.m3u.id": "M1"})
+            return XEPGChannel.from_json(
+                {
+                    "x-active": True,
+                    "x-name": n,
+                    "x-channelID": n,
+                    "tvg-chno": n,
+                    "x-epg": f"x-ID.{n}",
+                    "url": f"http://p/{n}",
+                    "_file.m3u.id": "M1",
+                }
+            )
 
         channels = {f"x-ID.{n}": make(n) for n in ("10", "2", "1000", "1")}
         numbers = [e["GuideNumber"] for e in lineup_xepg(channels, StreamRegistry(), "http://h")]

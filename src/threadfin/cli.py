@@ -32,15 +32,28 @@ log = logging.getLogger("threadfin")
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="threadfin", description=f"{NAME} {__version__}: M3U proxy and EPG mapper "
                                 "for Plex / Emby / Jellyfin.")  # fmt: skip
-    p.add_argument("-config", "--config", metavar="DIR", default="",
-                   help=f"config folder (default: {default_config_folder()})")
+    p.add_argument(
+        "-config", "--config", metavar="DIR", default="", help=f"config folder (default: {default_config_folder()})"
+    )
     p.add_argument("-port", "--port", default="", help="server port, saved to settings.json (default: 34400)")
-    p.add_argument("-bind", "--bind", default="", metavar="IP",
-                   help="address to listen on (default: the bindIpAddress setting, else all interfaces)")
+    p.add_argument(
+        "-bind",
+        "--bind",
+        default="",
+        metavar="IP",
+        help="address to listen on (default: the bindIpAddress setting, else all interfaces)",
+    )
     p.add_argument("-restore", "--restore", metavar="FILE", default="", help="restore a backup, then exit")
     p.add_argument("-info", "--info", action="store_true", help="show system info, then exit")
-    p.add_argument("-debug", "--debug", type=int, default=0, choices=range(4), metavar="0-3",
-                   help="debug level (2 and up also logs every request)")
+    p.add_argument(
+        "-debug",
+        "--debug",
+        type=int,
+        default=0,
+        choices=range(4),
+        metavar="0-3",
+        help="debug level (2 and up also logs every request)",
+    )
     p.add_argument("-branch", "--branch", default="", help=argparse.SUPPRESS)  # Go's self-update branch
     p.add_argument("-version", "--version", action="version", version=f"{NAME} {__version__}")
     return p

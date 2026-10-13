@@ -209,9 +209,7 @@ def check_xmltv(body: bytes) -> dict[str, int]:
             if event == "start":
                 depth += 1
                 if depth == 1 and element.tag != "tv":
-                    raise ProviderError(
-                        f"expected element <tv> but have <{element.tag}>"
-                    )
+                    raise ProviderError(f"expected element <tv> but have <{element.tag}>")
             else:
                 depth -= 1
                 if depth == 1:
@@ -395,9 +393,7 @@ class ProviderManager:
 
         try:
             filename, body = await asyncio.to_thread(self._fetch_source, kind, source, proxy)
-            result = await asyncio.to_thread(
-                self._store, kind, provider_id, record, source, filename, body
-            )
+            result = await asyncio.to_thread(self._store, kind, provider_id, record, source, filename, body)
         except (ProviderError, InvalidM3UError, OSError) as exc:
             return self._failed(kind, provider_id, record, str(exc), new)
         if not new:
@@ -411,9 +407,7 @@ class ProviderManager:
         agent = self._settings.user_agent
         scheme = urlsplit(source).scheme.lower()
         if scheme in ("http", "https"):
-            fetched = self._fetch(
-                source, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes
-            )
+            fetched = self._fetch(source, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes)
             return fetched.filename, fetched.body
         raise ProviderError(f"unsupported source {source!r}: use an http:// or https:// URL")
 
@@ -447,9 +441,7 @@ class ProviderManager:
         record["counter.download"] = _number(record.get("counter.download")) + 1
         return RefreshResult(provider_id, kind, True, None, count, skipped)
 
-    def _failed(
-        self, kind: str, provider_id: str, record: dict[str, Any], error: str, new: bool
-    ) -> RefreshResult:
+    def _failed(self, kind: str, provider_id: str, record: dict[str, Any], error: str, new: bool) -> RefreshResult:
         if not new:
             record["counter.error"] = _number(record.get("counter.error")) + 1
             record["counter.download"] = _number(record.get("counter.download")) + 1

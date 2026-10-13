@@ -46,9 +46,7 @@ class GoldenFilterTests(unittest.TestCase):
                     golden["rules"],
                 )
                 got = [filter_stream(s, rules) for s in case["streams"]]
-                self.assertEqual(
-                    [{"active": a, "liveEvent": e} for a, e in got], golden["results"]
-                )
+                self.assertEqual([{"active": a, "liveEvent": e} for a, e in got], golden["results"])
 
 
 class UnitTests(unittest.TestCase):

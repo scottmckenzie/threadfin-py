@@ -59,7 +59,9 @@ class Goldens(unittest.TestCase):
             golden = json.loads((GOLDEN / f"{name}.golden.json").read_text())
             if not spec["caching"]:
                 with self.subTest(name):  # caching off: Go only trims CR/LF; the guide uses the URLs as they are
-                    self.assertEqual([lk["first"] for lk in golden["lookups"]], [s.strip("\r\n") for s in spec["sources"]])
+                    self.assertEqual(
+                        [lk["first"] for lk in golden["lookups"]], [s.strip("\r\n") for s in spec["sources"]]
+                    )
                     self.assertEqual(golden["queue"], [])
                 continue
             with self.subTest(name), tempfile.TemporaryDirectory() as tmp:
@@ -108,7 +110,12 @@ class Names(unittest.TestCase):
 
     def test_paths_stay_in_the_folder(self) -> None:
         cache = ImageCache("/tmp/cache")
-        for name in ("../settings.json", "a.png", "d41d8cd98f00b204e9800998ecf8427e.html", "x/d41d8cd98f00b204e9800998ecf8427e.png"):
+        for name in (
+            "../settings.json",
+            "a.png",
+            "d41d8cd98f00b204e9800998ecf8427e.html",
+            "x/d41d8cd98f00b204e9800998ecf8427e.png",
+        ):
             with self.subTest(name):
                 self.assertIsNone(cache.path(name))
         self.assertIsNotNone(cache.path("d41d8cd98f00b204e9800998ecf8427e.PNG"))
@@ -118,7 +125,9 @@ class Names(unittest.TestCase):
         self.assertEqual(image_headers("x.png"), {"X-Content-Type-Options": "nosniff"})
 
     def test_bases(self) -> None:
-        self.assertEqual(configured_base(settings(force_https=True, https_threadfin_domain="tv.example")), "https://tv.example")
+        self.assertEqual(
+            configured_base(settings(force_https=True, https_threadfin_domain="tv.example")), "https://tv.example"
+        )
         self.assertEqual(configured_base(settings(force_https=True, https_threadfin_domain="tv.example", https_port=8443)),
                          "https://tv.example:8443")  # fmt: skip
         self.assertEqual(configured_base(settings(http_threadfin_domain="tv.example")), "http://tv.example:34400")
@@ -148,7 +157,9 @@ class Downloads(unittest.TestCase):
 
     def test_fill_and_prune(self) -> None:
         session = self.cache.session("http://me:1")
-        urls = [session.url(u) for u in ("http://h/a.png", "http://h/html.png", "http://h/gone.png", "http://h/a.png?v=2")]
+        urls = [
+            session.url(u) for u in ("http://h/a.png", "http://h/html.png", "http://h/gone.png", "http://h/a.png?v=2")
+        ]
         self.assertEqual(urls[0], "http://h/a.png")  # not cached yet
         self.assertEqual(self.cache.fill(session), (1, 2))
         name = cache_name("http://h/a.png")
@@ -230,7 +241,9 @@ class ThroughTheApp(AppTestCase):
 
         # The channel database keeps the provider's URL (Go stored the cache URL in it).
         saved = json.loads(self.system.file_xepg.read_text())
-        self.assertEqual({c["tvg-logo"] for c in saved.values()} - {""}, {f"{self.url}/img/a.png", f"{self.url}/img/bad.png"})
+        self.assertEqual(
+            {c["tvg-logo"] for c in saved.values()} - {""}, {f"{self.url}/img/a.png", f"{self.url}/img/bad.png"}
+        )
 
     def test_rebuild_does_not_download_again_and_prunes(self) -> None:
         self.enable()

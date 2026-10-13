@@ -217,8 +217,10 @@ class PMSMode(Base):
     async def test_lineup_uses_provider_streams(self) -> None:
         _, _, body = await asyncio.to_thread(self.get, "/lineup.json")
         lineup = json.loads(body)
-        self.assertEqual([e["GuideName"] for e in lineup], ["Alpha", "Beta", "Gamma \"Q\""])
-        self.assertEqual([e["GuideNumber"] for e in lineup], ["Alpha", "Beta", "Gamma"])  # tvg-name is the provider's own number
+        self.assertEqual([e["GuideName"] for e in lineup], ["Alpha", "Beta", 'Gamma "Q"'])
+        self.assertEqual(
+            [e["GuideNumber"] for e in lineup], ["Alpha", "Beta", "Gamma"]
+        )  # tvg-name is the provider's own number
         _, _, again = await asyncio.to_thread(self.get, "/lineup.json")
         self.assertEqual(json.loads(again), lineup)
         base = f"http://127.0.0.1:{self.port}"

@@ -19,6 +19,7 @@ Python 3.12 (minimum 3.11). Use modern syntax:
     uv sync                                  # .venv from pyproject.toml + uv.lock (Python 3.12)
     PYTHONDEVMODE=1 uv run pytest            # warnings are errors (pyproject.toml)
     uv run ruff check                        # rules in pyproject.toml; must pass
+    uv run ruff format                       # `# fmt: skip` keeps hand-aligned tables
 
 Add dependencies with `uv add` / `uv add --dev` and commit `uv.lock`. Runtime dependencies are
 pydantic, starlette, uvicorn, jinja2 and python-multipart. Tests are `unittest.TestCase` classes run

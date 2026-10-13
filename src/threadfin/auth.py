@@ -307,15 +307,18 @@ class Authentication:
         """createFirstUserForAuthentication: the first user gets every level but the API; returns a token."""
         with self._lock:
             user_id = self.create_default_user(username, password)
-            self.write_user_data(user_id, {
-                "username": username,
-                LEVEL_WEB: True,
-                LEVEL_PMS: True,
-                LEVEL_M3U: True,
-                LEVEL_XML: True,
-                LEVEL_API: False,
-                "defaultUser": True,
-            })
+            self.write_user_data(
+                user_id,
+                {
+                    "username": username,
+                    LEVEL_WEB: True,
+                    LEVEL_PMS: True,
+                    LEVEL_M3U: True,
+                    LEVEL_XML: True,
+                    LEVEL_API: False,
+                    "defaultUser": True,
+                },
+            )
             return self._issue_token(user_id)
 
     def save_new_user(self, data: dict[str, Any]) -> str:

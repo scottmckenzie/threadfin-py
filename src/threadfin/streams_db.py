@@ -24,12 +24,9 @@ PLEX_CHANNEL_LIMIT = 480
 UNFILTERED_CHANNEL_LIMIT = 480
 
 WARNING_PLEX_LIMIT = (
-    "Plex can not handle more than {limit} streams. "
-    "If you do not use Plex, you can ignore this warning."
+    "Plex can not handle more than {limit} streams. If you do not use Plex, you can ignore this warning."
 )
-WARNING_UNFILTERED = (
-    "Threadfin has loaded more than {limit} streams. Use the filter to reduce the number of streams."
-)
+WARNING_UNFILTERED = "Threadfin has loaded more than {limit} streams. Use the filter to reduce the number of streams."
 
 
 @dataclass(frozen=True, slots=True)

@@ -417,8 +417,9 @@ def _clean(text: str) -> str:
     if text.isprintable() and text.isascii():
         return text
     return "".join(
-        ch if ch in "\t\n\r" or 0x20 <= ord(ch) <= 0xD7FF or (0xE000 <= ord(ch) <= 0xFFFD)
-        or ord(ch) >= 0x10000 else "�"
+        ch
+        if ch in "\t\n\r" or 0x20 <= ord(ch) <= 0xD7FF or (0xE000 <= ord(ch) <= 0xFFFD) or ord(ch) >= 0x10000
+        else "�"
         for ch in text
     )
 
@@ -493,7 +494,9 @@ def render_programme(p: Programme) -> str:
             parts.append(f"      <icon{_attrs(src=icon)}/>\n")
         parts.append("    </rating>\n")
     for system, value in p.star_ratings:
-        parts.append(f"    <star-rating{_attrs(system=system)}>\n      <value>{_text(value)}</value>\n    </star-rating>\n")
+        parts.append(
+            f"    <star-rating{_attrs(system=system)}>\n      <value>{_text(value)}</value>\n    </star-rating>\n"
+        )
     parts.append("  </programme>\n")
     return "".join(parts)
 
@@ -555,9 +558,7 @@ def write_xmltv(
                 if targets:
                     source = parse_programme(element)
                     for target in targets:
-                        programmes[target.x_epg].append(
-                            render_programme(convert_programme(source, target, options))
-                        )
+                        programmes[target.x_epg].append(render_programme(convert_programme(source, target, options)))
         except XMLTVError as exc:
             stats.errors[file] = str(exc)
 
@@ -572,7 +573,7 @@ def write_xmltv(
                     icon = options.image_url(entry.tvg_logo)
                     out.write(f"  <channel id={quoteattr(_clean(entry.x_channel_id))}>\n")
                     out.write(f"    <display-name>{_text(entry.x_name)}</display-name>\n")
-                    out.write(f"    <icon{_attrs(src=icon)}/>\n" if icon else "    <icon src=\"\"/>\n")
+                    out.write(f"    <icon{_attrs(src=icon)}/>\n" if icon else '    <icon src=""/>\n')
                     out.write("  </channel>\n")
                     stats.channels += 1
             for entry in entries:

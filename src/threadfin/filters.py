@@ -108,9 +108,7 @@ def build_filter_rules(filters: Mapping[str, Any] | Iterable[Mapping[str, Any]])
             include = f" {{{f['include']}}}" if f["include"] else ""
             exclude = f" !{{{f['exclude']}}}" if f["exclude"] else ""
             rules.append(
-                FilterRule(
-                    f"{f['filter']}{include}{exclude}", GROUP_TITLE, f["caseSensitive"], f["liveEvent"]
-                )
+                FilterRule(f"{f['filter']}{include}{exclude}", GROUP_TITLE, f["caseSensitive"], f["liveEvent"])
             )
     return rules
 
