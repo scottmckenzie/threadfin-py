@@ -17,7 +17,7 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | Providers (URL / file / HDHomeRun fetch, gzip, local copies, counters) | done, tested against a local HTTP server |
 | Stream database (active / inactive, previews, groups, compatibility) | done, golden-tested against Go (30 cases) |
 | XMLTV channel mapping, channel database (XEPG) | done, golden-tested against Go (69 cases) |
-| XMLTV guide output (provider, dummy and live-event guides) | done, golden-tested against Go (50 cases) |
+| XMLTV guide output (provider, dummy and live-event guides) | done, golden-tested against Go (50 cases); live-event start times are read from the channel name (Go never managed to) |
 | M3U playlist output + stream id registry | done, golden-tested against Go (39 cases) |
 | Build pipeline, `/stream/` redirect, `/m3u/`, `/xmltv/` endpoints | done, tested end to end |
 | HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
@@ -81,6 +81,4 @@ Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the developmen
 
 ## Open questions
 
-- Live-event (PPV) start times never worked in Go (always 06:00 if the name contains a
-  digit, else midnight). Implement the intended date / time / timezone parsing?
 - Backup channels cannot fail over with a plain 302; they are kept in the registry only.

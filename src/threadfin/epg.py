@@ -15,22 +15,23 @@ Differences from Go: elements are written in XMLTV DTD order, empty ``<credits>`
 ``<date>`` and the app-private ``<live>`` / ``<active>`` channel children are left out, generator and
 source are attributes of ``<tv>`` (Go wrote them as child elements), control characters Go would have
 emitted are replaced with U+FFFD, and a dummy guide with a zero-minute length uses 30 minutes instead
-of looping forever. The "event start time" parsing of live-event channel names never worked in Go
-(see docs/PARITY_NOTES.md) and is reproduced as it behaves: 06:00 if the name contains a digit,
-midnight otherwise.
+of looping forever. Go never read the event time in a live-event channel name (06:00 whenever the
+name has a digit); :func:`event_start` does (see docs/PARITY_NOTES.md).
 """
 
 from __future__ import annotations
 
 import gzip
 import os
+import re
 import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from pathlib import Path
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape, quoteattr
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .xepg import XEPGChannel
 from .xmltv import (
@@ -273,23 +274,84 @@ def _stamp(moment: datetime) -> str:
     return moment.strftime("%Y%m%d%H%M%S %z")
 
 
+# [M/D or M.D, then '-' or spaces] H:MM, H AM/PM or HH:MM [US zone, UTC or GMT]: "12/25-1:00 PM",
+# "3.21 3:45 AM ET", "9PM", "20:00". Other zones are not read ("20:00 CET" is server-local 20:00).
+_EVENT_TIME = re.compile(
+    r"(?<![\d./:])"
+    r"(?:(?P<month>\d{1,2})[./](?P<day>\d{1,2})[-\s]+)?"
+    r"(?P<hour>\d{1,2})(?::(?P<minute>\d{2}))?(?!\d)"
+    r"(?:\s*(?P<ampm>[AaPp])\.?[Mm]\.?(?![A-Za-z]))?"
+    r"(?:\s*\b(?P<tz>[ECMP][SD]?T|UTC|GMT)\b)?"
+)
+_EVENT_ZONES = {"E": "America/New_York", "C": "America/Chicago", "M": "America/Denver", "P": "America/Los_Angeles"}
+MIN_EVENT_LENGTH = timedelta(hours=3)
+
+
+def _zone(abbreviation: str | None, now: datetime) -> tzinfo:
+    if not abbreviation:
+        return now.tzinfo or UTC
+    if abbreviation in ("UTC", "GMT"):
+        return UTC
+    try:
+        return ZoneInfo(_EVENT_ZONES[abbreviation[0]])
+    except ZoneInfoNotFoundError:  # no tz database (Windows without the tzdata package)
+        return now.tzinfo or UTC
+
+
+def event_start(name: str, now: datetime) -> datetime | None:
+    """The event start written in a live-event channel name, in ``now``'s timezone, or None.
+
+    A time needs minutes or AM/PM ("UFC 300" has none). Without a date the event is on today's date
+    in the event's timezone; with one, in the year that puts it closest to ``now``.
+    """
+    for match in _EVENT_TIME.finditer(name):
+        hour, minute = int(match["hour"]), int(match["minute"] or 0)
+        if match["ampm"]:
+            if not 1 <= hour <= 12:
+                continue
+            hour = hour % 12 + (12 if match["ampm"] in "Pp" else 0)
+        elif match["minute"] is None:
+            continue
+        zone = _zone(match["tz"], now)
+        today = now.astimezone(zone)
+        try:
+            if match["month"] is None:
+                start = datetime(today.year, today.month, today.day, hour, minute, tzinfo=zone)
+            else:
+                month, day = int(match["month"]), int(match["day"])
+                start = min(
+                    (datetime(year, month, day, hour, minute, tzinfo=zone) for year in (today.year - 1, today.year, today.year + 1)),
+                    key=lambda candidate: abs(candidate - now),
+                )  # fmt: skip
+        except ValueError:  # 24:00, 9:60, 2/30 ...
+            continue
+        return start.astimezone(now.tzinfo)
+    return None
+
+
 def live_programmes(channel: XEPGChannel, channel_id: str, options: EPGOptions, now: datetime) -> list[Programme]:
-    """The "PPV" guide: offline until the event, the event, offline the next day."""
+    """The "PPV" guide: offline until the event, the event until the end of its day, offline the next day.
+
+    The event starts at the time in the channel name (:func:`event_start`); a name with digits but no
+    readable time starts at 06:00 today, one without digits at midnight (as Go intended). A late event
+    runs for at least :data:`MIN_EVENT_LENGTH`.
+    """
     name = channel.x_name or channel.tvg_name
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    last_second = now.replace(hour=23, minute=59, second=59, microsecond=0)
 
-    start = midnight
-    # Go looks for an event time in the name, but its parser always fails and falls back to 06:00.
-    if any("0" <= ch <= "9" for ch in name):
-        start = now.replace(hour=6, minute=0, second=0, microsecond=0)
+    start = event_start(name, now)
+    if start is None:
+        start = midnight.replace(hour=6) if any("0" <= ch <= "9" for ch in name) else midnight
+    event_day = start.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = event_day.replace(hour=23, minute=59, second=59)
+    stop = day_end if start + MIN_EVENT_LENGTH <= event_day + timedelta(days=1) else start + MIN_EVENT_LENGTH
 
     offline = OFFLINE_TEXT if options.enable_non_ascii else strip_non_ascii(OFFLINE_TEXT)
     before = Programme(
-        channel=channel_id, start=_stamp(midnight), stop=_stamp(start),
+        channel=channel_id, start=_stamp(min(midnight, event_day)), stop=_stamp(start),
         titles=[("en", offline)], descs=[("en", offline)],
     )  # fmt: skip
-    main = Programme(channel=channel_id, start=_stamp(start), stop=_stamp(last_second))
+    main = Programme(channel=channel_id, start=_stamp(start), stop=_stamp(stop))
     if options.replace_channel_title and channel.x_mapping == PPV:
         title = f"{name} {channel.x_ppv_extra}"
         if not options.enable_non_ascii:
@@ -297,10 +359,10 @@ def live_programmes(channel: XEPGChannel, channel_id: str, options: EPGOptions, 
         main.titles = [("en", title)]
         main.descs = [("en", title)]
 
-    next_day = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    after_start = event_day + timedelta(days=1) if stop == day_end else stop
     after = Programme(
-        channel=channel_id, start=_stamp(next_day),
-        stop=_stamp(next_day.replace(hour=23, minute=59, second=59)),
+        channel=channel_id, start=_stamp(after_start),
+        stop=_stamp(after_start.replace(hour=23, minute=59, second=59)),
         titles=[("en", offline)], descs=[("en", offline)],
     )  # fmt: skip
     return [before, main, after]
