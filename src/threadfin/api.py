@@ -3,7 +3,7 @@
 ``/api/v1/...``  REST API for everything the web UI does (see ``routes()``). Session as in
                  access.py; errors are ``{"error": "..."}`` with a 4xx status.
 ``/api/``        Go's API, kept for existing scripts: ``POST {"cmd": "status" | "login" |
-                 "update.m3u" | "update.hdhr" | "update.xmltv" | "update.xepg"}``, only with the
+                 "update.m3u" | "update.xmltv" | "update.xepg"}``, only with the
                  ``api`` setting on (423 otherwise); with ``authentication.api`` on, ``login`` returns
                  a token that every later request sends and that is replaced in every answer.
 ``/ppv/enable``, ``/ppv/disable``   switch the channels mapped to the PPV dummy guide on / off.
@@ -479,7 +479,7 @@ def legacy_routes(service: Service) -> list[BaseRoute]:
                 "version.threadfin": service.system.version,
             })  # fmt: skip
             response = {k: v for k, v in response.items() if v not in ("", 0)}  # Go: omitempty
-        elif cmd in ("update.m3u", "update.hdhr", "update.xmltv"):
+        elif cmd in ("update.m3u", "update.xmltv"):
             await service.refresh_provider(cmd.removeprefix("update."))
         elif cmd == "update.xepg":
             await service.rebuild()

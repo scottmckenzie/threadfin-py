@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gzip
-import json
 import os
 import tempfile
 import threading
@@ -25,7 +24,6 @@ from threadfin.providers import (
     filename_from_content_disposition,
     filename_from_url,
     go_base,
-    hdhr_streams,
     new_provider_id,
 )
 from threadfin.settings import Settings
@@ -34,13 +32,6 @@ M3U = (
     '#EXTM3U\n#EXTINF:-1 tvg-id="a" tvg-name="A" group-title="News" tvg-logo="http://x/l.png",Alpha\n'
     "http://s/1\n#EXTINF:-1 group-title=\"Sports\",Beta\nhttp://s/2\n"
     '#EXTINF:-1 tvg-id="n",\nhttp://s/3\n'
-)
-LINEUP = json.dumps(
-    [
-        {"GuideNumber": "2.1", "GuideName": "WXYZ", "URL": "http://tuner/auto/v2.1"},
-        {"GuideNumber": "3.1", "GuideName": "NoUrl"},
-        "junk",
-    ]
 )
 XMLTV = (
     '<?xml version="1.0"?><tv><channel id="a"><display-name>A</display-name></channel>'
@@ -95,8 +86,6 @@ class Handler(BaseHTTPRequestHandler):
                 pass
         elif path == "/big":
             self.reply(b"x" * 5000)
-        elif path == "/lineup.json":
-            self.reply(LINEUP.encode())
         elif path == "/tv.xml":
             self.reply(XMLTV.encode())
         elif path == "/bad.m3u":
@@ -273,15 +262,6 @@ class RefreshTests(ServerCase):
         result, = await self.manager.refresh("m3u", "nope")
         self.assertFalse(result.ok)
 
-    async def test_hdhr(self) -> None:
-        host = self.base.removeprefix("http://")
-        result = await self.manager.add("hdhr", {"file.source": host, "name": "Tuner"})
-        self.assertEqual(result.streams, 1)
-        self.assertEqual(len(result.skipped), 2)
-        (pid, record), = self.settings.files.hdhr.items()
-        self.assertEqual(record["tuner"], 1)
-        self.assertTrue((self.data / f"{pid}.json").exists())
-
     async def test_xmltv_compatibility_counts(self) -> None:
         await self.manager.add("xmltv", {"file.source": f"{self.base}/tv.xml"})
         (pid, record), = self.settings.files.xmltv.items()
@@ -361,28 +341,6 @@ class PureTests(unittest.TestCase):
         with self.assertRaises(ProviderError):
             extract_gzip(gzip.compress(b"0" * 100_000), max_bytes=1000)
 
-    def test_hdhr_streams(self) -> None:
-        streams, skipped = hdhr_streams(LINEUP, "Tuner", "H123")
-        self.assertEqual(
-            streams,
-            [
-                {
-                    "group-title": "Tuner",
-                    "name": "WXYZ",
-                    "tvg-id": "WXYZ",
-                    "url": "http://tuner/auto/v2.1",
-                    "ID-H123": "2.1",
-                    "_uuid.key": "ID-H123",
-                    "_values": "Tuner WXYZ",
-                }
-            ],
-        )
-        self.assertEqual([e.line for e in skipped], [2, 3])
-        self.assertEqual(hdhr_streams("null", "T", "H")[0], [])
-        for bad in ("{}", "not json", '"x"'):
-            with self.subTest(bad=bad), self.assertRaises(ProviderError):
-                hdhr_streams(bad, "T", "H")
-
     def test_check_xmltv(self) -> None:
         self.assertEqual(check_xmltv(XMLTV.encode()), {"xmltv.channels": 1, "xmltv.programs": 2})
         for bad in (b"<rss></rss>", b"<tv><channel></tv>", b"", b"plain"):
@@ -391,7 +349,7 @@ class PureTests(unittest.TestCase):
 
     def test_ids(self) -> None:
         self.assertEqual(len({new_provider_id("xmltv") for _ in range(50)}), 50)
-        self.assertTrue(new_provider_id("hdhr").startswith("H"))
+        self.assertTrue(new_provider_id("m3u").startswith("M"))
 
     def test_apply_defaults_keeps_existing(self) -> None:
         data = {"name": "Mine", "counter.error": 2}

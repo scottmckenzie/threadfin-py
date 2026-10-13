@@ -84,7 +84,7 @@ Checked on 70 cases (incl. 40 randomised) against the real Go `createFilterRules
 ## Providers (`src/threadfin/providers.py`, `streams_db.py`)
 
 Download/refresh logic is tested against a local HTTP server; the stream database against the real
-Go `buildDatabaseDVR` on 30 cases.
+Go `buildDatabaseDVR` on 28 cases.
 
 | Go behaviour | Status |
 |---|---|
@@ -95,12 +95,12 @@ Go `buildDatabaseDVR` on 30 cases.
 | ...but a value containing `"` produced a broken line in that copy. | **fixed**: written with single quotes (both kinds: inner `"` becomes `'`) |
 | gzip bodies are unpacked; corrupt or truncated gzip falls back to the raw bytes. | kept; **new**: size limit on the unpacked data |
 | `Content-Disposition` without `=` panicked, and `filename="a.m3u"; size=3` became `a.m3u size`. | **fixed**: proper header parsing (also `filename*=`), path parts stripped |
-| A malformed HDHomeRun lineup entry panicked. | **fixed**: skipped and reported |
+| HDHomeRun tuners as a source (`files.hdhr`: the tuner's `lineup.json` read as a playlist). | **dropped**: records are kept in settings.json but never fetched or read; their channels are no longer in the stream database |
 | The last provider's error was the only one returned from a refresh-all or database build, so one bad provider's failure depended on random map order. | **fixed**: every provider's outcome is reported (`RefreshResult`, `StreamDatabase.errors`) and the rest still loads |
 | The timeout covered the whole request; no size limit. | kept (total deadline, enforced even for slow trickling bodies); **new**: size limit |
 | `strings.Contains(source, "http://")` decided between URL and local file; local files could be read. | **changed**: sources must be http/https URLs; local files are not supported |
 | Group labels and values were sorted as two independent lists (a label could end up beside the wrong value, e.g. groups `a` and `a (1)`). | **fixed**: one list of `(name, count)` sorted by name |
-| Providers were visited in random map order. | **changed**: settings order, M3U before HDHR |
+| Providers were visited in random map order. | **changed**: settings order |
 | With no filters and at most 480 streams everything is active; above that everything is inactive plus a warning. Plex warning above 480 active. | kept |
 | Loopback hosts bypass proxies. | kept |
 
@@ -244,10 +244,10 @@ were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
 | Permissions come from the archive as created under umask 022; archives without Unix permissions give 0644. | kept |
 | Same port: reload settings, re-init and `StartSystem(true)` (backup, download, build). Different port: files replaced but the running instance kept its old settings (and could save them over the restored ones), and the UI showed the new `/web/` URL. | **changed**: always reloads everything (settings object updated in place, users, stream ids, channel database), then backup + download + build; `RestoreResult.web_url()` gives Go's new-URL text when the port changed (the new port needs a restart). Refused while an update is running |
 | Restore from the command line (`-restore`, asks `yes`/`no`). | not yet: comes with the entry point |
-| Scheduler: once a minute, every `HHMM` in `update` that equals the local time runs backup, download (`m3u`, `hdhr`, plus `xmltv` in XEPG mode), image-cache clean-up (unless `cache.images`), build. Skipped while a scan is in progress. | kept |
+| Scheduler: once a minute, every `HHMM` in `update` that equals the local time runs backup, download (`m3u`, plus `xmltv` in XEPG mode), image-cache clean-up (unless `cache.images`), build. Skipped while a scan is in progress. | kept |
 | The loop slept 60 s *after* each check and update, so it drifted and could skip a minute (e.g. `0301` after a long `0300` update); a time listed twice ran twice. | **fixed**: wakes at each minute boundary, at most one run per minute |
 | Daily binary self-update at a random time between 00:10 and 01:58 (`ThreadfinAutoUpdate`). | **dropped** (the setting is kept in `settings.json`) |
-| Start-up: with `files.update` on and at least one **M3U** provider: backup, download, build; otherwise build from the local copies. | **fixed**: HDHomeRun providers count too (an HDHomeRun-only setup was never refreshed on start) |
+| Start-up: with `files.update` on and at least one **M3U** provider: backup, download, build; otherwise build from the local copies. | kept |
 
 ## Web UI and APIs (`ui.py`, `api.py`, `access.py`, `admin.py`)
 
@@ -277,7 +277,7 @@ every request); the rest is tested through the app (`tests/test_ui.py`, `tests/t
 | Deleting the last user was possible while login was required (anyone could then create a new "first user"). | **fixed**: refused; a user cannot delete or lock out themselves |
 | Backup download from the temp folder via `/download/<name>`, deleted after the download. | kept as `/web/backup` and `GET /api/v1/backup` (created on request, deleted afterwards) |
 | Configuration wizard. | **dropped**: dead code in Go (`System.ConfigurationWizard` is never set) |
-| Go `/api/`: needs the `api` setting (423 otherwise), POST only (404 for GET), invalid JSON 400; `status`, `login`, `update.m3u` / `.hdhr` / `.xmltv` / `.xepg`; `Invalid API command`; with `authentication.api` a token that is replaced in every answer. | kept |
+| Go `/api/`: needs the `api` setting (423 otherwise), POST only (404 for GET), invalid JSON 400; `status`, `login`, `update.m3u` / `.xmltv` / `.xepg`; `Invalid API command`; with `authentication.api` a token that is replaced in every answer. | kept; `update.hdhr` is now an invalid command (no HDHomeRun sources) |
 | Go `/api/` wrote a second JSON object after an error object. | **fixed**: one object |
 | `/ppv/enable` / `/ppv/disable`: (de)activate the channels mapped to the PPV dummy guide, no authentication, any method. | kept (used by scripts) |
 | Settings that do nothing in this port (stream buffer, VLC, SSDP, self-update, temp folder) are on the settings page. | **changed**: kept in settings.json, not shown |

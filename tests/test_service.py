@@ -236,7 +236,7 @@ class PMSMode(Base):
 
         self.service.manager.refresh = spy  # type: ignore[method-assign]
         await self.service.update()
-        self.assertEqual(kinds, ["m3u", "hdhr"])
+        self.assertEqual(kinds, ["m3u"])
 
     async def test_links_survive_a_rebuild(self) -> None:
         _, _, body = await asyncio.to_thread(self.get, "/lineup.json")

@@ -4,6 +4,16 @@ Python 3.12+ port of [Threadfin](https://github.com/Threadfin/Threadfin) (Go IPT
 mapper). Status and roadmap are in `README.md`; every Go behaviour that was kept, fixed or changed is
 in `docs/PARITY_NOTES.md`.
 
+## Python Version
+
+Python 3.12 (minimum 3.11). Use modern syntax:
+- `X | None` instead of `Optional[X]`
+- `list[str]` instead of `List[str]`
+- `dict[str, Any]` instead of `Dict[str, Any]`
+- `tuple[int, str]` instead of `Tuple[int, str]`
+- `type X = ...` for type aliases (Python 3.12)
+- Match statements for enum/type dispatch where appropriate
+
 ## Setup and tests
 
     python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
@@ -25,6 +35,8 @@ needs `ffmpeg`/`ffprobe`. htmx is vendored in `src/threadfin/static/` (no CDN: t
   do anything (e.g. `ssdp`).
 - Providers are http(s) URLs only (no local-file sources).
 - No SSDP discovery.
+- No HDHomeRun tuners as a channel source (`files.hdhr` is kept in the config but ignored). The
+  HDHomeRun *emulation* that Plex / Emby / Jellyfin talk to stays.
 - No binary self-update (`ThreadfinAutoUpdate` is kept in the config but ignored).
 - Unnamed channels are skipped and reported; apostrophe and double-quote name bugs are fixed.
 

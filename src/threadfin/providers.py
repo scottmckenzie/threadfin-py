@@ -1,8 +1,9 @@
-"""Providers: fetching playlists / tuner lineups / XMLTV files and keeping local copies.
+"""Providers: fetching playlists and XMLTV files and keeping local copies.
 
 Port of ``getProviderData`` and ``downloadFileFromServer`` (provider.go), ``extractGZIP``
-(compression.go), ``makeInteraceFromHDHR`` (hdhr.go), ``checkXMLCompatibility`` (xepg.go)
-and the provider helpers in data.go.
+(compression.go), ``checkXMLCompatibility`` (xepg.go) and the provider helpers in data.go.
+HDHomeRun tuners as a source (Go ``files.hdhr``) are not supported; their records are kept in
+settings.json but ignored.
 
 Provider records stay plain dicts inside ``settings.files.<kind>`` with the Go key names
 (``file.source``, ``http_proxy.ip``, ``counter.error`` ...), so the config folder remains
@@ -12,7 +13,6 @@ Differences from Go (all fixes, see docs/PARITY_NOTES.md):
 
 * a ``Content-Disposition`` header without ``=`` no longer crashes the process, and
   parameters after the file name no longer end up in the name;
-* a malformed HDHomeRun lineup entry is skipped and reported instead of panicking;
 * every provider's outcome is returned (Go only returned the last provider's error);
 * downloads have a hard total deadline and size limits;
 * values containing ``"`` survive the playlist copy (see :func:`threadfin.m3u.serialize_m3u`).
@@ -25,7 +25,6 @@ import gzip
 import http
 import http.client
 import ipaddress
-import json
 import os
 import secrets
 import time
@@ -41,11 +40,11 @@ from urllib.parse import urlsplit
 from xml.etree import ElementTree
 
 from .jsonio import write_bytes_atomic
-from .m3u import InvalidM3UError, SkippedEntry, Stream, parse_m3u_report, serialize_m3u
+from .m3u import InvalidM3UError, SkippedEntry, parse_m3u_report, serialize_m3u
 
-KINDS = ("m3u", "hdhr", "xmltv")
-EXTENSIONS = {"m3u": ".m3u", "hdhr": ".json", "xmltv": ".xml"}
-ID_PREFIX = {"m3u": "M", "hdhr": "H", "xmltv": "X"}
+KINDS = ("m3u", "xmltv")
+EXTENSIONS = {"m3u": ".m3u", "xmltv": ".xml"}
+ID_PREFIX = {"m3u": "M", "xmltv": "X"}
 
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_BYTES = 1 << 30  # 1 GiB, both on the wire and after gunzip
@@ -200,42 +199,6 @@ def _status_error(status: int, url: str) -> str:
 # --- content handling -----------------------------------------------------------
 
 
-def hdhr_streams(
-    content: bytes | str, playlist_name: str, provider_id: str
-) -> tuple[list[Stream], list[SkippedEntry]]:
-    """Turn an HDHomeRun ``lineup.json`` into streams (Go ``makeInteraceFromHDHR``)."""
-    try:
-        data = json.loads(content)
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise ProviderError(f"invalid HDHomeRun lineup: {exc}") from exc
-    if data is None:
-        data = []
-    if not isinstance(data, list):
-        raise ProviderError("invalid HDHomeRun lineup: expected a JSON array")
-
-    streams: list[Stream] = []
-    skipped: list[SkippedEntry] = []
-    for index, entry in enumerate(data, start=1):
-        fields = ("GuideName", "URL", "GuideNumber")
-        if not isinstance(entry, dict) or not all(isinstance(entry.get(f), str) for f in fields):
-            skipped.append(SkippedEntry(index, "invalid lineup entry", None, json.dumps(entry)[:200]))
-            continue
-        name = entry["GuideName"]
-        key = f"ID-{provider_id}"
-        streams.append(
-            {
-                "group-title": playlist_name,
-                "name": name,
-                "tvg-id": name,
-                "url": entry["URL"],
-                key: entry["GuideNumber"],
-                "_uuid.key": key,
-                "_values": f"{playlist_name} {name}",
-            }
-        )
-    return streams, skipped
-
-
 def check_xmltv(body: bytes) -> dict[str, int]:
     """Validate an XMLTV file and count its channels and programmes (Go ``checkXMLCompatibility``)."""
     import io
@@ -299,7 +262,7 @@ def apply_defaults(
         "counter.error": 0,
         "provider.availability": 100,
     }
-    if kind in ("m3u", "hdhr"):
+    if kind == "m3u":
         defaults["tuner"] = 1
     for key, value in defaults.items():
         data.setdefault(key, value)
@@ -447,12 +410,6 @@ class ProviderManager:
         timeout = self._settings.buffer_timeout
         timeout = float(timeout) if timeout and timeout > 0 else DEFAULT_TIMEOUT
         agent = self._settings.user_agent
-        if kind == "hdhr":
-            url = f"http://{source}/lineup.json"
-            fetched = self._fetch(
-                url, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes
-            )
-            return fetched.filename, fetched.body
         scheme = urlsplit(source).scheme.lower()
         if scheme in ("http", "https"):
             fetched = self._fetch(
@@ -483,9 +440,6 @@ class ProviderManager:
             skipped = parsed.skipped
             count = len(parsed.streams)
             body = serialize_m3u(parsed.streams).encode("utf-8")
-        elif kind == "hdhr":
-            streams, skipped = hdhr_streams(body, "", provider_id)
-            count = len(streams)
         else:
             record["compatibility"] = check_xmltv(body)
 

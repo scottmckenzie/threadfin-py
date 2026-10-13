@@ -154,7 +154,7 @@ class Service:
         self.xmltv_mapping = mapping
         report.xmltv_errors.update(errors)
 
-        provider_ids = set(self.manager.records("m3u")) | set(self.manager.records("hdhr"))
+        provider_ids = set(self.manager.records("m3u"))
         result = build_xepg(
             self.channels,
             db.active,
@@ -244,7 +244,7 @@ class Service:
         self.updating = True
         try:
             results: list[RefreshResult] = []
-            for kind in ("m3u", "hdhr", "xmltv") if self.xepg_mode else ("m3u", "hdhr"):
+            for kind in ("m3u", "xmltv") if self.xepg_mode else ("m3u",):
                 results += await self.manager.refresh(kind)
             report = await asyncio.to_thread(self.build)
         finally:
@@ -290,7 +290,7 @@ class Service:
     async def start(self) -> BuildReport:
         """Start-up: update from the providers if ``files.update`` is on and there are any, else
         build from the local copies."""
-        if self.settings.files_update and (self.manager.records("m3u") or self.manager.records("hdhr")):
+        if self.settings.files_update and self.manager.records("m3u"):
             return await self.scheduled_update()
         return await self.rebuild()
 

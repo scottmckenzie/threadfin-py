@@ -33,7 +33,7 @@ class SettingsError(ValueError):
 
 
 class SettingsFiles(BaseModel):
-    hdhr: dict[str, Any] = Field(default_factory=dict)
+    hdhr: dict[str, Any] = Field(default_factory=dict)  # HDHomeRun sources: kept, ignored
     m3u: dict[str, Any] = Field(default_factory=dict)
     xmltv: dict[str, Any] = Field(default_factory=dict)
 

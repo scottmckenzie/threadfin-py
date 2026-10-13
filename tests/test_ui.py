@@ -60,6 +60,13 @@ class Pages(AppTestCase):
 
 
 class Providers(AppTestCase):
+    def test_no_hdhomerun_sources(self) -> None:
+        page = self.client.get("/web/playlists").text
+        self.assertIn("/web/providers/m3u/new", page)
+        self.assertNotIn("hdhr", page)
+        self.assertNotIn("HDHomeRun", page)
+        self.assertEqual(self.client.get("/web/providers/hdhr/new").status_code, 404)
+
     def test_add_edit_refresh_delete(self) -> None:
         form = self.client.get("/web/providers/m3u/new").text
         self.assertIn('name="file.source"', form)
