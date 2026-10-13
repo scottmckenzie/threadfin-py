@@ -14,7 +14,7 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | Config / settings / system paths | done, golden-tested against Go |
 | Channel probe + stored results | done |
 | Stream filters | done, golden-tested against Go (70 cases) |
-| Providers (URL / file / HDHomeRun fetch, gzip, local copies, counters) | done, tested against a local HTTP server |
+| Providers (M3U and XMLTV URLs, gzip, local copies, counters) | done, tested against a local HTTP server |
 | Stream database (active / inactive, previews, groups, compatibility) | done, golden-tested against Go (30 cases) |
 | XMLTV channel mapping, channel database (XEPG) | done, golden-tested against Go (69 cases) |
 | XMLTV guide output (provider, dummy and live-event guides) | done, golden-tested against Go (50 cases) |
@@ -24,6 +24,7 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth, web / API login) | done, golden-tested against Go (14 step-by-step cases) |
 | Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written |
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
+| HDHomeRun tuners as a channel source | dropped (`files.hdhr` is kept in settings.json but ignored) |
 | Web UI (`/web/`: status, playlists, XMLTV, filters, mapping with probe, users, settings, backup / restore, log) | done, htmx, tested through the app |
 | REST API (`/api/v1/`), Go's `/api/`, `/ppv/`, `/data_images/` | done; settings and filter saving golden-tested against Go (56 cases) |
 | `threadfin` command (start, `-restore`, `-info`) | done, tested with a real server process |
@@ -59,7 +60,7 @@ needs web access). A `POST` must have a JSON body or an `X-Requested-With` heade
 |---|---|
 | `GET /status`, `GET` / `DELETE /log`, `POST /update` (download + build), `POST /build` | status, log, updates |
 | `GET` / `PATCH /settings` | settings (the settings-page keys; unknown keys are refused) |
-| `GET` / `POST /providers/{m3u,hdhr,xmltv}`, `GET` / `PATCH` / `DELETE /providers/{kind}/{id}`, `POST .../refresh` | playlists, tuners, guides |
+| `GET` / `POST /providers/{m3u,xmltv}`, `GET` / `PATCH` / `DELETE /providers/{kind}/{id}`, `POST .../refresh` | playlists, guides |
 | `GET` / `POST /filters`, `PATCH` / `DELETE /filters/{id}`, `GET /groups` | filters and M3U groups |
 | `GET /channels[?active=&group=]`, `GET` / `PATCH /channels/{id}`, `POST /channels/bulk {"ids", "changes"}` | channel mapping |
 | `POST /channels/{id}/probe[?force=1]`, `GET /channels/{id}/probes`, `GET /xmltv`, `POST /logos` | probe, guide channels, logo upload |

@@ -242,16 +242,12 @@ def apply_filter_changes(
 
 # --- providers -------------------------------------------------------------------------------
 
-PROVIDER_KINDS = ("m3u", "hdhr", "xmltv")
+PROVIDER_KINDS = ("m3u", "xmltv")
 _PROVIDER_FIELDS: dict[str, dict[str, str]] = {
     "m3u": {
         "name": "str", "description": "str", "file.source": "str", "tuner": "tuner", "buffer": "str",
         "http_proxy.ip": "str", "http_proxy.port": "str",
         "http_headers.origin": "str", "http_headers.referer": "str",
-    },
-    "hdhr": {
-        "name": "str", "description": "str", "file.source": "str", "tuner": "tuner", "buffer": "str",
-        "http_proxy.ip": "str", "http_proxy.port": "str",
     },
     "xmltv": {
         "name": "str", "description": "str", "file.source": "str",

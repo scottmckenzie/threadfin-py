@@ -1,6 +1,6 @@
 """The web UI under ``/web/`` (replaces Go's WebSocket UI): server-rendered pages, htmx for the dialogs.
 
-Pages: status, playlists (M3U + HDHomeRun), XMLTV, filters, mapping, users, settings (with backup and
+Pages: status, playlists (M3U), XMLTV, filters, mapping, users, settings (with backup and
 restore), log. Dialog forms load into one ``<dialog>``; a successful save answers with an empty body
 and ``HX-Trigger`` events that close the dialog, reload the list and show a message. A refused save
 re-renders the form with the error.
@@ -52,7 +52,7 @@ Handler = Callable[[Request], Awaitable[Response]]
 MAX_ROWS = 500
 ERRORS = (AdminError, AuthError, BackupError, ProviderError, InvalidProbeURLError)
 
-PROVIDER_TITLES = {"m3u": "M3U playlist", "hdhr": "HDHomeRun tuner", "xmltv": "XMLTV guide"}
+PROVIDER_TITLES = {"m3u": "M3U playlist", "xmltv": "XMLTV guide"}
 
 
 def events(**triggers: Any) -> dict[str, str]:
@@ -276,7 +276,7 @@ def routes(service: Service) -> list[BaseRoute]:
         return kind
 
     async def providers_page(request: Request) -> Response:
-        kinds = ["xmltv"] if request.url.path.rstrip("/").endswith("xmltv") else ["m3u", "hdhr"]
+        kinds = ["xmltv"] if request.url.path.rstrip("/").endswith("xmltv") else ["m3u"]
         return render(request, "providers.html", page=kinds[0] if kinds == ["xmltv"] else "playlists",
                       kinds=kinds, titles=PROVIDER_TITLES)  # fmt: skip
 
@@ -300,10 +300,8 @@ def routes(service: Service) -> list[BaseRoute]:
 
     def provider_data(kind: str, form: FormData) -> dict[str, Any]:
         keys = ["name", "description", "file.source", "http_proxy.ip", "http_proxy.port"]
-        if kind in ("m3u", "hdhr"):
-            keys += ["tuner"]
         if kind == "m3u":
-            keys += ["http_headers.origin", "http_headers.referer"]
+            keys += ["tuner", "http_headers.origin", "http_headers.referer"]
         return {key: form_text(form, key) for key in keys}
 
     async def provider_save(request: Request) -> Response:

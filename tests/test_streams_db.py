@@ -58,9 +58,8 @@ class GoldenStreamDatabaseTests(unittest.TestCase):
                 missing = [p["id"] for p in case["providers"] if p["missing"]]
                 self.assertEqual(sorted(db.errors), sorted(missing))
                 # and the compatibility counts were stored on the provider records
-                for kind in ("m3u", "hdhr"):
-                    for pid, record in getattr(settings.files, kind).items():
-                        self.assertEqual(record["compatibility"], golden["compatibility"][pid])
+                for pid, record in settings.files.m3u.items():
+                    self.assertEqual(record["compatibility"], golden["compatibility"][pid])
 
 
 class BehaviourTests(unittest.TestCase):
@@ -93,22 +92,28 @@ class BehaviourTests(unittest.TestCase):
         self.assertEqual(run(480, ignore=True).warnings, [])
         self.assertEqual(len(run(481, ignore=True).warnings), 2)  # Plex limit and "no filter" (both, as in Go)
 
-    def test_m3u_streams_come_before_hdhr_streams(self) -> None:
-        case = json.loads((GOLDEN / "hdhr_and_m3u.input.json").read_text("utf-8"))
-        case["filters"] = {}
+    def test_hdhr_sources_are_ignored(self) -> None:
+        # Go's HDHomeRun tuner sources (files.hdhr) are not supported: kept in settings, never read.
+        lineup = json.dumps([{"GuideNumber": "2.1", "GuideName": "WXYZ", "URL": "http://t/2.1"}])
+        case = {"filters": {}, "ignoreFilters": False, "providers": [
+            {"kind": "m3u", "id": "M1", "name": "P", "content": '#EXTM3U\n#EXTINF:-1,A\nhttp://s/1\n', "missing": False},
+        ]}  # fmt: skip
         with tempfile.TemporaryDirectory() as tmp:
             settings, manager = setup(case, Path(tmp))
+            settings.files.hdhr["H1"] = {"name": "Tuner"}
+            (Path(tmp) / "H1.json").write_text(lineup, "utf-8")
             db = build_stream_database(manager, settings)
-            self.assertEqual([s["_file.m3u.id"] for s in db.all][0], "M1")
-            self.assertEqual([s["_file.m3u.id"] for s in db.all][-1], "H1")
+            self.assertEqual([s["_file.m3u.id"] for s in db.all], ["M1"])
+            self.assertEqual((db.errors, db.compatibility.keys()), ({}, {"M1"}))
+            self.assertEqual(settings.files.hdhr, {"H1": {"name": "Tuner"}})
 
     def test_error_names_the_provider_and_other_providers_still_load(self) -> None:
-        case = json.loads((GOLDEN / "hdhr_and_m3u.input.json").read_text("utf-8"))
-        case["providers"][1]["missing"] = True
+        case = json.loads((GOLDEN / "two_providers.input.json").read_text("utf-8"))
+        case["providers"][0]["missing"] = True
         with tempfile.TemporaryDirectory() as tmp:
             settings, manager = setup(case, Path(tmp))
             db = build_stream_database(manager, settings)
-            self.assertEqual(len(db.all), 2)
+            self.assertEqual({s["_file.m3u.id"] for s in db.all}, {"M2"})
             self.assertIn("M1: Local copy of the file no longer exists", db.errors["M1"])
 
     def test_invalid_copy_is_reported_not_raised(self) -> None:

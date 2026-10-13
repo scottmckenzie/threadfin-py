@@ -20,7 +20,7 @@ class Basics(AppTestCase):
         info = self.client.get("/api/v1/status").json()
         self.assertEqual((info["streams.all"], info["streams.active"]), (3, 3))
         self.assertEqual(info["url.m3u"], "http://testserver/m3u/threadfin.m3u")
-        self.assertEqual(info["providers"], {"m3u": 1, "hdhr": 0, "xmltv": 1})
+        self.assertEqual(info["providers"], {"m3u": 1, "xmltv": 1})
         self.assertTrue(info["report"]["ok"])
 
     def test_csrf_needs_header_or_json(self) -> None:
@@ -31,6 +31,7 @@ class Basics(AppTestCase):
 
     def test_unknown_routes_and_methods(self) -> None:
         self.assertEqual(self.client.get("/api/v1/providers/dvb").status_code, 404)
+        self.assertEqual(self.client.get("/api/v1/providers/hdhr").status_code, 404)  # not supported
         self.assertEqual(self.client.get("/api/v1/channels/nope").status_code, 404)
         self.assertEqual(self.client.put("/api/v1/settings", json={}).status_code, 405)
 
@@ -307,9 +308,10 @@ class GoAPI(AppTestCase):
         self.assertEqual(status["url.m3u"], "http://testserver/m3u/threadfin.m3u")
         self.assertEqual(status["version.api"], "1.2.40")
         self.assertEqual(self.call({"cmd": "nope"}), {"err": INVALID_COMMAND, "status": False})
-        for cmd in ("update.m3u", "update.xmltv", "update.hdhr", "update.xepg"):
+        for cmd in ("update.m3u", "update.xmltv", "update.xepg"):
             with self.subTest(cmd):
                 self.assertEqual(self.call({"cmd": cmd}), {"status": True})
+        self.assertEqual(self.call({"cmd": "update.hdhr"}), {"err": INVALID_COMMAND, "status": False})
 
     def test_token_flow(self) -> None:
         self.service.settings.api = True

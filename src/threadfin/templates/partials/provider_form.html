@@ -4,12 +4,7 @@
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <label>Name <input name="name" value="{{ data.get('name', '') }}"></label>
   <label>Description <input name="description" value="{{ data.get('description', '') }}"></label>
-  {% if kind == "hdhr" %}
-    <label>Tuner address <input name="file.source" value="{{ data.get('file.source', '') }}" placeholder="192.168.1.10" required>
-      <small>The HDHomeRun's IP address (and port); its lineup.json is read.</small></label>
-  {% else %}
-    <label>URL <input name="file.source" value="{{ data.get('file.source', '') }}" placeholder="http://provider/{{ 'playlist.m3u' if kind == 'm3u' else 'guide.xml' }}" required></label>
-  {% endif %}
+  <label>URL <input name="file.source" value="{{ data.get('file.source', '') }}" placeholder="http://provider/{{ 'playlist.m3u' if kind == 'm3u' else 'guide.xml' }}" required></label>
   {% if kind != "xmltv" %}
     <label>Tuners <input name="tuner" type="number" min="1" max="100" value="{{ data.get('tuner', 1) }}">
       <small>Parallel connections the provider allows.</small></label>

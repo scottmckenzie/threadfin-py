@@ -36,8 +36,6 @@ groups = ["News", "Sports", "Movies", "Ünïcode", "sports", "A", "A-b", "A b", 
 base = [stream(i, groups[i % len(groups)], tvg_id="" if i % 7 == 0 else None, chno="5" if i % 3 == 0 else "")
         for i in range(60)]
 big = [stream(i, groups[i % len(groups)]) for i in range(500)]
-hdhr = json.dumps([{"GuideNumber": "2.1", "GuideName": "WXYZ", "URL": "http://t/2.1"},
-                   {"GuideNumber": "3.1", "GuideName": "ABC", "URL": "http://t/3.1"}])
 
 cases = {
     "no_filters_all_active": {"providers": [P("M1", playlist(base))]},
@@ -56,9 +54,6 @@ cases = {
                       "providers": [P("M1", playlist(base[:30])), P("M2", playlist(base[30:]), name="Second")]},
     "empty_playlist": {"providers": [P("M1", "#EXTM3U\n")]},
     "missing_local_copy": {"providers": [P("M1", "", missing=True)]},
-    "hdhr_provider": {"providers": [P("H1", hdhr, kind="hdhr", name="Tuner One")]},
-    "hdhr_and_m3u": {"filters": {"0": F("custom-filter", "wxyz")},
-                     "providers": [P("H1", hdhr, kind="hdhr", name="Tuner One"), P("M1", playlist(base[:10]))]},
     "no_providers": {"providers": []},
 }
 for n in range(15):

@@ -19,7 +19,7 @@ from typing import Any
 
 from .filters import build_filter_rules, filter_stream
 from .m3u import SkippedEntry, Stream, parse_m3u_report
-from .providers import ProviderError, ProviderManager, hdhr_streams
+from .providers import ProviderError, ProviderManager
 
 PLEX_CHANNEL_LIMIT = 480
 UNFILTERED_CHANNEL_LIMIT = 480
@@ -61,16 +61,12 @@ def _percent(count: int, total: int) -> int:
     return count * 100 // total if count else 0
 
 
-def _load(
-    manager: ProviderManager, kind: str, provider_id: str, name: str
-) -> tuple[list[Stream], list[SkippedEntry]]:
-    path = manager.local_path(kind, provider_id)
+def _load(manager: ProviderManager, provider_id: str, name: str) -> tuple[list[Stream], list[SkippedEntry]]:
+    path = manager.local_path("m3u", provider_id)
     try:
         content = path.read_bytes()
     except OSError as exc:
         raise ProviderError(f"{name}: Local copy of the file no longer exists ({exc.strerror})") from exc
-    if kind == "hdhr":
-        return hdhr_streams(content, name, provider_id)
     parsed = parse_m3u_report(content)
     return parsed.streams, parsed.skipped
 
@@ -87,57 +83,56 @@ def build_stream_database(
     db = StreamDatabase()
     group_counts: dict[str, int] = {}
 
-    for kind in ("m3u", "hdhr"):
-        for provider_id in list(manager.records(kind)):
-            name = manager.parameter(kind, provider_id, "name")
-            path = str(manager.local_path(kind, provider_id))
-            try:
-                channels, skipped = _load(manager, kind, provider_id, name)
-            except (ProviderError, ValueError) as exc:
-                db.errors[provider_id] = str(exc)
-                channels, skipped = [], []
-            if skipped:
-                db.skipped[provider_id] = skipped
+    for provider_id in list(manager.records("m3u")):
+        name = manager.parameter("m3u", provider_id, "name")
+        path = str(manager.local_path("m3u", provider_id))
+        try:
+            channels, skipped = _load(manager, provider_id, name)
+        except (ProviderError, ValueError) as exc:
+            db.errors[provider_id] = str(exc)
+            channels, skipped = [], []
+        if skipped:
+            db.skipped[provider_id] = skipped
 
-            with_group = with_id = with_uuid = 0
-            for stream in channels:
-                stream["_file.m3u.path"] = path
-                stream["_file.m3u.name"] = name
-                stream["_file.m3u.id"] = provider_id
+        with_group = with_id = with_uuid = 0
+        for stream in channels:
+            stream["_file.m3u.path"] = path
+            stream["_file.m3u.name"] = name
+            stream["_file.m3u.id"] = provider_id
 
-                if stream.get("_uuid.key"):
-                    with_uuid += 1
-                group = stream.get("group-title", "")
-                if group:
-                    group_counts[group] = group_counts.get(group, 0) + 1
-                    with_group += 1
-                if stream.get("tvg-id"):
-                    with_id += 1
+            if stream.get("_uuid.key"):
+                with_uuid += 1
+            group = stream.get("group-title", "")
+            if group:
+                group_counts[group] = group_counts.get(group, 0) + 1
+                with_group += 1
+            if stream.get("tvg-id"):
+                with_id += 1
 
-                db.all.append(stream)
-                if settings.ignore_filters:
-                    active = True
-                else:
-                    active, live_event = filter_stream(stream, rules)
-                    stream["liveEvent"] = "true" if live_event else "false"
+            db.all.append(stream)
+            if settings.ignore_filters:
+                active = True
+            else:
+                active, live_event = filter_stream(stream, rules)
+                stream["liveEvent"] = "true" if live_event else "false"
 
-                preview = f"{stream.get('name', '')} [{group}]"
-                if active:
-                    db.preview_active.append(preview)
-                    db.active.append(stream)
-                else:
-                    db.preview_inactive.append(preview)
-                    db.inactive.append(stream)
+            preview = f"{stream.get('name', '')} [{group}]"
+            if active:
+                db.preview_active.append(preview)
+                db.active.append(stream)
+            else:
+                db.preview_inactive.append(preview)
+                db.inactive.append(stream)
 
-            total = len(channels)
-            compatibility = {
-                "tvg.id": _percent(with_id, total),
-                "group.title": _percent(with_group, total),
-                "stream.id": _percent(with_uuid, total),
-                "streams": total,
-            }
-            db.compatibility[provider_id] = compatibility
-            manager.set_compatibility(kind, provider_id, compatibility)
+        total = len(channels)
+        compatibility = {
+            "tvg.id": _percent(with_id, total),
+            "group.title": _percent(with_group, total),
+            "stream.id": _percent(with_uuid, total),
+            "streams": total,
+        }
+        db.compatibility[provider_id] = compatibility
+        manager.set_compatibility("m3u", provider_id, compatibility)
 
     db.groups = [GroupCount(name, group_counts[name]) for name in sorted(group_counts)]
 

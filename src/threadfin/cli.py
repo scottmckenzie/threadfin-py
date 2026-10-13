@@ -90,7 +90,6 @@ def show_info(system: SystemInfo, settings: Settings, out: TextIO) -> None:
         ("EPG source", settings.epg_source),
         ("Tuner", str(settings.tuner)),
         ("Playlists (M3U)", str(len(files.m3u))),
-        ("Tuners (HDHomeRun)", str(len(files.hdhr))),
         ("Guides (XMLTV)", str(len(files.xmltv))),
         ("Update schedule", ", ".join(settings.update) or "none"),
         ("Files update", str(settings.files_update).lower()),
