@@ -21,9 +21,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-ALLOWED_SCHEMES = frozenset(
-    {"http", "https", "rtmp", "rtmps", "rtsp", "rtsps", "rtp", "udp", "srt", "tcp"}
-)
+ALLOWED_SCHEMES = frozenset({"http", "https", "rtmp", "rtmps", "rtsp", "rtsps", "rtp", "udp", "srt", "tcp"})
 _HTTP_SCHEMES = frozenset({"http", "https"})
 
 
@@ -220,9 +218,7 @@ def resolve_ffprobe(ffmpeg_path: str = "") -> str:
     return shutil.which("ffprobe") or ""
 
 
-def build_ffprobe_command(
-    ffprobe: str, url: str, *, user_agent: str = "", timeout: float = 20.0
-) -> list[str]:
+def build_ffprobe_command(ffprobe: str, url: str, *, user_agent: str = "", timeout: float = 20.0) -> list[str]:
     command = [ffprobe, "-v", "error", "-show_streams", "-of", "json"]
     scheme = urlsplit(url).scheme.lower()
     if scheme in _HTTP_SCHEMES:
@@ -252,7 +248,7 @@ async def run_ffprobe(
     url: str,
     *,
     ffprobe: str,
-    timeout: float = 20.0,
+    timeout: float = 20.0,  # noqa: ASYNC109 - also ffprobe's own -rw_timeout
     user_agent: str = "",
     allow_local: bool = False,
 ) -> ProbeRun:

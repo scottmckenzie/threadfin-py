@@ -162,7 +162,10 @@ class Golden(unittest.TestCase):
         new = json.loads((GOLDEN / "new_user.golden.json").read_text("utf-8"))
         self.assertEqual(new[5]["err"], "")
         first = json.loads((GOLDEN / "first_user_when_users_exist.golden.json").read_text("utf-8"))
-        self.assertEqual([(s["err"], s["result"]) for s in first[1:]], [("", True), ("User data could not be saved", False), ("", None)])
+        self.assertEqual(
+            [(s["err"], s["result"]) for s in first[1:]],
+            [("", True), ("User data could not be saved", False), ("", None)],
+        )
 
     def test_first_user_cannot_take_over_an_account(self) -> None:
         name = "first_user_when_users_exist"
@@ -227,9 +230,24 @@ class Behaviour(unittest.TestCase):
 
     def test_header_without_colon_is_refused(self) -> None:
         # Go accepted empty passwords, so such a user may exist; Go crashed on this header
-        self.path.write_text(json.dumps({"dbVersion": "1.0", "hash": "sha256", "users": {"id-AAAAAAAAAA": {
-            "_id": "id-AAAAAAAAAA", "_salt": "S" * 20, "_username": credential_hash("ghost"),
-            "_password": credential_hash(""), "data": {LEVEL_PMS: True}}}}), "utf-8")
+        self.path.write_text(
+            json.dumps(
+                {
+                    "dbVersion": "1.0",
+                    "hash": "sha256",
+                    "users": {
+                        "id-AAAAAAAAAA": {
+                            "_id": "id-AAAAAAAAAA",
+                            "_salt": "S" * 20,
+                            "_username": credential_hash("ghost"),
+                            "_password": credential_hash(""),
+                            "data": {LEVEL_PMS: True},
+                        }
+                    },
+                }
+            ),
+            "utf-8",
+        )
         auth = Authentication(self.path)
         self.assertEqual(auth.basic_auth("Basic Z2hvc3Q6", LEVEL_PMS), "ghost")  # "ghost:"
         with self.assertRaisesRegex(AuthError, LOGIN_FAILED):

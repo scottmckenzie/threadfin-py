@@ -32,8 +32,8 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 
 ## Running
 
-    pip install .            # or: python3 -m venv .venv && .venv/bin/pip install .
-    threadfin                # or: python -m threadfin
+    uv tool install .        # after an update: uv tool install --reinstall .
+    threadfin                # or, from the checkout: uv run threadfin
 
 Then open `http://<this machine>:34400/web/`, add a playlist (and, for the XMLTV mode, a guide),
 and add the tuner in Plex / Emby / Jellyfin as `http://<this machine>:34400`. An existing
@@ -72,8 +72,8 @@ Go's API (`POST /api/` with `{"cmd": "status" | "login" | "update.m3u" | ...}`, 
 
 ## Tests
 
-    python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
-    .venv/bin/python -m unittest discover -s tests
+    uv sync
+    uv run pytest
 
 Needs Python 3.12+ and (for one integration test) `ffmpeg`/`ffprobe`. Golden files in
 `tests/golden/` were produced by the real Go code; regenerate them with the scripts in

@@ -10,7 +10,6 @@ import json
 import socket
 import tempfile
 import threading
-import time
 import unittest
 import xml.etree.ElementTree as ET
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,7 +42,7 @@ class Provider(BaseHTTPRequestHandler):
     def log_message(self, *args: object) -> None:
         pass
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         body = (M3U if self.path.endswith(".m3u") else XMLTV).encode()
         self.send_response(200)
         self.send_header("Content-Length", str(len(body)))
@@ -84,7 +83,7 @@ class Base(unittest.IsolatedAsyncioTestCase):
         for _ in range(100):
             if self.server.started:
                 break
-            time.sleep(0.05)
+            await asyncio.sleep(0.05)
 
     async def asyncTearDown(self) -> None:
         self.server.should_exit = True
@@ -146,7 +145,7 @@ class EndToEnd(Base):
         self.assertEqual(status, 200)
         self.assertIn("audio/x-mpegurl", headers["content-type"])
         lines = body.decode().splitlines()
-        self.assertTrue(lines[0].startswith("#EXTM3U url-tvg=\"http://127.0.0.1:%d/xmltv/threadfin.xml\"" % self.port))
+        self.assertTrue(lines[0].startswith(f'#EXTM3U url-tvg="http://127.0.0.1:{self.port}/xmltv/threadfin.xml"'))
         links = [line for line in lines if line.startswith("http")]
         self.assertEqual(len(links), 2)
         self.assertTrue(all(link.startswith(f"http://127.0.0.1:{self.port}/stream/") for link in links))
@@ -171,7 +170,7 @@ class EndToEnd(Base):
         self.assertEqual(status, 404)
 
     async def test_guide_served_plain_and_gzipped(self) -> None:
-        status, headers, body = await asyncio.to_thread(self.get, "/xmltv/threadfin.xml")
+        status, _, body = await asyncio.to_thread(self.get, "/xmltv/threadfin.xml")
         self.assertEqual(status, 200)
         root = ET.fromstring(body)
         self.assertEqual([e.get("id") for e in root if e.tag == "channel"], ["1000", "1001"])
@@ -218,8 +217,10 @@ class PMSMode(Base):
     async def test_lineup_uses_provider_streams(self) -> None:
         _, _, body = await asyncio.to_thread(self.get, "/lineup.json")
         lineup = json.loads(body)
-        self.assertEqual([e["GuideName"] for e in lineup], ["Alpha", "Beta", "Gamma \"Q\""])
-        self.assertEqual([e["GuideNumber"] for e in lineup], ["Alpha", "Beta", "Gamma"])  # tvg-name is the provider's own number
+        self.assertEqual([e["GuideName"] for e in lineup], ["Alpha", "Beta", 'Gamma "Q"'])
+        self.assertEqual(
+            [e["GuideNumber"] for e in lineup], ["Alpha", "Beta", "Gamma"]
+        )  # tvg-name is the provider's own number
         _, _, again = await asyncio.to_thread(self.get, "/lineup.json")
         self.assertEqual(json.loads(again), lineup)
         base = f"http://127.0.0.1:{self.port}"

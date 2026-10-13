@@ -219,8 +219,12 @@ class Login(AppTestCase):
 
     def test_needs_a_session(self) -> None:
         self.assertEqual(self.client.get("/api/v1/status").status_code, 401)
-        self.assertEqual(self.client.post("/api/v1/login", json={"username": "admin", "password": "no"}).status_code, 401)
-        self.assertEqual(self.client.post("/api/v1/login", json={"username": "viewer", "password": "pw"}).status_code, 401)
+        self.assertEqual(
+            self.client.post("/api/v1/login", json={"username": "admin", "password": "no"}).status_code, 401
+        )
+        self.assertEqual(
+            self.client.post("/api/v1/login", json={"username": "viewer", "password": "pw"}).status_code, 401
+        )
         self.assertEqual(self.client.post("/api/v1/login", content=b"nope", headers=JSON).status_code, 400)
 
     def test_bearer_and_cookie(self) -> None:
@@ -246,7 +250,9 @@ class Login(AppTestCase):
         auth = {"Authorization": f"Bearer {token}"}
         me = self.service.auth.session(token)
         self.assertEqual(self.client.delete(f"/api/v1/users/{me}", headers=auth).status_code, 400)
-        self.assertEqual(self.client.patch(f"/api/v1/users/{me}", json={LEVEL_WEB: False}, headers=auth).status_code, 400)
+        self.assertEqual(
+            self.client.patch(f"/api/v1/users/{me}", json={LEVEL_WEB: False}, headers=auth).status_code, 400
+        )
         self.assertIn(me, self.service.auth.users)
 
 
@@ -280,11 +286,15 @@ class Logos(AppTestCase):
         self.assertEqual(response.json()["url"], "http://testserver/data_images/My_Logo.png")
         self.assertEqual(self.client.get("/data_images/My%20Logo.png").status_code, 404)  # only the stored name
         served = self.client.get("/data_images/My_Logo.png")
-        self.assertEqual((served.status_code, served.content, served.headers["content-type"]), (200, b"\x89PNG", "image/png"))
+        self.assertEqual(
+            (served.status_code, served.content, served.headers["content-type"]), (200, b"\x89PNG", "image/png")
+        )
         for path in ("/data_images/..%2Fsettings.json", "/data_images/missing.png", "/data_images/x.exe"):
             with self.subTest(path):
                 self.assertEqual(self.client.get(path).status_code, 404)
-        self.assertEqual(self.client.post("/api/v1/logos", files={"file": ("a.png", b"x", "image/png")}).status_code, 403)
+        self.assertEqual(
+            self.client.post("/api/v1/logos", files={"file": ("a.png", b"x", "image/png")}).status_code, 403
+        )
         bad = self.client.post("/api/v1/logos", files={"file": ("x.exe", b"MZ", "application/octet-stream")},
                                headers={"X-Requested-With": "x"})  # fmt: skip
         self.assertEqual(bad.status_code, 400)

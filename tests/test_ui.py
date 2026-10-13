@@ -96,7 +96,9 @@ class Providers(AppTestCase):
         self.assertNotIn("hx-trigger", response.headers)
         self.assertIn('class="error"', response.text)
         self.assertIn('value="X"', response.text)  # what was typed is kept
-        response = self.client.post("/web/providers/m3u", data={"name": "X", "file.source": "", "tuner": "1"}, headers=HX)
+        response = self.client.post(
+            "/web/providers/m3u", data={"name": "X", "file.source": "", "tuner": "1"}, headers=HX
+        )
         self.assertIn("file.source is required", response.text)
 
 
@@ -115,7 +117,9 @@ class Filters(AppTestCase):
         self.assertEqual(self.service.settings.filter, {})
 
     def test_empty_rule(self) -> None:
-        response = self.client.post("/web/filters", data={"type": "custom-filter", "name": "x", "filter": ""}, headers=HX)
+        response = self.client.post(
+            "/web/filters", data={"type": "custom-filter", "name": "x", "filter": ""}, headers=HX
+        )
         self.assertIn("Invalid filter rule", response.text)
         self.assertEqual(self.service.settings.filter, {})
 
@@ -199,16 +203,23 @@ class Mapping(AppTestCase):
 
     def test_picker_preselects_the_streams_tvg_id(self) -> None:
         channel_id = self.channel_ids()["Gamma"]  # tvg-id "c"
-        html = self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": self.guide(), "channel": channel_id}).text
+        html = self.client.get(
+            "/web/mapping/xmltv-picker", params={"x-xmltv-file": self.guide(), "channel": channel_id}
+        ).text
         self.assertIn('name="x-mapping" value="c"', html)
         self.assertIn('value="Gamma TV (c)"', html)
-        html = self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "Threadfin Dummy", "channel": channel_id}).text
+        html = self.client.get(
+            "/web/mapping/xmltv-picker", params={"x-xmltv-file": "Threadfin Dummy", "channel": channel_id}
+        ).text
         self.assertIn('name="x-mapping" value="-"', html)
         self.assertIn('name="q" value=""', html)  # nothing chosen: an empty search box
         self.assertIn('data-dummy="true"', html)
         html = self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "-", "channel": channel_id}).text
         self.assertIn("disabled", html)
-        self.assertEqual(self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "-", "channel": "nope"}).status_code, 404)
+        self.assertEqual(
+            self.client.get("/web/mapping/xmltv-picker", params={"x-xmltv-file": "-", "channel": "nope"}).status_code,
+            404,
+        )
 
     def test_mapping_missing_from_the_guide_is_kept(self) -> None:
         channel_id = self.channel_ids()["Beta"]
@@ -227,21 +238,27 @@ class Mapping(AppTestCase):
 
     def test_bulk(self) -> None:
         ids = list(self.channel_ids().values())
-        response = self.client.post("/web/mapping/bulk", data={"ids": ids, "action": "renumber", "value": "200"}, headers=HX)
+        response = self.client.post(
+            "/web/mapping/bulk", data={"ids": ids, "action": "renumber", "value": "200"}, headers=HX
+        )
         self.assertEqual(triggers(response)["toast"], "3 channels changed")
         self.assertEqual(sorted(c.x_channel_id for c in self.service.channels.values()), ["200", "201", "202"])
         self.client.post("/web/mapping/bulk", data={"ids": ids[:1], "action": "deactivate"}, headers=HX)
         self.assertEqual(sum(c.x_active for c in self.service.channels.values()), 2)
         response = self.client.post("/web/mapping/bulk", data={"action": "activate"}, headers=HX)
         self.assertEqual(triggers(response)["toast"], "Select channels first")
-        response = self.client.post("/web/mapping/bulk", data={"ids": ids, "action": "renumber", "value": "x"}, headers=HX)
+        response = self.client.post(
+            "/web/mapping/bulk", data={"ids": ids, "action": "renumber", "value": "x"}, headers=HX
+        )
         self.assertIn("not a channel number", triggers(response)["toast"])
 
     def test_logo_upload(self) -> None:
         response = self.client.post("/web/logo", data={"tvg-logo": "old"}, files={"logo": ("a b.png", b"\x89PNG", "image/png")},
                                     headers=HX)  # fmt: skip
         self.assertIn('value="http://testserver/data_images/a_b.png"', response.text)
-        response = self.client.post("/web/logo", data={"tvg-logo": "old"}, files={"logo": ("a.exe", b"MZ", "x/y")}, headers=HX)
+        response = self.client.post(
+            "/web/logo", data={"tvg-logo": "old"}, files={"logo": ("a.exe", b"MZ", "x/y")}, headers=HX
+        )
         self.assertIn('value="old"', response.text)
         self.assertIn("logos must be one of", response.text)
 
@@ -290,10 +307,14 @@ class Settings(AppTestCase):
         archive = self.client.get("/web/backup")
         self.assertEqual(archive.headers["content-type"], "application/zip")
         self.client.patch("/api/v1/settings", json={"tuner": 5})
-        response = self.client.post("/web/restore", files={"archive": ("b.zip", archive.content, "application/zip")}, headers=HX)
+        response = self.client.post(
+            "/web/restore", files={"archive": ("b.zip", archive.content, "application/zip")}, headers=HX
+        )
         self.assertIn("Backup restored", response.text)
         self.assertEqual(self.service.settings.tuner, 1)
-        response = self.client.post("/web/restore", files={"archive": ("b.zip", b"junk", "application/zip")}, headers=HX)
+        response = self.client.post(
+            "/web/restore", files={"archive": ("b.zip", b"junk", "application/zip")}, headers=HX
+        )
         self.assertIn("Restore failed: not a backup archive", response.text)
 
 
@@ -380,7 +401,9 @@ class Users(AppTestCase):
     def test_refusals(self) -> None:
         response = self.client.post("/web/users", data={"username": "x", "password": "a", "confirm": "b"}, headers=HX)
         self.assertIn("The passwords do not match", response.text)
-        response = self.client.post("/web/users", data={"username": "admin", "password": "a", "confirm": "a"}, headers=HX)
+        response = self.client.post(
+            "/web/users", data={"username": "admin", "password": "a", "confirm": "a"}, headers=HX
+        )
         self.assertIn("User already exists", response.text)
         response = self.client.post(f"/web/users/{self.me}/delete", headers=HX)
         self.assertEqual(triggers(response)["toast"], "You cannot delete your own account")

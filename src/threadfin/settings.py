@@ -95,9 +95,7 @@ class Settings(BaseModel):
     https_threadfin_domain: str = Field("", alias="httpsThreadfinDomain")
     http_threadfin_domain: str = Field("", alias="httpThreadfinDomain")
     enable_non_ascii: bool = Field(False, alias="enableNonAscii")
-    epg_categories: str = Field(
-        "Kids:kids|News:news|Movie:movie|Series:series|Sports:sports", alias="epgCategories"
-    )
+    epg_categories: str = Field("Kids:kids|News:news|Movie:movie|Series:series|Sports:sports", alias="epgCategories")
     epg_categories_colors: str = Field(
         "kids:mediumpurple|news:tomato|movie:royalblue|series:gold|sports:yellowgreen",
         alias="epgCategoriesColors",

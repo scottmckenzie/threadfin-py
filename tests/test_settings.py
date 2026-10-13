@@ -23,9 +23,7 @@ UUID_RE = re.compile(r"^\d{4}-\d{2}-[A-Z0-9]{4}-[A-Z0-9]{6}$")
 
 def make_system(root: Path) -> SystemInfo:
     # The Go golden run used these folders for the backup/temp defaults.
-    return SystemInfo(
-        config=root, backup=Path("/tmp/tfgolden/backup"), temp=Path("/tmp/tfgolden/tmp")
-    )
+    return SystemInfo(config=root, backup=Path("/tmp/tfgolden/backup"), temp=Path("/tmp/tfgolden/tmp"))
 
 
 class TempDirCase(unittest.TestCase):

@@ -45,10 +45,26 @@ def filters(name, changes, existing=None, **kw):
 settings("booleans", {"api": True, "ssdp": False, "files.update": False, "dummy": True, "ignoreFilters": True})
 settings("tuner", {"tuner": 3})
 settings("epg_source_xepg", {"epgSource": "XEPG"})
-settings("strings", {"udpxy": "10.0.0.1:4022", "user.agent": "VLC", "dummyChannel": "PPV",
-                     "epgCategories": "Kids:kids", "epgCategoriesColors": "kids:red", "bindIpAddress": "0.0.0.0"})
-settings("https", {"forceHttps": True, "httpsPort": 8443, "httpsThreadfinDomain": "tv.example.com",
-                   "httpThreadfinDomain": "lan.example.com"})
+settings(
+    "strings",
+    {
+        "udpxy": "10.0.0.1:4022",
+        "user.agent": "VLC",
+        "dummyChannel": "PPV",
+        "epgCategories": "Kids:kids",
+        "epgCategoriesColors": "kids:red",
+        "bindIpAddress": "0.0.0.0",
+    },
+)
+settings(
+    "https",
+    {
+        "forceHttps": True,
+        "httpsPort": 8443,
+        "httpsThreadfinDomain": "tv.example.com",
+        "httpThreadfinDomain": "lan.example.com",
+    },
+)
 settings("update_times", {"update": ["0300", " 12 30 ", "2359", "0000"]})
 settings("update_empty", {"update": []})
 for bad in ("2400", "0960", "930", "12:30", "abcd", "03000", "", "1260"):
@@ -63,8 +79,16 @@ settings("ffmpeg_path_ok", {"ffmpeg.path": "{work}/bin/other"})
 settings("ffmpeg_path_missing", {"ffmpeg.path": "{work}/bin/nope"})
 settings("ffmpeg_path_directory", {"ffmpeg.path": "{work}/bin"})
 settings("vlc_path_empty", {"vlc.path": ""})
-settings("auth_off_clears_levels", {"authentication.web": False, "authentication.m3u": True,
-                                    "authentication.xml": True, "authentication.pms": True, "authentication.api": True})
+settings(
+    "auth_off_clears_levels",
+    {
+        "authentication.web": False,
+        "authentication.m3u": True,
+        "authentication.xml": True,
+        "authentication.pms": True,
+        "authentication.api": True,
+    },
+)
 settings("auth_on", {"authentication.web": True, "authentication.m3u": True})
 settings("auth_level_without_web", {"authentication.m3u": True})
 settings("auth_level_with_web_on", {"authentication.xml": True}, settings={"authentication.web": True})
@@ -84,11 +108,27 @@ settings("replace_missing_images", {"xepg.replace.missing.images": False})
 settings("null_value", {"udpxy": None})
 
 # --- saveFilter -----------------------------------------------------------------------------
-GROUP = {"active": True, "caseSensitive": False, "description": "", "exclude": "", "filter": "News",
-         "include": "", "liveEvent": False, "name": "News", "type": "group-title",
-         "startingNumber": "1000", "x-category": ""}
-CUSTOM = {"active": True, "caseSensitive": True, "description": "d", "filter": "BBC {HD}", "name": "BBC",
-          "type": "custom-filter"}
+GROUP = {
+    "active": True,
+    "caseSensitive": False,
+    "description": "",
+    "exclude": "",
+    "filter": "News",
+    "include": "",
+    "liveEvent": False,
+    "name": "News",
+    "type": "group-title",
+    "startingNumber": "1000",
+    "x-category": "",
+}
+CUSTOM = {
+    "active": True,
+    "caseSensitive": True,
+    "description": "d",
+    "filter": "BBC {HD}",
+    "name": "BBC",
+    "type": "custom-filter",
+}
 filters("new_into_empty", {"-1": GROUP})
 filters("new_after_two", {"-1": CUSTOM}, {"0": GROUP, "1": CUSTOM})
 filters("new_fills_gap", {"-1": CUSTOM}, {"0": GROUP, "2": CUSTOM})

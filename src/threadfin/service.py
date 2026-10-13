@@ -30,13 +30,13 @@ from .auth import Authentication
 from .backup import AutoBackupResult, BackupError, RestoreResult, auto_backup, restore_backup
 from .epg import EPGOptions, XMLTVStats, write_xmltv
 from .filters import FilterError
+from .hdhr import Device, PMSIds, lineup_pms, lineup_xepg
 from .imagecache import ImageCache, ImageSession, default_base
 from .logbuffer import LogBuffer
+from .playlist import PlaylistOptions, StreamInfo, StreamRegistry, build_playlist
 from .probe import resolve_ffprobe
 from .probe_service import ProbeService
 from .probe_store import ProbeRecord, ProbeStore
-from .hdhr import Device, PMSIds, lineup_pms, lineup_xepg
-from .playlist import PlaylistOptions, StreamInfo, StreamRegistry, build_playlist
 from .providers import ProviderManager, RefreshResult
 from .settings import Settings, load_settings, save_settings
 from .streams_db import StreamDatabase, build_stream_database
@@ -134,7 +134,6 @@ class Service:
     def xepg_mode(self) -> bool:
         """``epgSource`` XEPG builds guide + playlist; PMS only serves the lineup."""
         return self.settings.epg_source == "XEPG"
-
 
     def _build(self, report: BuildReport, now: datetime) -> None:
         settings, system = self.settings, self.system
@@ -536,7 +535,9 @@ class Service:
         options = PlaylistOptions(
             base_url=base_url,
             group_labels=tuple(g.label for g in self.stream_db.groups),
-            image_url=(lambda url: self.images.lookup(url, base_url)) if self.settings.cache_images else identity_image_url,
+            image_url=(lambda url: self.images.lookup(url, base_url))
+            if self.settings.cache_images
+            else identity_image_url,
         )
         return build_playlist(self.channels, options, StreamRegistry(), groups or ())
 
@@ -566,4 +567,4 @@ class Service:
         return url
 
 
-__all__ = ["BuildReport", "Service", "XMLTV_FILE"]
+__all__ = ["XMLTV_FILE", "BuildReport", "Service"]

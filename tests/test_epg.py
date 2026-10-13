@@ -44,7 +44,9 @@ def normalise(element: ElementTree.Element, is_root: bool = False) -> tuple:
     children = []
     for child in element:
         if is_root and child.tag in ("generator", "source"):
-            attrs["generator-info-name" if child.tag == "generator" else "source-info-name"] = (child.text or "").strip()
+            attrs["generator-info-name" if child.tag == "generator" else "source-info-name"] = (
+                child.text or ""
+            ).strip()
             continue
         if element.tag == "channel" and child.tag in GO_ONLY_CHANNEL_CHILDREN:
             continue
@@ -58,7 +60,6 @@ def normalise(element: ElementTree.Element, is_root: bool = False) -> tuple:
     # Go's output order is struct order, ours is DTD order: compare per tag, keeping order within a tag.
     grouped = tuple(sorted(children, key=lambda c: c[0]))
     return (element.tag, attrs, text, grouped)
-
 
 
 def expected_programme_channels(root: ElementTree.Element) -> list:
@@ -134,16 +135,30 @@ class GoldenGuide(unittest.TestCase):
                     [(e.get("channel"), e.get("start")) for e in wp],
                     "programme order",
                 )
-                for g, w in zip(gp, wp):
+                for g, w in zip(gp, wp, strict=True):
                     self.assertEqual(normalise(g), normalise(w))
 
 
 def channel(**kw) -> XEPGChannel:
     base = {
-        "_file.m3u.id": "M1", "_file.m3u.name": "P", "_file.m3u.path": "/d/M1.m3u", "group-title": "G",
-        "name": "Alpha", "tvg-id": "a", "tvg-logo": "", "tvg-name": "Alpha", "tvg-chno": "1", "url": "http://p/1",
-        "x-active": True, "x-channelID": "1", "x-epg": "x-ID.1", "x-mapping": "30_Minutes",
-        "x-xmltv-file": "Threadfin Dummy", "x-name": "Alpha", "x-ppv-extra": "", "x-category": "",
+        "_file.m3u.id": "M1",
+        "_file.m3u.name": "P",
+        "_file.m3u.path": "/d/M1.m3u",
+        "group-title": "G",
+        "name": "Alpha",
+        "tvg-id": "a",
+        "tvg-logo": "",
+        "tvg-name": "Alpha",
+        "tvg-chno": "1",
+        "url": "http://p/1",
+        "x-active": True,
+        "x-channelID": "1",
+        "x-epg": "x-ID.1",
+        "x-mapping": "30_Minutes",
+        "x-xmltv-file": "Threadfin Dummy",
+        "x-name": "Alpha",
+        "x-ppv-extra": "",
+        "x-category": "",
     }
     base.update(kw)
     return XEPGChannel.from_json(base)
@@ -177,9 +192,16 @@ class Units(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as td:
             out = Path(td) / "t.xml"
-            write_xmltv(out, {"x-ID.1": channel()}, td, EPGOptions(), datetime(2026, 10, 12, 10, tzinfo=SYD),
-                        gzip_path=Path(td) / "t.xml.gz")
-            self.assertEqual(gzip.open(Path(td) / "t.xml.gz").read(), out.read_bytes())
+            write_xmltv(
+                out,
+                {"x-ID.1": channel()},
+                td,
+                EPGOptions(),
+                datetime(2026, 10, 12, 10, tzinfo=SYD),
+                gzip_path=Path(td) / "t.xml.gz",
+            )
+            with gzip.open(Path(td) / "t.xml.gz") as unpacked:
+                self.assertEqual(unpacked.read(), out.read_bytes())
             self.assertEqual([p.name for p in Path(td).glob(".*")], [])
             ElementTree.parse(out)
 
@@ -236,8 +258,12 @@ class LiveEvent(unittest.TestCase):
         self.assertEqual(self.start("x 9PM").tzinfo, SYD)
 
     def test_year_rollover(self) -> None:
-        self.assertEqual(self.start("12/31 11PM", datetime(2027, 1, 1, 1, tzinfo=SYD)), datetime(2026, 12, 31, 23, tzinfo=SYD))
-        self.assertEqual(self.start("1/1 1AM", datetime(2026, 12, 31, 23, tzinfo=SYD)), datetime(2027, 1, 1, 1, tzinfo=SYD))
+        self.assertEqual(
+            self.start("12/31 11PM", datetime(2027, 1, 1, 1, tzinfo=SYD)), datetime(2026, 12, 31, 23, tzinfo=SYD)
+        )
+        self.assertEqual(
+            self.start("1/1 1AM", datetime(2026, 12, 31, 23, tzinfo=SYD)), datetime(2027, 1, 1, 1, tzinfo=SYD)
+        )
 
     def programmes(self, name: str, now: datetime | None = None, **options) -> list[tuple[str, str]]:
         c = channel(**{"x-mapping": "PPV", "x-name": name, "x-ppv-extra": "Main"})

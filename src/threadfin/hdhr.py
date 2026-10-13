@@ -118,9 +118,7 @@ class PMSIds:
             jsonio.save_json(self.path, self.ids)
 
 
-def lineup_xepg(
-    channels: Mapping[str, XEPGChannel], registry: StreamRegistry, base_url: str
-) -> list[dict[str, str]]:
+def lineup_xepg(channels: Mapping[str, XEPGChannel], registry: StreamRegistry, base_url: str) -> list[dict[str, str]]:
     entries = []
     for channel in sorted(channels.values(), key=channel_order):
         if channel.x_active and not channel.x_hide_channel:

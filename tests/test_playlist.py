@@ -19,6 +19,7 @@ from threadfin.xepg import XEPGChannel
 GOLDEN = Path(__file__).parent / "golden" / "playlist"
 CASES = sorted(GOLDEN.glob("*.input.json"))
 
+
 def run(case: dict) -> tuple[str, StreamRegistry]:
     channels = {k: XEPGChannel.from_json(v) for k, v in case["xepg"].items()}
     registry = StreamRegistry()
@@ -49,15 +50,31 @@ class Units(unittest.TestCase):
         self.assertEqual(expected_group_counts(["A (3)", "B (x)", "C", "D (+2)", "E (1"]), {"A": 3, "D": 2})
 
     def test_quotes_never_break_a_line(self) -> None:
-        channel = XEPGChannel.from_json({"x-active": True, "x-name": 'Say "hi"\nnow', "x-channelID": "1",
-                                         "x-epg": "x-ID.1", "url": "http://p/1", "_file.m3u.id": "M1"})
+        channel = XEPGChannel.from_json(
+            {
+                "x-active": True,
+                "x-name": 'Say "hi"\nnow',
+                "x-channelID": "1",
+                "x-epg": "x-ID.1",
+                "url": "http://p/1",
+                "_file.m3u.id": "M1",
+            }
+        )
         text = build_playlist({"x-ID.1": channel}, PlaylistOptions(), StreamRegistry())
         self.assertEqual(len(text.splitlines()), 3)
         self.assertIn("Say 'hi' now", text)
 
     def test_registry_roundtrip_and_refresh(self) -> None:
-        channel = XEPGChannel.from_json({"x-active": True, "x-name": "One", "x-channelID": "1", "x-epg": "x-ID.1",
-                                         "url": "http://p/1\r\n", "_file.m3u.id": "M1"})
+        channel = XEPGChannel.from_json(
+            {
+                "x-active": True,
+                "x-name": "One",
+                "x-channelID": "1",
+                "x-epg": "x-ID.1",
+                "url": "http://p/1\r\n",
+                "_file.m3u.id": "M1",
+            }
+        )
         with tempfile.TemporaryDirectory() as td:
             registry = StreamRegistry(Path(td) / "urls.json")
             uid = registry.register(channel)

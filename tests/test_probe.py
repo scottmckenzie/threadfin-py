@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
@@ -69,8 +70,7 @@ class GoldenParseTests(unittest.TestCase):
 
     def test_details_tolerate_odd_bit_rates(self) -> None:
         d = analyze_ffprobe_output(
-            '{"streams":[{"codec_type":"video","bit_rate":"N/A","height":10},'
-            '{"codec_type":"audio","bit_rate":null}]}'
+            '{"streams":[{"codec_type":"video","bit_rate":"N/A","height":10},{"codec_type":"audio","bit_rate":null}]}'
         ).details
         self.assertEqual((d.video_bit_rate, d.audio_bit_rate), (None, None))
 
@@ -85,8 +85,17 @@ class UrlAndCommandTests(unittest.TestCase):
             self.assertEqual(validate_probe_url(url), url)
 
     def test_validate_rejects_dangerous_inputs(self) -> None:
-        for url in ("", "  ", "file:///etc/passwd", "/etc/passwd", "-i evil", "concat:a|b",
-                    "pipe:0", "data:text/plain,x", "gopher://h"):
+        for url in (
+            "",
+            "  ",
+            "file:///etc/passwd",
+            "/etc/passwd",
+            "-i evil",
+            "concat:a|b",
+            "pipe:0",
+            "data:text/plain,x",
+            "gopher://h",
+        ):
             with self.subTest(url=url), self.assertRaises(InvalidProbeURLError):
                 validate_probe_url(url)
 
@@ -129,7 +138,7 @@ class RunnerTests(unittest.IsolatedAsyncioTestCase):
         self.script.write_text(
             '#!/bin/sh\nfor a; do url="$a"; done\n'
             'case "$url" in\n'
-            '  *slow*) exec sleep 5 ;;\n'
+            "  *slow*) exec sleep 5 ;;\n"
             '  *fail*) echo "Connection refused" >&2; exit 1 ;;\n'
             '  *garbage*) echo "not json" ;;\n'
             '  *) cat "$FAKE_JSON" ;;\n'
@@ -188,15 +197,14 @@ class RealFfprobeTests(unittest.IsolatedAsyncioTestCase):
     async def test_probe_generated_stream(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             media = Path(tmp) / "t.ts"
-            subprocess.run(
+            await asyncio.to_thread(
+                subprocess.run,
                 ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=320x240:rate=25",
                  "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
                  "-t", "1", "-c:v", "mpeg2video", "-c:a", "mp2", "-f", "mpegts", str(media)],
                 check=True,
             )  # fmt: skip
-            run = await run_ffprobe(
-                str(media), ffprobe=shutil.which("ffprobe") or "", allow_local=True
-            )
+            run = await run_ffprobe(str(media), ffprobe=shutil.which("ffprobe") or "", allow_local=True)
         self.assertTrue(run.ok, run.error)
         self.assertEqual(
             (run.summary.resolution, run.summary.frame_rate, run.summary.audio_channels),

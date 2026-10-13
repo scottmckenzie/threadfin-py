@@ -35,8 +35,8 @@ from starlette.routing import Route
 
 from . import api, hdhr, ui
 from .access import base_url
-from .imagecache import IMAGE_TYPES, image_headers
 from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError
+from .imagecache import IMAGE_TYPES, image_headers
 from .scheduler import Scheduler
 from .service import Service
 

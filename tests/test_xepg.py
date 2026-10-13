@@ -35,7 +35,9 @@ def run_case(case: dict, data: Path) -> tuple[dict[str, XEPGChannel], object, di
     for name, body in case["xmltv"].items():
         (data / f"{name}.xml").write_text(body, "utf-8")
     settings = case["settings"]
-    files = [(f"{pid}.xml", data / f"{pid}.xml") for pid in settings["files"]["xmltv"] if (data / f"{pid}.xml").exists()]
+    files = [
+        (f"{pid}.xml", data / f"{pid}.xml") for pid in settings["files"]["xmltv"] if (data / f"{pid}.xml").exists()
+    ]
     mapping, _errors = build_mapping(files)
     channels = {k: XEPGChannel.from_json(v) for k, v in case["xepg"].items()}
     provider_ids = set(settings["files"]["m3u"]) | set(settings["files"]["hdhr"])
@@ -97,11 +99,24 @@ def st(i: int, **kw: str) -> dict[str, str]:
     return s
 
 
-def run(channels: dict, streams: list, *, filters: dict | None = None, first: float = 1000,
-        providers: set | None = None, mapping: dict | None = None, count=lambda c: 99):
+def run(
+    channels: dict,
+    streams: list,
+    *,
+    filters: dict | None = None,
+    first: float = 1000,
+    providers: set | None = None,
+    mapping: dict | None = None,
+    count=lambda c: 99,
+):
     return build_xepg(
-        channels, streams, mapping_first_channel=first, filters=filters or {},
-        xmltv_mapping=mapping or {}, provider_ids=providers or {"M1"}, program_count=count,
+        channels,
+        streams,
+        mapping_first_channel=first,
+        filters=filters or {},
+        xmltv_mapping=mapping or {},
+        provider_ids=providers or {"M1"},
+        program_count=count,
     )
 
 
@@ -110,8 +125,10 @@ class DeliberateFixTests(unittest.TestCase):
         """Go pointed every channel with that tvg-id at whichever stream came last."""
         a = mk("x-ID.0", tvg_id="same", url="http://p/a")
         b = mk("x-ID.1", tvg_id="same", url="http://p/b")
-        run({"x-ID.0": a, "x-ID.1": b}, [st(1, **{"tvg-id": "same", "url": "http://p/a"}),
-                                           st(2, **{"tvg-id": "same", "url": "http://p/b"})])
+        run(
+            {"x-ID.0": a, "x-ID.1": b},
+            [st(1, **{"tvg-id": "same", "url": "http://p/a"}), st(2, **{"tvg-id": "same", "url": "http://p/b"})],
+        )
         self.assertEqual((a.url, b.url), ("http://p/a", "http://p/b"))
 
     def test_url_refresh_follows_unique_tvg_id_within_the_same_playlist(self) -> None:
@@ -129,8 +146,10 @@ class DeliberateFixTests(unittest.TestCase):
         result = run({"x-ID.0": old}, [new_stream])
         self.assertEqual(list(result.channels), ["x-ID.0"])
         channel = result.channels["x-ID.0"]
-        self.assertEqual((channel.url, channel.tvg_id, channel.x_name, channel.x_channel_id),
-                         ("http://p/new", "fresh-id", "My name", "77"))
+        self.assertEqual(
+            (channel.url, channel.tvg_id, channel.x_name, channel.x_channel_id),
+            ("http://p/new", "fresh-id", "My name", "77"),
+        )
         self.assertEqual(result.created, [])
 
     def test_deactivated_channel_found_by_uuid_keeps_settings_but_follows_identity(self) -> None:
@@ -142,7 +161,10 @@ class DeliberateFixTests(unittest.TestCase):
 
     def test_duplicate_prefers_mapped_even_with_smaller_id(self) -> None:
         same = dict(url="http://p/x", tvg_id="t", x_active=True)
-        channels = {"x-ID.0": mk("x-ID.0", x_xmltv_file="X1.xml", **same), "x-ID.1": mk("x-ID.1", x_xmltv_file="-", **same)}
+        channels = {
+            "x-ID.0": mk("x-ID.0", x_xmltv_file="X1.xml", **same),
+            "x-ID.1": mk("x-ID.1", x_xmltv_file="-", **same),
+        }
         remove_duplicates(channels)
         self.assertEqual(list(channels), ["x-ID.0"])
 
@@ -150,8 +172,10 @@ class DeliberateFixTests(unittest.TestCase):
         from threadfin.xepg import _refresh_urls
 
         channel = mk("x-ID.0", tvg_id="t", url="http://old")
-        _refresh_urls({"x-ID.0": channel}, [st(1, **{"tvg-id": "t", "url": "http://a"}),
-                                            st(2, **{"tvg-id": "t", "url": "http://b"})])
+        _refresh_urls(
+            {"x-ID.0": channel},
+            [st(1, **{"tvg-id": "t", "url": "http://a"}), st(2, **{"tvg-id": "t", "url": "http://b"})],
+        )
         self.assertEqual(channel.url, "http://old")  # two streams share the tvg-id
         first, second = mk("x-ID.0", tvg_id="t", url="http://old1"), mk("x-ID.1", tvg_id="t", url="http://old2")
         _refresh_urls({"x-ID.0": first, "x-ID.1": second}, [st(1, **{"tvg-id": "t", "url": "http://a"})])
@@ -188,8 +212,10 @@ class DeliberateFixTests(unittest.TestCase):
         self.assertEqual(next(iter(result.channels.values())).x_channel_id, "1000")
 
     def test_invalid_starting_number_is_ignored_and_valid_one_used(self) -> None:
-        filters = {"0": {"filter": "News", "startingNumber": "x7", "type": "group-title"},
-                   "1": {"filter": "Sports", "startingNumber": "40.5", "type": "group-title"}}
+        filters = {
+            "0": {"filter": "News", "startingNumber": "x7", "type": "group-title"},
+            "1": {"filter": "Sports", "startingNumber": "40.5", "type": "group-title"},
+        }
         result = run({}, [st(1, **{"group-title": "News"}), st(2, **{"group-title": "Sports"})], filters=filters)
         self.assertEqual([c.x_channel_id for c in result.channels.values()], ["1000", "40.5"])
 
@@ -200,15 +226,27 @@ class DeliberateFixTests(unittest.TestCase):
 
     def test_backup_found_by_name_last_match_wins(self) -> None:
         a = mk("x-ID.0", x_active=True, x_backup_channel_2=" Ch 2 ")
-        result = run({"x-ID.0": a}, [st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"}), st(2),
-                                     st(3, **{"name": "Ch 2", "tvg-name": "Ch 2"})])
+        result = run(
+            {"x-ID.0": a},
+            [
+                st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"}),
+                st(2),
+                st(3, **{"name": "Ch 2", "tvg-name": "Ch 2"}),
+            ],
+        )
         self.assertEqual(result.channels["x-ID.0"].backup_channel_2, BackupStream("M1", "http://p/3"))
 
     def test_active_count_only_counts_kept_channels(self) -> None:
         a = mk("x-ID.0", x_active=True, file_m3u_id="GONE")
         b = mk("x-ID.1", x_active=True)
-        result = run({"x-ID.0": a, "x-ID.1": b}, [st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0", "_file.m3u.id": "GONE"}),
-                                                   st(1, url="http://p/x-ID.1", **{"tvg-id": "x-ID.1"})], providers={"M1"})
+        result = run(
+            {"x-ID.0": a, "x-ID.1": b},
+            [
+                st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0", "_file.m3u.id": "GONE"}),
+                st(1, url="http://p/x-ID.1", **{"tvg-id": "x-ID.1"}),
+            ],
+            providers={"M1"},
+        )
         self.assertEqual(result.xepg_count, 1)
         self.assertEqual(list(result.channels), ["x-ID.1"])
 
@@ -229,16 +267,31 @@ class DeliberateFixTests(unittest.TestCase):
         self.assertFalse(hasattr(module, "is_in_inactive_list"))
 
     def test_new_ids_fill_the_first_gap(self) -> None:
-        result = run({"x-ID.0": mk("x-ID.0", x_active=True), "x-ID.2": mk("x-ID.2", x_active=True)},
-                     [st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"}), st(2, url="http://p/x-ID.2", **{"tvg-id": "x-ID.2"}),
-                      st(7), st(8)])
+        result = run(
+            {"x-ID.0": mk("x-ID.0", x_active=True), "x-ID.2": mk("x-ID.2", x_active=True)},
+            [
+                st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"}),
+                st(2, url="http://p/x-ID.2", **{"tvg-id": "x-ID.2"}),
+                st(7),
+                st(8),
+            ],
+        )
         self.assertEqual(result.created, ["x-ID.1", "x-ID.3"])
 
 
 class HelperTests(unittest.TestCase):
     def test_go_g(self) -> None:
-        for value, text in [(1000.0, "1000"), (1000.5, "1000.5"), (1e6, "1e+06"), (999999.0, "999999"),
-                            (1234567.0, "1.234567e+06"), (0.0001, "0.0001"), (0.00001, "1e-05"), (-3.0, "-3"), (0.0, "0")]:
+        for value, text in [
+            (1000.0, "1000"),
+            (1000.5, "1000.5"),
+            (1e6, "1e+06"),
+            (999999.0, "999999"),
+            (1234567.0, "1.234567e+06"),
+            (0.0001, "0.0001"),
+            (0.00001, "1e-05"),
+            (-3.0, "-3"),
+            (0.0, "0"),
+        ]:
             self.assertEqual(go_g(value), text)
 
     def test_parse_float(self) -> None:
@@ -252,7 +305,9 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(channel_hash("u", "", "M1"), channel_hash("u", "", "M1"))
 
     def test_json_round_trip_keeps_go_key_order_and_omits_empty_uuid_value(self) -> None:
-        channel = XEPGChannel.from_json({"url": "u", "x-active": True, "unknown": 1, "backup_channel_2": {"PlaylistID": "M", "URL": "x"}})
+        channel = XEPGChannel.from_json(
+            {"url": "u", "x-active": True, "unknown": 1, "backup_channel_2": {"PlaylistID": "M", "URL": "x"}}
+        )
         data = channel.to_json()
         self.assertEqual(list(data)[:3], ["_file.m3u.id", "_file.m3u.name", "_file.m3u.path"])
         self.assertNotIn("_uuid.value", data)

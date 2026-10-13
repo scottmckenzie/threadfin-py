@@ -49,9 +49,7 @@ class ProbeService:
         ttl = self._ok_ttl if record.ok else self._failure_ttl
         return record.age(self._clock()) < ttl.total_seconds()
 
-    async def probe(
-        self, url: str, *, channel_key: str | None = None, force: bool = False
-    ) -> ProbeRecord:
+    async def probe(self, url: str, *, channel_key: str | None = None, force: bool = False) -> ProbeRecord:
         """Return a probe result for ``url``: stored if fresh, otherwise a new probe.
 
         Failed probes are cached for a shorter time than successful ones so a
@@ -83,9 +81,7 @@ class ProbeService:
                 user_agent=self._user_agent,
                 allow_local=self._allow_local,
             )
-        return await asyncio.to_thread(
-            self._store.record, run, channel_key=channel_key, probed_at=self._clock()
-        )
+        return await asyncio.to_thread(self._store.record, run, channel_key=channel_key, probed_at=self._clock())
 
     async def probe_many(
         self, items: Iterable[tuple[str, str | None]], *, force: bool = False

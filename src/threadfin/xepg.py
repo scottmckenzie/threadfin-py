@@ -21,9 +21,9 @@ from __future__ import annotations
 
 import hashlib
 import math
-from decimal import Decimal
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields
+from decimal import Decimal
 from typing import Any
 
 from .jsonio import load_json_object, save_json
@@ -47,9 +47,7 @@ class BackupStream:
         if not isinstance(value, dict):
             return None
         playlist_id, url = value.get("PlaylistID"), value.get("URL")
-        return BackupStream(
-            playlist_id if isinstance(playlist_id, str) else "", url if isinstance(url, str) else ""
-        )
+        return BackupStream(playlist_id if isinstance(playlist_id, str) else "", url if isinstance(url, str) else "")
 
 
 # (attribute, JSON key, kind) in the order Go marshals them.
@@ -167,14 +165,12 @@ class XEPGChannel:
 def channel_hash(url: str, tvg_id: str, playlist_id: str) -> str:
     """Stable channel identity: the URL, the ``tvg-id`` when there is one, and the playlist."""
     text = url + tvg_id + playlist_id if tvg_id else url + playlist_id
-    return hashlib.md5(text.encode("utf-8")).hexdigest()  # noqa: S324
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
 def load_xepg(path: str) -> dict[str, XEPGChannel]:
     return {
-        key: XEPGChannel.from_json(value)
-        for key, value in load_json_object(path).items()
-        if isinstance(value, dict)
+        key: XEPGChannel.from_json(value) for key, value in load_json_object(path).items() if isinstance(value, dict)
     }
 
 
@@ -192,7 +188,7 @@ def go_g(value: float) -> str:
         return "0"
     if not math.isfinite(value):
         return "NaN" if math.isnan(value) else ("+Inf" if value > 0 else "-Inf")
-    sign, digits, exponent = Decimal(repr(abs(value))).as_tuple()
+    _, digits, exponent = Decimal(repr(abs(value))).as_tuple()
     text = "".join(map(str, digits)).rstrip("0") or "0"
     point = len(digits) + exponent  # value = 0.<digits> * 10**point
     exp10 = point - 1
@@ -242,9 +238,7 @@ def group_filters(settings_filter: Mapping[str, Any]) -> list[GroupFilter]:
     for key in sorted(settings_filter, key=order):
         raw = settings_filter[key]
         if isinstance(raw, Mapping):
-            result.append(
-                GroupFilter(text(raw, "filter"), text(raw, "startingNumber"), text(raw, "x-category"))
-            )
+            result.append(GroupFilter(text(raw, "filter"), text(raw, "startingNumber"), text(raw, "x-category")))
     return result
 
 
@@ -264,9 +258,7 @@ class BuildResult:
     warnings: list[str] = field(default_factory=list)
 
 
-WARNING_NO_ACTIVE_CHANNELS = (
-    "No channels are active. Open the mapping page and activate the channels you want."
-)
+WARNING_NO_ACTIVE_CHANNELS = "No channels are active. Open the mapping page and activate the channels you want."
 
 
 # --- duplicates -------------------------------------------------------------------
@@ -383,7 +375,6 @@ def update_database(
         url = _stream_text(stream, "url")
         tvg_id = _stream_text(stream, "tvg-id")
         name = _stream_text(stream, "name")
-        tvg_name = _stream_text(stream, "tvg-name") or name
         playlist_id = _stream_text(stream, "_file.m3u.id")
         uuid_value = _stream_text(stream, "_uuid.value")
         live_event = _stream_text(stream, "liveEvent")

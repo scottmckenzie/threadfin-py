@@ -2,6 +2,7 @@
 
 ``files`` are names in the cache folder; ``md5:<url>`` stands for the cache name of that URL.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -25,15 +26,31 @@ SOURCES = [
     "http://img.example/space name.svg",
     "http://img.example/weird%20.webp",
 ]
-CACHED = [f"md5:{u}" for u in ("http://img.example/logo.png", "https://cdn.example/a/b/Channel.PNG",
-                                 "http://img.example/page.html", "http://img.example/trimmed.png",
-                                 "http://img.example/space name.svg")]
+CACHED = [
+    f"md5:{u}"
+    for u in (
+        "http://img.example/logo.png",
+        "https://cdn.example/a/b/Channel.PNG",
+        "http://img.example/page.html",
+        "http://img.example/trimmed.png",
+        "http://img.example/space name.svg",
+    )
+]
 
 
 def case(name, **kw):
-    body = {"caching": True, "cacheURL": "http://192.168.1.2:34400/images/", "files": CACHED,
-            "httpDomain": "", "port": "34400", "forceHttps": False, "httpsPort": 443, "httpsDomain": "",
-            "sources": SOURCES, **kw}
+    body = {
+        "caching": True,
+        "cacheURL": "http://192.168.1.2:34400/images/",
+        "files": CACHED,
+        "httpDomain": "",
+        "port": "34400",
+        "forceHttps": False,
+        "httpsPort": 443,
+        "httpsDomain": "",
+        "sources": SOURCES,
+        **kw,
+    }
     (out / f"{name}.input.json").write_text(json.dumps(body, indent=1) + "\n")
 
 

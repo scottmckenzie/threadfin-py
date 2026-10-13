@@ -49,8 +49,7 @@ def normalise_filters(settings: dict[str, Any]) -> dict[str, Any]:
     """Go nested the whole request ({id: data, ...}) in a new filter; that copy is dropped here."""
     filters = settings.get("filter")
     if isinstance(filters, dict):
-        request_id = lambda key: key.lstrip("-").isdigit()
-        settings = {**settings, "filter": {k: {kk: vv for kk, vv in v.items() if not request_id(kk)}
+        settings = {**settings, "filter": {k: {kk: vv for kk, vv in v.items() if not kk.lstrip("-").isdigit()}
                                            for k, v in filters.items()}}  # fmt: skip
     return settings
 

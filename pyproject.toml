@@ -18,11 +18,11 @@ dependencies = [
 [project.scripts]
 threadfin = "threadfin.cli:main"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "httpx2>=2.0",  # starlette.testclient
-    "pytest>=8",
-    "ruff>=0.6",
+    "pytest>=9",  # unittest subTest reported per subtest
+    "ruff>=0.17",
     "mypy>=1.11",
 ]
 
@@ -31,10 +31,20 @@ packages = ["src/threadfin"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]  # webfixture
+filterwarnings = ["error"]
+addopts = "-ra"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "ASYNC"]
+ignore = [
+    "E501",    # line length is the formatter's job
+    "SIM108",  # if/else blocks are often clearer than a long ternary
+]
 
 [tool.mypy]
 python_version = "3.12"

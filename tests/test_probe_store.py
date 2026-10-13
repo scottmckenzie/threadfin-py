@@ -72,9 +72,7 @@ class StoreTests(unittest.TestCase):
     def test_keep_per_url_prunes_oldest(self) -> None:
         for i in range(5):
             self.store.record(make_run(res=f"{i}p"), probed_at=T0 + timedelta(minutes=i))
-        self.assertEqual(
-            [r.summary.resolution for r in self.store.history("http://h/a")], ["4p", "3p", "2p"]
-        )
+        self.assertEqual([r.summary.resolution for r in self.store.history("http://h/a")], ["4p", "3p", "2p"])
 
     def test_prune_across_urls(self) -> None:
         store = ProbeStore(":memory:", keep_per_url=100)
@@ -148,9 +146,8 @@ class StoreTests(unittest.TestCase):
                 opened.append(conn)
                 return conn
 
-            with mock.patch("threadfin.probe_store.sqlite3.connect", spy):
-                with self.assertRaises(RuntimeError):
-                    ProbeStore(path)
+            with mock.patch("threadfin.probe_store.sqlite3.connect", spy), self.assertRaises(RuntimeError):
+                ProbeStore(path)
             self.assertEqual(len(opened), 1)
             with self.assertRaises(sqlite3.ProgrammingError):  # "Cannot operate on a closed database"
                 opened[0].execute("SELECT 1")
@@ -178,10 +175,10 @@ class ServiceTests(unittest.IsolatedAsyncioTestCase):
             '#!/bin/sh\nfor a; do url="$a"; done\n'
             'echo "$url" >> "$FAKE_LOG"\necho "start $url" >> "$FAKE_TRACE"\n'
             'case "$url" in\n'
-            '  *slow*) exec sleep 5 ;;\n'
+            "  *slow*) exec sleep 5 ;;\n"
             '  *fail*) echo "Connection refused" >&2; echo "end $url" >> "$FAKE_TRACE"; exit 1 ;;\n'
             '  *) cat "$FAKE_JSON"; sleep "${FAKE_DELAY:-0}" ;;\n'
-            "esac\necho \"end $url\" >> \"$FAKE_TRACE\"\n"
+            'esac\necho "end $url" >> "$FAKE_TRACE"\n'
         )
         script.chmod(script.stat().st_mode | stat.S_IEXEC)
         self.script = script

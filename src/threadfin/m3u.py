@@ -111,9 +111,7 @@ def parse_m3u_report(content: bytes | str) -> ParseResult:
         if isinstance(outcome, _Skip):
             if original_lines is None:
                 original_lines = original.split("\n")
-            skipped.append(
-                SkippedEntry(line, outcome.reason, outcome.url, original_lines[line - 1].strip()[:200])
-            )
+            skipped.append(SkippedEntry(line, outcome.reason, outcome.url, original_lines[line - 1].strip()[:200]))
         else:
             streams.append(outcome)
     return ParseResult(streams, skipped)
@@ -142,11 +140,7 @@ def _name_comma(extinf: str, attributes: list[re.Match[str]]) -> int:
 
 
 def _parse_channel(chunk: str) -> Stream | _Skip:
-    lines = [
-        line
-        for line in chunk.replace("\r\n", "\n").split("\n")
-        if line and not line.startswith("#")
-    ]
+    lines = [line for line in chunk.replace("\r\n", "\n").split("\n") if line and not line.startswith("#")]
     if len(lines) < 2:
         return _Skip(NO_URL)
 
@@ -181,7 +175,7 @@ def _parse_channel(chunk: str) -> Stream | _Skip:
         return _Skip(NO_NAME, url)
 
     if stream.get("tvg-id", "") in ("", "(no tvg-id)"):
-        digest = hashlib.md5(url.encode("utf-8")).hexdigest()  # noqa: S324
+        digest = hashlib.md5(url.encode("utf-8")).hexdigest()
         stream["tvg-id"] = f"threadfin-{digest}"
 
     stream["name"] = name
@@ -214,8 +208,7 @@ def serialize_m3u(streams: list[Stream]) -> str:
     out = ["#EXTM3U\n"]
     for s in streams:
         attributes = " ".join(
-            _attribute(key, s.get(key, ""))
-            for key in ("tvg-id", "tvg-name", "tvg-chno", "tvg-logo", "group-title")
+            _attribute(key, s.get(key, "")) for key in ("tvg-id", "tvg-name", "tvg-chno", "tvg-logo", "group-title")
         )
         out.append(f"#EXTINF:-1 {attributes},{s.get('name', '')}\n{s.get('url', '')}\n")
     return "".join(out)
