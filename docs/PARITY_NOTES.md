@@ -129,7 +129,13 @@ Compared element by element (parsed XML) with the real `createXMLTVFile` on 50 c
 |---|---|
 | Programmes keep only title, sub-title, desc, category, country, episode-num, icon, credits, rating, star-rating, language, video, date, previously-shown, new, live, premiere. | kept |
 | Dummy guides: 4 days of fixed slots, labelled with *today's* UTC offset (no DST adjustment). | kept |
-| Live-event (`PPV`) guides: "CHANNEL OFFLINE" before and after the event. The start time parsed from the channel name **never worked** in Go: the event always starts at 06:00 if the name contains an ASCII digit and at midnight otherwise. | kept as it behaves; real parsing is available as a follow-up |
+| Live-event (`PPV`) guides: "CHANNEL OFFLINE" before and after the event. | kept |
+| The start time in the channel name **never worked** in Go (it read the AM/PM group of its regex instead of the time, so parsing always failed): the event started at 06:00 if the name contained an ASCII digit and at midnight otherwise. | **fixed**: the time is read (`9PM`, `7:30 PM`, `20:00`, `9 p.m.`), with an optional date before it (`12/25-1:00 PM`, `3.21 3:45 AM`) and an optional US zone after it (`ET`/`EST`/`EDT`, `CT`, `MT`, `PT` and their S/D forms, DST-aware; also `UTC`/`GMT`); without a zone the time is server-local. A name with digits but no readable time still starts at 06:00, one without digits at midnight (Go's intended fallbacks) |
+| Go's intended parser would also have taken any 1–2 digit number as an hour (`UFC 300`, `Channel 5`). | **fixed**: a time needs minutes or AM/PM |
+| Go's intended parser used the server's date for a zoned time (in Sydney on the morning of the 13th, `7:30 PM ET` would have been the 13th in New York, a day late). | **fixed**: today's date in the event's zone |
+| A date without a year used the current year (`12/31` seen on 1 January was a year ahead). | **fixed**: the nearest year (previous, this or next) |
+| The event always ran until 23:59:59 today and the closing "CHANNEL OFFLINE" was always tomorrow, even for an event on another day. | **fixed**: built around the event's own day; the opening "CHANNEL OFFLINE" starts at today's midnight (or the event day's, if earlier) |
+| An event late in the evening ran only until 23:59:59 (e.g. 30 minutes for 11:30 PM). | **changed**: an event runs for at least 3 hours, and the closing "CHANNEL OFFLINE" starts when it ends |
 | Empty `<credits>`, `<video>`, `<date>` and the private channel children `<live>`/`<active>` were written. | **dropped** (no information) |
 | `generator`/`source` were child elements of `<tv>`. | **changed**: attributes (the XMLTV DTD form) |
 | Elements follow Go struct order. | **changed**: XMLTV DTD order |
