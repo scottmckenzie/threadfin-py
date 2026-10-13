@@ -6,7 +6,7 @@ in `docs/PARITY_NOTES.md`.
 
 ## Python Version
 
-Python 3.12 (minimum 3.11). Use modern syntax:
+Python 3.12 minimum (`requires-python` in pyproject.toml). Use modern syntax:
 - `X | None` instead of `Optional[X]`
 - `list[str]` instead of `List[str]`
 - `dict[str, Any]` instead of `Dict[str, Any]`
