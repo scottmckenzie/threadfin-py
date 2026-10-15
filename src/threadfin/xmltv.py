@@ -10,6 +10,7 @@ Provider XMLTV files can be hundreds of megabytes, so everything here streams th
 from __future__ import annotations
 
 import os
+from collections import Counter
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
@@ -122,12 +123,10 @@ def build_mapping(
     return mapping, errors
 
 
-def count_programmes(path: str | os.PathLike[str], channel_id: str) -> int:
-    """How many ``<programme>`` entries belong to ``channel_id``."""
-    return sum(
-        1
-        for element in iter_top_level(path)
-        if _local(element.tag) == "programme" and element.attrib.get("channel", "") == channel_id
+def programme_counts(path: str | os.PathLike[str]) -> Counter[str]:
+    """How many ``<programme>`` entries each channel id has, in one pass over the file."""
+    return Counter(
+        element.attrib.get("channel", "") for element in iter_top_level(path) if _local(element.tag) == "programme"
     )
 
 
@@ -147,17 +146,26 @@ def dummy_programme_count(mapping: str) -> int:
 
 
 def make_program_counter(data_folder: str | os.PathLike[str]) -> Callable[[Any], int]:
-    """How many programmes ``getProgramData`` would produce for a channel (0 if unreadable)."""
+    """How many programmes ``getProgramData`` would produce for a channel (0 if unreadable).
+
+    Each file is read once, on first use, and its counts are kept: make one counter per build,
+    so files changed by a later download are read again.
+    """
     folder = Path(data_folder)
+    per_file: dict[str, Counter[str]] = {}
 
     def count(channel: Any) -> int:
         if DUMMY_FILE in channel.x_xmltv_file:
             return dummy_programme_count(channel.x_mapping)
         if not channel.x_xmltv_file:
             return 0
-        try:
-            return count_programmes(folder / channel.x_xmltv_file, channel.x_mapping)
-        except XMLTVError:
-            return 0
+        counts = per_file.get(channel.x_xmltv_file)
+        if counts is None:
+            try:
+                counts = programme_counts(folder / channel.x_xmltv_file)
+            except XMLTVError:
+                counts = Counter()  # unreadable or invalid: every channel counts 0
+            per_file[channel.x_xmltv_file] = counts
+        return counts[channel.x_mapping]
 
     return count
