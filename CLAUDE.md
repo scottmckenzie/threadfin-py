@@ -95,9 +95,10 @@ Always use `uv run` to execute Python code and tools. Never call `python`, `pyte
     PYTHONDEVMODE=1 uv run pytest            # warnings are errors (pyproject.toml)
     uv run ruff check                        # rules in pyproject.toml; must pass
     uv run ruff format                       # `# fmt: skip` keeps hand-aligned tables
+    uv run coverage run -m pytest && uv run coverage report   # fails below 95% (lines + branches)
 
-CI (`.github/workflows/ci.yml`) runs the same lint, format and test checks on every pull request
-and push to `main`, with tests on Python 3.12 and 3.14 and `ffmpeg` installed.
+CI (`.github/workflows/ci.yml`) runs the same lint, format, test and coverage checks on every pull
+request and push to `main`, with tests on Python 3.12 and 3.14 and `ffmpeg` installed.
 
 A commit that only reformats goes in `.git-blame-ignore-revs` (once it is on `main`).
 

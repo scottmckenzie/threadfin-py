@@ -40,7 +40,9 @@ jobs:
       - name: Install ffmpeg (for the real ffprobe test)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: uv sync --locked
-      - name: Tests (warnings are errors, see pyproject.toml)
-        run: uv run pytest
+      - name: Tests with coverage (warnings are errors, see pyproject.toml)
+        run: uv run coverage run -m pytest
         env:
           PYTHONDEVMODE: "1"
+      - name: Coverage (fails below fail_under in pyproject.toml)
+        run: uv run coverage report
