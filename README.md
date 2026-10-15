@@ -37,7 +37,9 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 
 Then open `http://<this machine>:34400/web/`, add a playlist (and, for the XMLTV mode, a guide),
 and add the tuner in Plex / Emby / Jellyfin as `http://<this machine>:34400`. An existing
-`~/.threadfin` folder from the Go app is used as it is.
+`~/.threadfin` folder from the Go app is used as it is. Passwords are stored as scrypt hashes: a
+user's Go hash is replaced at their next login here, and the Go app can then no longer log that
+user in.
 
 | Option | |
 |---|---|

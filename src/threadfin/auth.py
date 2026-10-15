@@ -7,9 +7,14 @@
      "users": {"id-XXXXXXXXXX": {"_id": ..., "_salt": ..., "_username": <hash>, "_password": <hash>,
                                  "data": {"username": "...", "authentication.web": true, ...}}}}
 
-Usernames and passwords are stored as ``base64(HMAC-SHA256(key=secret, msg="_remote_db"))``.
-Go never used the per-user ``_salt`` (it is generated and stored, then ignored), so neither do we:
-salting now would lock every existing user out.
+Usernames are stored as Go stores them, ``base64(HMAC-SHA256(key=username, msg="_remote_db"))``,
+because users are looked up by that hash. Go stored passwords the same way: fast and unsalted (the
+per-user ``_salt`` is generated and stored, then ignored). Here passwords are stored as salted scrypt
+hashes (:func:`hash_password`, ``$scrypt$ln=14,r=8,p=5$<salt>$<hash>``). Go hashes are still accepted
+and replaced at the user's next successful login, as are scrypt hashes with weaker parameters; after
+that the Go app can no longer log that user in. Correct credentials are remembered in memory (keyed by
+an HMAC with a per-process secret) so that Basic / URL credentials sent with every player request do
+not cost a scrypt computation each time.
 
 A user may use an area when its ``data`` has ``authentication.<area>: true``; a missing or
 non-boolean entry is written back as ``false`` and denied, as in Go. Tokens (web UI / API sessions)
@@ -17,8 +22,9 @@ live in memory only, are valid for ``token_minutes`` and are replaced by a new o
 
 Differences from Go (see docs/PARITY_NOTES.md): malformed ``Authorization`` headers are refused
 instead of crashing the request, Base64 is decoded strictly, the first-user form cannot take over an
-existing account, empty usernames/passwords are refused, Basic / URL auth do not mint tokens, and
-failed credential checks are throttled per client (:class:`LoginThrottle`).
+existing account, empty usernames/passwords are refused, Basic / URL auth do not mint tokens,
+failed credential checks are throttled per client (:class:`LoginThrottle`), and passwords are stored
+as scrypt hashes.
 """
 
 from __future__ import annotations
@@ -124,9 +130,66 @@ class LoginThrottle:
 
 
 def credential_hash(secret: str | bytes) -> str:
-    """Go's ``SHA256(secret, salt)``: the salt argument was never used."""
+    """Go's ``SHA256(secret, salt)``: the salt argument was never used. Usernames (and Go passwords)."""
     key = secret.encode("utf-8") if isinstance(secret, str) else secret
     return base64.b64encode(hmac.new(key, b"_remote_db", hashlib.sha256).digest()).decode("ascii")
+
+
+PasswordCost = tuple[int, int, int]  # scrypt (log2 N, r, p)
+PASSWORD_COST: PasswordCost = (14, 8, 5)  # OWASP: N=2^14, r=8, p=5 (16 MB, about 0.1 s)
+_SCRYPT_PREFIX = "$scrypt$"
+_SCRYPT_LIMITS = (20, 16, 16)  # refuse parameters beyond these from a hand-edited file
+_SCRYPT_MAXMEM = 256 * 1024 * 1024
+
+
+def _b64(data: bytes) -> str:
+    return base64.b64encode(data).decode("ascii").rstrip("=")
+
+
+def _unb64(text: str) -> bytes:
+    return base64.b64decode(text + "=" * (-len(text) % 4), validate=True)
+
+
+def _scrypt(secret: bytes, salt: bytes, cost: PasswordCost) -> bytes:
+    log_n, r, p = cost
+    return hashlib.scrypt(secret, salt=salt, n=1 << log_n, r=r, p=p, maxmem=_SCRYPT_MAXMEM, dklen=32)
+
+
+def _as_bytes(secret: str | bytes) -> bytes:
+    return secret.encode("utf-8") if isinstance(secret, str) else secret
+
+
+def hash_password(password: str | bytes, cost: PasswordCost = PASSWORD_COST) -> str:
+    """``$scrypt$ln=<log2 N>,r=<r>,p=<p>$<salt>$<hash>`` (unpadded Base64) with a random salt."""
+    salt = secrets.token_bytes(16)
+    log_n, r, p = cost
+    return f"{_SCRYPT_PREFIX}ln={log_n},r={r},p={p}${_b64(salt)}${_b64(_scrypt(_as_bytes(password), salt, cost))}"
+
+
+def _parse_scrypt(stored: str) -> tuple[PasswordCost, bytes, bytes] | None:
+    try:
+        _, _, params, salt, digest = stored.split("$")
+        values = dict(item.split("=", 1) for item in params.split(","))
+        cost = (int(values["ln"]), int(values["r"]), int(values["p"]))
+        if set(values) != {"ln", "r", "p"} or not all(1 <= v <= m for v, m in zip(cost, _SCRYPT_LIMITS, strict=True)):
+            return None
+        return cost, _unb64(salt), _unb64(digest)
+    except (ValueError, KeyError, binascii.Error):
+        return None
+
+
+def verify_password(stored: str, password: str | bytes, cost: PasswordCost = PASSWORD_COST) -> tuple[bool, bool]:
+    """``(matches, needs a new hash)`` for a stored scrypt or Go hash; anything else never matches."""
+    secret = _as_bytes(password)
+    if stored.startswith(_SCRYPT_PREFIX):
+        parsed = _parse_scrypt(stored)
+        if parsed is None:
+            return False, False
+        stored_cost, salt, digest = parsed
+        matches = hmac.compare_digest(_scrypt(secret, salt, stored_cost), digest)
+        return matches, matches and stored_cost != cost
+    matches = hmac.compare_digest(stored.encode("ascii", "replace"), credential_hash(secret).encode("ascii"))
+    return matches, matches
 
 
 def _random(chars: str, n: int) -> str:
@@ -144,8 +207,13 @@ class Authentication:
         *,
         token_minutes: int = 60,
         clock: Callable[[], float] = time.monotonic,
+        password_cost: PasswordCost = PASSWORD_COST,
     ) -> None:
         self.path = Path(path)
+        self.password_cost = password_cost
+        self._verified: dict[bytes, str] = {}  # HMAC(process key, user id + password) -> stored hash
+        self._verified_key = secrets.token_bytes(32)
+        self._dummy_hash: str | None = None  # checked when no user has the name: same work, same timing
         self.token_seconds = token_minutes * 60
         self._clock = clock
         self._lock = threading.RLock()
@@ -188,7 +256,7 @@ class Authentication:
             "_id": user_id,
             "_salt": _random(_TOKEN_CHARS, 20),
             "_username": credential_hash(username),
-            "_password": credential_hash(password),
+            "_password": hash_password(password, self.password_cost),
             "data": {},
         }
         self.users[user_id] = user
@@ -215,19 +283,44 @@ class Authentication:
         """Return the user id for these credentials or raise ``AuthError``.
 
         With ``client`` (the caller's address) failures are counted, and a client that failed too
-        often recently gets :class:`TooManyAttempts` without its credentials being checked.
+        often recently gets :class:`TooManyAttempts` without its credentials being checked. A Go hash
+        (or a weaker scrypt hash) is replaced by a new scrypt hash on success.
         """
         if client is not None:
             with self._lock:
                 self.throttle.check(client)
-        name_hash, pass_hash = credential_hash(username), credential_hash(password)
+        name_hash, secret = credential_hash(username), _as_bytes(password)
         with self._lock:
-            for user_id, user in self.users.items():
-                if user.get("_username") == name_hash and user.get("_password") == pass_hash:
-                    if client is not None:
-                        self.throttle.succeeded(client)
-                    return user_id
-            if client is not None:
+            candidates = [(uid, u["_password"]) for uid, u in self.users.items()
+                          if isinstance(u, dict) and u.get("_username") == name_hash
+                          and isinstance(u.get("_password"), str)]  # fmt: skip
+            if not candidates and self._dummy_hash is None:
+                self._dummy_hash = hash_password(secrets.token_bytes(16), self.password_cost)
+            dummy = self._dummy_hash
+        if not candidates and dummy is not None:
+            verify_password(dummy, secret, self.password_cost)  # an unknown name takes as long as a known one
+        for user_id, stored in candidates:
+            key = hmac.new(self._verified_key, user_id.encode() + b"\0" + secret, hashlib.sha256).digest()
+            if self._verified.get(key) == stored:
+                matches, upgrade = True, False
+            else:
+                matches, upgrade = verify_password(stored, secret, self.password_cost)
+            if not matches:
+                continue
+            new_hash = hash_password(secret, self.password_cost) if upgrade else stored
+            with self._lock:
+                user = self.users.get(user_id)
+                if upgrade and isinstance(user, dict) and user.get("_password") == stored:
+                    user["_password"] = new_hash
+                    self._save()
+                if len(self._verified) >= 256:
+                    self._verified.clear()
+                self._verified[key] = new_hash
+                if client is not None:
+                    self.throttle.succeeded(client)
+            return user_id
+        if client is not None:
+            with self._lock:
                 self.throttle.failed(client)
         raise AuthError(LOGIN_FAILED)
 
@@ -266,7 +359,7 @@ class Authentication:
             if username:
                 user["_username"] = credential_hash(username)
             if password:
-                user["_password"] = credential_hash(password)
+                user["_password"] = hash_password(password, self.password_cost)
             self._save()
 
     def set_default_user_data(self, defaults: dict[str, Any]) -> None:

@@ -204,7 +204,7 @@ results, error texts and `authentication.json` after every step.
 | Go behaviour | Status |
 |---|---|
 | `authentication.json` format (`dbVersion`, `hash`, `users` by `id-XXXXXXXXXX`, hashed `_username` / `_password`, `data`). Created as `{}` by the system-file step, filled with the empty database on start. | kept |
-| The "hash" is `base64(HMAC-SHA256(key=secret, msg="_remote_db"))`; the stored per-user `_salt` is never used. | kept (changing it would lock out every existing user) |
+| The "hash" is `base64(HMAC-SHA256(key=secret, msg="_remote_db"))`; the stored per-user `_salt` is never used. | kept for usernames (users are looked up by it); **changed** for passwords: salted scrypt (`$scrypt$ln=14,r=8,p=5$<salt>$<hash>`, OWASP parameters). Go hashes are accepted and replaced at the user's next successful login (web / API login, Basic or URL credentials); weaker scrypt hashes too. The Go app cannot log in a user whose hash was replaced |
 | On start every user gets `authentication.web/pms/xml/api: false` where missing (not `m3u`). | kept |
 | A level that is missing or not a boolean is denied and written back as `false`; a user with empty data is denied without a write. | kept |
 | `/m3u/` and `/xmltv/` (also `.gz`) take `?username=&password=` when `authentication.m3u` / `.xml` is on; the first value of a repeated parameter counts. | kept |
