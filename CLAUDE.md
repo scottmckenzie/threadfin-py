@@ -96,6 +96,9 @@ Always use `uv run` to execute Python code and tools. Never call `python`, `pyte
     uv run ruff check                        # rules in pyproject.toml; must pass
     uv run ruff format                       # `# fmt: skip` keeps hand-aligned tables
 
+CI (`.github/workflows/ci.yml`) runs the same lint, format and test checks on every pull request
+and push to `main`, with tests on Python 3.12 and 3.14 and `ffmpeg` installed.
+
 A commit that only reformats goes in `.git-blame-ignore-revs` (once it is on `main`).
 
 Runtime dependencies are pydantic, starlette, uvicorn, jinja2 and python-multipart. Tests are 
