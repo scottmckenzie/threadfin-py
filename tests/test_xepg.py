@@ -279,6 +279,42 @@ class DeliberateFixTests(unittest.TestCase):
         self.assertEqual(result.created, ["x-ID.1", "x-ID.3"])
 
 
+class MatchingTests(unittest.TestCase):
+    def test_uuid_match_takes_the_first_channel_of_the_playlist(self) -> None:
+        """Two channels with one UUID only come from a hand-edited or Go-written database."""
+        channels = {
+            xid: mk(xid, uuid_key="tvg-name", uuid_value="u1", x_channel_id=str(1000 + i), x_active=True)
+            for i, xid in enumerate(["x-ID.1", "x-ID.0", "x-ID.2"])
+        }
+        channels["x-ID.0"].file_m3u_id = "M2"  # another playlist: never a candidate
+        stream = {"url": "http://p/new", "tvg-id": "new", "name": "N", "_file.m3u.id": "M1",
+                  "_uuid.key": "tvg-name", "_uuid.value": "u1", "liveEvent": "false"}  # fmt: skip
+        result = run(channels, [stream], providers={"M1", "M2"})
+        self.assertEqual(result.channels["x-ID.1"].url, "http://p/new")  # the first M1 channel by id
+        self.assertEqual(set(result.channels), {"x-ID.1"})  # the others' streams are gone: cleaned up
+        self.assertEqual(result.created, [])
+
+    def test_same_uuid_twice_in_one_build_makes_one_channel(self) -> None:
+        streams = [{"url": f"http://p/{i}", "tvg-id": f"t{i}", "name": f"N{i}", "_file.m3u.id": "M1",
+                    "_uuid.key": "tvg-name", "_uuid.value": "u1", "liveEvent": "false"} for i in range(3)]  # fmt: skip
+        streams.append({**streams[0], "url": "http://p/other", "_file.m3u.id": "M2"})  # another playlist
+        result = run({}, streams, providers={"M1", "M2"})
+        self.assertEqual(len(result.created), 2)  # one per playlist
+        self.assertEqual(sorted(c.file_m3u_id for c in result.channels.values()), ["M1", "M2"])
+
+    def test_free_numbers_per_starting_number(self) -> None:
+        filters = {"0": {"type": "group-title", "filter": "A", "startingNumber": "1000"},
+                   "1": {"type": "group-title", "filter": "B", "startingNumber": "1002"}}  # fmt: skip
+        streams = [{"url": f"http://p/{g}{i}", "tvg-id": f"{g}{i}", "name": f"{g}{i}", "_file.m3u.id": "M1",
+                    "group-title": g, "liveEvent": "false"} for i in range(3) for g in "AB"]  # fmt: skip
+        streams.insert(0, {"url": "http://p/c", "tvg-id": "c", "name": "c", "_file.m3u.id": "M1",
+                           "group-title": "A", "tvg-chno": "1001", "liveEvent": "false"})  # fmt: skip
+        result = run({}, streams, filters=filters)
+        numbers = {c.name: c.x_channel_id for c in result.channels.values()}
+        self.assertEqual(numbers, {"c": "1001", "A0": "1000", "B0": "1002", "A1": "1003", "B1": "1004",
+                                   "A2": "1005", "B2": "1006"})  # fmt: skip
+
+
 class HelperTests(unittest.TestCase):
     def test_go_g(self) -> None:
         for value, text in [
