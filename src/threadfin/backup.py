@@ -148,9 +148,14 @@ def _entry_path(name: str) -> str | None:
 
 
 def _mode(info: zipfile.ZipInfo) -> int:
-    """Unix permissions from the archive as Go created them under umask 022; 0644 otherwise."""
+    """The archive's read/write permissions (``authentication.json`` stays 0600); 0644 otherwise.
+
+    Execute and group/world write bits are dropped: a backup holds JSON files and images, and an
+    executable restored into the config folder could be run (e.g. as the ffprobe next to a restored
+    ``ffmpeg.path``). Go kept the execute bits.
+    """
     mode = (info.external_attr >> 16) & 0o777 if info.create_system == 3 else 0
-    return (mode & ~0o022) or 0o644
+    return (mode & 0o644) or 0o644
 
 
 def restore_backup(system: SystemInfo, archive: str | os.PathLike[str], current_port: str) -> RestoreResult:

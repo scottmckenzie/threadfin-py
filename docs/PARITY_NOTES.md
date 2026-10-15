@@ -223,7 +223,7 @@ results, error texts and `authentication.json` after every step.
 
 Golden-tested against the real `ThreadfinAutoBackup`, `ThreadfinBackup` and `ThreadfinRestore` on 32
 cases (`tests/golden/backup`), comparing the result, the error and the whole file tree afterwards,
-archives entry by entry (name, permissions, compression, content). 6 cases differ on purpose and 3
+archives entry by entry (name, permissions, compression, content). 7 cases differ on purpose and 3
 were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
 
 | Go behaviour | Status |
@@ -241,7 +241,7 @@ were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
 | Files in folders without their own folder entry failed to unpack (`no such file or directory`). | **fixed**: folders are created |
 | The archive was unpacked into the temp folder first; on error, and when the port was unchanged, that copy was left behind. | **changed**: checked in memory, no temp copy; the archive is validated completely before the first file is written |
 | Folder entries written by Go on Windows (`data\images\`). | **fixed**: `\` is a separator (Go on Linux created files with backslashes in their names) |
-| Permissions come from the archive as created under umask 022; archives without Unix permissions give 0644. | kept |
+| Permissions come from the archive as created under umask 022, execute bits included; archives without Unix permissions give 0644. | **fixed**: only read/write bits are restored (`authentication.json` stays 0600), so a restore cannot plant an executable, e.g. an `ffprobe` next to a restored `ffmpeg.path` that the channel probe would run |
 | Same port: reload settings, re-init and `StartSystem(true)` (backup, download, build). Different port: files replaced but the running instance kept its old settings (and could save them over the restored ones), and the UI showed the new `/web/` URL. | **changed**: always reloads everything (settings object updated in place, users, stream ids, channel database), then backup + download + build; `RestoreResult.web_url()` gives Go's new-URL text when the port changed (the new port needs a restart). Refused while an update is running |
 | Restore from the command line (`-restore`, asks `yes`/`no`). | not yet: comes with the entry point |
 | Scheduler: once a minute, every `HHMM` in `update` that equals the local time runs backup, download (`m3u`, plus `xmltv` in XEPG mode), image-cache clean-up (unless `cache.images`), build. Skipped while a scan is in progress. | kept |

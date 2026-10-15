@@ -41,6 +41,7 @@ DIVERGENT = {
     "manual_missing_system_file",
     "restore_zip_slip",  # Go wrote "../evil.txt" outside the config folder
     "restore_nested_without_dir_entries",  # Go failed: folders without their own entry were not created
+    "restore_executable_mode",  # Go restored data/run.sh as 0755 (executable)
 }
 # Go panicked; here a clean error / result, with the same files afterwards.
 PANICS = {
@@ -246,6 +247,14 @@ class Divergences(Base):
         self.assertEqual(case.run(), ("http://192.168.1.2:34500/web/", ""))
         self.assertEqual((case.work / "cfg/data/new/deep/x.txt").read_text(), "x")
 
+    def test_executable_entries_are_restored_without_execute_bits(self) -> None:
+        case = self.case("restore_executable_mode")
+        self.assertEqual(case.run(), (case.golden["result"], ""))
+        ours, theirs = case.trees()
+        self.assertEqual(theirs["cfg/data/run.sh"]["mode"], "0755")
+        self.assertEqual(ours.pop("cfg/data/run.sh"), {**theirs.pop("cfg/data/run.sh"), "mode": "0644"})
+        self.assertEqual(ours, theirs)  # everything else as in Go
+
     def test_other_escapes_are_refused(self) -> None:
         for name in ("a/../../x", "/../x", "..", "..\\x", "data/../../../etc/passwd"):
             with self.subTest(name):
@@ -332,6 +341,19 @@ class Restore(Base):
             zf.writestr(info, "{}")
         restore_backup(self.system, path, "1")
         self.assertEqual(stat.S_IMODE((self.system.config / "pms.json").stat().st_mode), 0o644)
+
+    def test_read_write_modes_are_kept_and_execute_bits_dropped(self) -> None:
+        for archived, restored in [(0o600, 0o600), (0o640, 0o640), (0o755, 0o644), (0o700, 0o600),
+                                   (0o4755, 0o644), (0o111, 0o644), (0o000, 0o644)]:  # fmt: skip
+            with self.subTest(f"{archived:04o}"):
+                path = self.work / "a.zip"
+                with zipfile.ZipFile(path, "w") as zf:
+                    zf.writestr("settings.json", json.dumps({"version": "0.5.0", "port": "1"}))
+                    info = zipfile.ZipInfo("x/ffprobe")
+                    info.external_attr = (stat.S_IFREG | archived) << 16
+                    zf.writestr(info, "#!/bin/sh\n")
+                restore_backup(self.system, path, "1")
+                self.assertEqual(stat.S_IMODE((self.system.config / "x" / "ffprobe").stat().st_mode), restored)
 
     def test_group_and_world_write_bits_are_dropped(self) -> None:
         path = self.work / "a.zip"
