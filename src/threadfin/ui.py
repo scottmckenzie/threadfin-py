@@ -32,12 +32,13 @@ from .access import (
     NotLoggedIn,
     auth_enabled,
     base_url,
+    client_address,
     csrf_ok,
     current_user,
     request_token,
 )
 from .admin import CHANNEL_ATTRIBUTES, PROVIDER_KINDS, AdminError, save_logo
-from .auth import LEVEL_WEB, AuthError
+from .auth import LEVEL_WEB, AuthError, TooManyAttempts
 from .backup import BackupError, create_backup
 from .probe import InvalidProbeURLError
 from .providers import ProviderError
@@ -209,8 +210,12 @@ def routes(service: Service) -> list[BaseRoute]:
         async with request.form() as form:
             username, password = form_text(form, "username"), str(form.get("password", ""))
         try:
-            token = service.auth.login(username, password)
+            token = service.auth.login(username, password, client_address(request))
             service.auth.check_level(service.auth.session(token), LEVEL_WEB)
+        except TooManyAttempts as exc:
+            response = render(request, "login.html", 429, error=str(exc), username_value=username)
+            response.headers["Retry-After"] = str(exc.retry_after)
+            return response
         except AuthError:
             return render(request, "login.html", 401, error="User authentication failed", username_value=username)
         return set_session(request, RedirectResponse("/web/", status_code=303), token)

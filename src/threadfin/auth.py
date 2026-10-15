@@ -17,7 +17,8 @@ live in memory only, are valid for ``token_minutes`` and are replaced by a new o
 
 Differences from Go (see docs/PARITY_NOTES.md): malformed ``Authorization`` headers are refused
 instead of crashing the request, Base64 is decoded strictly, the first-user form cannot take over an
-existing account, empty usernames/passwords are refused, and Basic / URL auth do not mint tokens.
+existing account, empty usernames/passwords are refused, Basic / URL auth do not mint tokens, and
+failed credential checks are throttled per client (:class:`LoginThrottle`).
 """
 
 from __future__ import annotations
@@ -26,10 +27,12 @@ import base64
 import binascii
 import hashlib
 import hmac
+import math
 import re
 import secrets
 import threading
 import time
+from collections import deque
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -56,6 +59,11 @@ DATA_NOT_READ = "User data could not be read"
 USER_NOT_FOUND = "User ID was not found"
 NO_AUTHORIZATION = "No authorization"
 EMPTY_CREDENTIALS = "Username and password must not be empty"
+TOO_MANY_ATTEMPTS = "Too many failed logins, try again later"
+
+MAX_FAILURES = 10  # failed credential checks per client ...
+FAILURE_WINDOW = 15 * 60  # ... within this many seconds, then the client is refused
+MAX_THROTTLED_CLIENTS = 10_000
 
 _TOKEN_CHARS = "-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789aBcDeFgHiJkLmNoPqRsTuVwXyZ_"
 _ID_CHARS = "ABCDEFGHJKLMNOPQRSTUVWXYZ0123456789"
@@ -65,6 +73,54 @@ ID_PATTERN = re.compile(r"id-[A-HJ-Z0-9]{10}")
 
 class AuthError(Exception):
     """Authentication or authorization failed; the message is Go's error text."""
+
+
+class TooManyAttempts(AuthError):
+    """The client failed too often recently; ``retry_after`` is the wait in seconds."""
+
+    def __init__(self, retry_after: int) -> None:
+        super().__init__(TOO_MANY_ATTEMPTS)
+        self.retry_after = retry_after
+
+
+class LoginThrottle:
+    """Failed credential checks per client (IP address).
+
+    After ``max_failures`` failures within ``window`` seconds the client is refused, before its
+    credentials are even checked, until the oldest of those failures is older than the window. A
+    success clears the client's record. Not thread-safe: :class:`Authentication` calls it under its lock.
+    """
+
+    def __init__(
+        self, clock: Callable[[], float], max_failures: int = MAX_FAILURES, window: float = FAILURE_WINDOW
+    ) -> None:
+        self._clock, self.max_failures, self.window = clock, max_failures, window
+        self._failures: dict[str, deque[float]] = {}
+
+    def _recent(self, client: str, now: float) -> deque[float]:
+        times = self._failures.get(client, deque())
+        while times and times[0] <= now - self.window:
+            times.popleft()
+        return times
+
+    def check(self, client: str) -> None:
+        now = self._clock()
+        times = self._recent(client, now)
+        if len(times) >= self.max_failures:
+            raise TooManyAttempts(max(1, math.ceil(times[0] + self.window - now)))
+
+    def failed(self, client: str) -> None:
+        now = self._clock()
+        times = self._recent(client, now)
+        times.append(now)
+        self._failures[client] = times
+        if len(self._failures) > MAX_THROTTLED_CLIENTS:
+            self._failures = {c: t for c, t in self._failures.items() if self._recent(c, now)}
+            while len(self._failures) > MAX_THROTTLED_CLIENTS:  # keep the most recent offenders
+                del self._failures[min(self._failures, key=lambda c: self._failures[c][-1])]
+
+    def succeeded(self, client: str) -> None:
+        self._failures.pop(client, None)
 
 
 def credential_hash(secret: str | bytes) -> str:
@@ -94,6 +150,7 @@ class Authentication:
         self._clock = clock
         self._lock = threading.RLock()
         self._tokens: dict[str, tuple[str, float]] = {}  # token -> (user id, expires)
+        self.throttle = LoginThrottle(clock)
         self._db = self._load()
         # activatedSystemAuthentication()
         self.set_default_user_data(DEFAULT_LEVELS)
@@ -154,13 +211,24 @@ class Authentication:
             self._save()
             return user_id
 
-    def authenticate(self, username: str | bytes, password: str | bytes) -> str:
-        """Return the user id for these credentials or raise ``AuthError``."""
+    def authenticate(self, username: str | bytes, password: str | bytes, client: str | None = None) -> str:
+        """Return the user id for these credentials or raise ``AuthError``.
+
+        With ``client`` (the caller's address) failures are counted, and a client that failed too
+        often recently gets :class:`TooManyAttempts` without its credentials being checked.
+        """
+        if client is not None:
+            with self._lock:
+                self.throttle.check(client)
         name_hash, pass_hash = credential_hash(username), credential_hash(password)
         with self._lock:
             for user_id, user in self.users.items():
                 if user.get("_username") == name_hash and user.get("_password") == pass_hash:
+                    if client is not None:
+                        self.throttle.succeeded(client)
                     return user_id
+            if client is not None:
+                self.throttle.failed(client)
         raise AuthError(LOGIN_FAILED)
 
     def read_user_data(self, user_id: str) -> dict[str, Any]:
@@ -223,8 +291,8 @@ class Authentication:
         self._tokens[token] = (user_id, now + self.token_seconds)
         return token
 
-    def login(self, username: str, password: str) -> str:
-        user_id = self.authenticate(username, password)
+    def login(self, username: str, password: str, client: str | None = None) -> str:
+        user_id = self.authenticate(username, password, client)
         with self._lock:
             return self._issue_token(user_id)
 
@@ -284,7 +352,7 @@ class Authentication:
                 self.write_user_data(user_id, data)
             raise AuthError(NO_AUTHORIZATION)
 
-    def basic_auth(self, header: str, level: str) -> str:
+    def basic_auth(self, header: str, level: str, client: str | None = None) -> str:
         """Check an ``Authorization: Basic`` header; return the username."""
         scheme, space, payload = header.partition(" ")
         if scheme != "Basic" or not space:
@@ -296,12 +364,12 @@ class Authentication:
         username, colon, password = decoded.partition(b":")
         if not colon:
             raise AuthError(LOGIN_FAILED)
-        self.check_level(self.authenticate(username, password), level)
+        self.check_level(self.authenticate(username, password, client), level)
         return username.decode("utf-8", "replace")
 
-    def url_auth(self, username: str, password: str, level: str) -> None:
+    def url_auth(self, username: str, password: str, level: str, client: str | None = None) -> None:
         """``?username=..&password=..`` on /m3u/ and /xmltv/."""
-        self.check_level(self.authenticate(username, password), level)
+        self.check_level(self.authenticate(username, password, client), level)
 
     def create_first_user(self, username: str, password: str) -> str:
         """createFirstUserForAuthentication: the first user gets every level but the API; returns a token."""

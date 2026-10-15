@@ -39,8 +39,8 @@ from starlette.responses import FileResponse, PlainTextResponse, RedirectRespons
 from starlette.routing import Route
 
 from . import api, hdhr, ui
-from .access import ALLOWED_HOSTS_ENV, base_url, configured_hosts, host_allowed, host_name
-from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError
+from .access import ALLOWED_HOSTS_ENV, base_url, client_address, configured_hosts, host_allowed, host_name
+from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError, TooManyAttempts
 from .imagecache import IMAGE_TYPES, image_headers
 from .scheduler import Scheduler
 from .service import Service
@@ -50,26 +50,34 @@ def forbidden() -> Response:
     return PlainTextResponse("Forbidden [403]\n", status_code=403)
 
 
-def url_auth_ok(request: Request, service: Service, level: str) -> bool:
+def too_many_attempts(exc: TooManyAttempts) -> Response:
+    return PlainTextResponse(f"{exc} [429]\n", status_code=429, headers={"Retry-After": str(exc.retry_after)})
+
+
+def url_auth_refusal(request: Request, service: Service, level: str) -> Response | None:
     """``?username=..&password=..`` check for /m3u/ and /xmltv/ (Go takes the first value of each)."""
     enabled = service.settings.authentication_m3u if level == LEVEL_M3U else service.settings.authentication_xml
     if not enabled:
-        return True
+        return None
     username = next(iter(request.query_params.getlist("username")), "")
     password = next(iter(request.query_params.getlist("password")), "")
     try:
-        service.auth.url_auth(username, password, level)
+        service.auth.url_auth(username, password, level, client_address(request))
+    except TooManyAttempts as exc:
+        return too_many_attempts(exc)
     except AuthError:
-        return False
-    return True
+        return forbidden()
+    return None
 
 
-def basic_auth_ok(request: Request, service: Service, level: str) -> bool:
+def basic_auth_refusal(request: Request, service: Service, level: str) -> Response | None:
     try:
-        service.auth.basic_auth(request.headers.get("authorization", ""), level)
+        service.auth.basic_auth(request.headers.get("authorization", ""), level, client_address(request))
+    except TooManyAttempts as exc:
+        return too_many_attempts(exc)
     except AuthError:
-        return False
-    return True
+        return forbidden()
+    return None
 
 
 GUARDED_PREFIXES = ("/web", "/api", "/ppv")
@@ -114,8 +122,8 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         return RedirectResponse(target, status_code=302)
 
     async def m3u(request: Request) -> Response:
-        if not url_auth_ok(request, service, LEVEL_M3U):
-            return forbidden()
+        if refusal := url_auth_refusal(request, service, LEVEL_M3U):
+            return refusal
         raw = request.query_params.get("group-title", "")
         groups = [g for g in raw.split(",")] if raw else []
         text = await asyncio.to_thread(service.playlist, base_url(request, service), groups)
@@ -126,16 +134,16 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         )
 
     async def xmltv(request: Request) -> Response:
-        if not url_auth_ok(request, service, LEVEL_XML):
-            return forbidden()
+        if refusal := url_auth_refusal(request, service, LEVEL_XML):
+            return refusal
         path = service.xmltv_path
         if not path.exists():
             return PlainTextResponse("404 page not found\n", status_code=404)
         return FileResponse(path, media_type="application/xml; charset=utf-8")
 
     async def xmltv_gz(request: Request) -> Response:
-        if not url_auth_ok(request, service, LEVEL_XML):
-            return forbidden()
+        if refusal := url_auth_refusal(request, service, LEVEL_XML):
+            return refusal
         path = service.xmltv_path.with_name(service.xmltv_path.name + ".gz")
         if not path.exists():
             return PlainTextResponse("404 page not found\n", status_code=404)
@@ -151,8 +159,8 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         return Response(hdhr.to_json(hdhr.lineup_status(service.building)), media_type="application/json")
 
     async def lineup(request: Request) -> Response:
-        if service.settings.authentication_pms and not basic_auth_ok(request, service, LEVEL_PMS):
-            return forbidden()
+        if service.settings.authentication_pms and (refusal := basic_auth_refusal(request, service, LEVEL_PMS)):
+            return refusal
         entries = await asyncio.to_thread(service.lineup, base_url(request, service))
         return Response(hdhr.to_json(entries), media_type="application/json")
 

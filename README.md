@@ -62,6 +62,8 @@ any name.
 JSON under `/api/v1/`; errors are `{"error": "..."}` with a 4xx status. With web authentication on,
 send `Authorization: Bearer <token>` from `POST /api/v1/login {"username", "password"}` (the user
 needs web access). A `POST` must have a JSON body or an `X-Requested-With` header (CSRF guard).
+After 10 failed logins within 15 minutes, an address gets `429` (with `Retry-After`) on every
+login and credential check until the oldest failure is 15 minutes old.
 
 | Endpoint | |
 |---|---|
