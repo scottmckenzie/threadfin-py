@@ -50,6 +50,13 @@ and add the tuner in Plex / Emby / Jellyfin as `http://<this machine>:34400`. An
 
 Go's single-dash spelling and `--config` etc. both work. Stop the server with Ctrl+C or SIGTERM.
 
+The web UI and the APIs answer only host names that cannot be used for DNS rebinding: IP addresses,
+single-label names (`http://nas:34400`), `.local`, `.lan`, `.home.arpa`, `.internal` and
+`.localhost` names, and the `httpThreadfinDomain` / `httpsThreadfinDomain` settings. To use another
+name (for example through a reverse proxy), list it in the `THREADFIN_ALLOWED_HOSTS` environment
+variable (comma-separated; `*` allows any name). Player and Plex / Emby / Jellyfin endpoints answer
+any name.
+
 ## REST API
 
 JSON under `/api/v1/`; errors are `{"error": "..."}` with a 4xx status. With web authentication on,

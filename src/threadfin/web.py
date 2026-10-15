@@ -18,6 +18,9 @@ copies, then the scheduler runs the ``update`` times (see scheduler.py).
 ``/images/<name>``       the image cache (``cache.images``, see imagecache.py)
 ``/web/``                the web UI (ui.py); ``/api/v1/`` the REST API, ``/api/`` Go's API, ``/ppv/``,
                         ``/data_images/`` (api.py)
+
+The UI and the APIs (``/web``, ``/api``, ``/ppv``) refuse ``Host`` names that could be DNS rebinding
+(see access.py); the player and HDHomeRun endpoints answer any name.
 """
 
 from __future__ import annotations
@@ -27,14 +30,16 @@ import contextlib
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from starlette.applications import Starlette
+from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import FileResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.routing import Route
 
 from . import api, hdhr, ui
-from .access import base_url
+from .access import ALLOWED_HOSTS_ENV, base_url, configured_hosts, host_allowed, host_name
 from .auth import LEVEL_M3U, LEVEL_PMS, LEVEL_XML, AuthError
 from .imagecache import IMAGE_TYPES, image_headers
 from .scheduler import Scheduler
@@ -65,6 +70,40 @@ def basic_auth_ok(request: Request, service: Service, level: str) -> bool:
     except AuthError:
         return False
     return True
+
+
+GUARDED_PREFIXES = ("/web", "/api", "/ppv")
+log = logging.getLogger("threadfin")
+
+
+class HostCheck:
+    """ASGI middleware: refuse UI / API requests whose ``Host`` could be DNS rebinding."""
+
+    def __init__(self, app: Any, service: Service) -> None:
+        self.app, self.service = app, service
+        self.reported: set[str] = set()
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        path = scope.get("path", "") if scope["type"] == "http" else ""
+        if any(path == prefix or path.startswith(prefix + "/") for prefix in GUARDED_PREFIXES):
+            host = next((v.decode("latin-1") for k, v in scope.get("headers", []) if k == b"host"), "")
+            if not host_allowed(host, configured_hosts(self.service.settings)):
+                await self.refuse(host)(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+    def refuse(self, host: str) -> Response:
+        if host not in self.reported and len(self.reported) < 100:  # log each name once
+            self.reported.add(host)
+            log.warning(
+                "refused a request for host %r (possible DNS rebinding); allow it in %s", host, ALLOWED_HOSTS_ENV
+            )
+        name = host_name(host)
+        return PlainTextResponse(
+            f"Forbidden: unknown host {name!r}. To use this name, add it to {ALLOWED_HOSTS_ENV} and restart,"
+            " or set it as httpThreadfinDomain in the settings.\n",
+            status_code=403,
+        )
 
 
 def create_app(service: Service, *, build_on_start: bool = True, schedule: bool = True) -> Starlette:
@@ -164,6 +203,7 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
             *ui.routes(service),
         ],
         lifespan=lifespan,
+        middleware=[Middleware(HostCheck, service=service)],
     )
     app.state.service = service
     return app
