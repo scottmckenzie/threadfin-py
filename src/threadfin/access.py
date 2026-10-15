@@ -49,6 +49,11 @@ def base_url(request: Request, service: Service) -> str:
     return f"{scheme}://{host}"
 
 
+def client_address(request: Request) -> str:
+    """Who is asking, for throttling failed logins (behind a reverse proxy: the proxy)."""
+    return request.client.host if request.client else "unknown"
+
+
 def auth_enabled(service: Service) -> bool:
     return service.settings.authentication_web
 
@@ -122,6 +127,7 @@ __all__ = [
     "NotLoggedIn",
     "auth_enabled",
     "base_url",
+    "client_address",
     "configured_hosts",
     "csrf_ok",
     "current_user",

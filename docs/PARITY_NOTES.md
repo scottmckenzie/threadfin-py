@@ -204,7 +204,7 @@ results, error texts and `authentication.json` after every step.
 | Go behaviour | Status |
 |---|---|
 | `authentication.json` format (`dbVersion`, `hash`, `users` by `id-XXXXXXXXXX`, hashed `_username` / `_password`, `data`). Created as `{}` by the system-file step, filled with the empty database on start. | kept |
-| The "hash" is `base64(HMAC-SHA256(key=secret, msg="_remote_db"))`; the stored per-user `_salt` is never used. | kept (changing it would lock out every existing user) |
+| The "hash" is `base64(HMAC-SHA256(key=secret, msg="_remote_db"))`; the stored per-user `_salt` is never used. | kept for usernames (users are looked up by it); **changed** for passwords: salted scrypt (`$scrypt$ln=14,r=8,p=5$<salt>$<hash>`, OWASP parameters). Go hashes are accepted and replaced at the user's next successful login (web / API login, Basic or URL credentials); weaker scrypt hashes too. The Go app cannot log in a user whose hash was replaced |
 | On start every user gets `authentication.web/pms/xml/api: false` where missing (not `m3u`). | kept |
 | A level that is missing or not a boolean is denied and written back as `false`; a user with empty data is denied without a write. | kept |
 | `/m3u/` and `/xmltv/` (also `.gz`) take `?username=&password=` when `authentication.m3u` / `.xml` is on; the first value of a repeated parameter counts. | kept |
@@ -213,6 +213,7 @@ results, error texts and `authentication.json` after every step.
 | Base64 was decoded leniently: valid Base64 followed by garbage still logged in. | **fixed**: strict decoding, 403 |
 | The first-user form ignored "Default user already exists" and, given an existing user's credentials, gave that user every level. | **fixed**: refused once a user exists |
 | A user could be created with an empty username and password (which then matched requests without credentials). | **fixed**: refused |
+| Failed logins were not limited: any client could try passwords as fast as the server answered (web / API login, `/lineup.json` Basic auth, `/m3u` / `/xmltv` URL credentials). | **fixed**: after 10 failures within 15 minutes a client address gets `429` with `Retry-After` (Go's `/api/` answers `Too many failed logins, try again later`) until the oldest failure is 15 minutes old, without its credentials being checked; a success clears its count. Behind a reverse proxy the proxy is the client |
 | Every Basic / URL check minted a session token that stayed in memory forever. | **changed**: only logins issue tokens; expired tokens are purged |
 | Tokens: in memory, 60 minutes, replaced by a new one on every check. | kept for Go's `/api/` (deleting a user also ends its sessions); **changed** for web / REST sessions: extended on every use instead of replaced, because the UI sends requests in parallel |
 | Changing only the password (no username) in the user editor was silently ignored. | kept (the new UI always sends the username) |

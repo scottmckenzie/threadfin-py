@@ -6,6 +6,8 @@ the error text and the database file must match Go (random salts / ids / tokens 
 
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import stat
 import tempfile
@@ -29,6 +31,7 @@ from threadfin.auth import (
     Authentication,
     AuthError,
     credential_hash,
+    verify_password,
 )
 
 GOLDEN = Path(__file__).parent / "golden" / "auth"
@@ -43,13 +46,60 @@ DIVERGENT_STEPS: dict[tuple[str, int], tuple[str, Any]] = {
 }
 
 
-def normalise(db: Any, fixture_ids: set[str]) -> Any:
-    """Replace random salts and new user ids by placeholders and the users map by a sorted list."""
+CHEAP = (4, 1, 1)  # scrypt cost for the golden runs: the stored hash carries its parameters
+
+
+def case_secrets(case: dict[str, Any]) -> list[str]:
+    """Every string the steps use, plus the parts of Basic headers and URL queries: the candidates
+    for which password a stored hash stands for."""
+    found: set[str] = set()
+
+    def walk(value: Any) -> None:
+        if isinstance(value, dict):
+            for v in value.values():
+                walk(v)
+        elif isinstance(value, list):
+            for v in value:
+                walk(v)
+        elif isinstance(value, str):
+            found.add(value)
+            if value.startswith("Basic "):
+                try:
+                    decoded = base64.b64decode(value[6:]).decode("utf-8", "replace")
+                except (binascii.Error, ValueError):
+                    return
+                found.update([decoded, *decoded.split(":", 1)])
+            for values in parse_qs(value, keep_blank_values=True).values():
+                found.update(values)
+
+    walk(case["steps"])
+    return sorted(found)
+
+
+def password_of(stored: Any, secrets: list[str]) -> Any:
+    """``<password: x>`` for a Go or scrypt hash of one of ``secrets``, else the hash itself.
+
+    Go stores ``credential_hash(password)``; this port stores scrypt hashes with a random salt and
+    replaces Go hashes at the next successful login, so the files are compared by the password a
+    hash stands for.
+    """
+    if isinstance(stored, str):
+        for secret in secrets:
+            if verify_password(stored, secret, CHEAP)[0]:
+                return f"<password: {secret}>"
+    return stored
+
+
+def normalise(db: Any, fixture_ids: set[str], secrets: list[str] = ()) -> Any:
+    """Replace random salts and new user ids by placeholders, password hashes by the password they
+    stand for, and the users map by a sorted list."""
     if not isinstance(db, dict) or "users" not in db:
         return db
     users = []
     for key, user in db["users"].items():
         user = dict(user)
+        if "_password" in user:
+            user["_password"] = password_of(user["_password"], list(secrets))
         assert SALT_PATTERN.fullmatch(user["_salt"]), user["_salt"]
         assert key == user["_id"]
         if key not in fixture_ids:
@@ -78,7 +128,7 @@ class Runner:
     def _step(self, s: dict[str, Any]) -> Any:
         op = s["op"]
         if op == "init":
-            self.auth = Authentication(self.path)
+            self.auth = Authentication(self.path, password_cost=CHEAP)
             return None
         if op == "hash":
             return credential_hash(s["secret"])
@@ -145,6 +195,7 @@ class Golden(unittest.TestCase):
                 continue
             case = json.loads(path.read_text("utf-8"))
             golden = json.loads((GOLDEN / f"{name}.golden.json").read_text("utf-8"))
+            secrets = case_secrets(case)
             with tempfile.TemporaryDirectory() as td:
                 run = Runner(case, Path(td))
                 want_db = case["db"]
@@ -153,7 +204,9 @@ class Golden(unittest.TestCase):
                         self.assertEqual(run.step(step), go_outcome(name, i, step, want))
                         if (name, i) not in DIVERGENT_STEPS:
                             want_db = want["db"]
-                        self.assertEqual(normalise(run.db(), run.fixture_ids), normalise(want_db, run.fixture_ids))
+                        self.assertEqual(
+                            normalise(run.db(), run.fixture_ids, secrets), normalise(want_db, run.fixture_ids, secrets)
+                        )
 
     def test_divergence_markers_still_hold(self) -> None:
         """The steps marked divergent really differ in Go (so a regenerated golden is noticed)."""

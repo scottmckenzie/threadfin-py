@@ -27,9 +27,9 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from starlette.routing import BaseRoute, Route
 
-from .access import NotLoggedIn, base_url, csrf_ok, current_user, request_token
+from .access import NotLoggedIn, base_url, client_address, csrf_ok, current_user, request_token
 from .admin import LOGO_TYPES, PROVIDER_KINDS, AdminError, logo_filename, save_logo
-from .auth import LEVEL_API, LEVEL_WEB, AuthError
+from .auth import LEVEL_API, LEVEL_WEB, AuthError, TooManyAttempts
 from .backup import BackupError, create_backup
 from .imagecache import image_headers
 from .probe import InvalidProbeURLError
@@ -130,8 +130,12 @@ def routes(service: Service) -> list[BaseRoute]:
         if not isinstance(username, str) or not isinstance(password, str):
             return error("username and password are required")
         try:
-            token = service.auth.login(username, password)
+            token = service.auth.login(username, password, client_address(request))
             service.auth.check_level(service.auth.session(token), LEVEL_WEB)
+        except TooManyAttempts as exc:
+            response = error(str(exc), 429)
+            response.headers["Retry-After"] = str(exc.retry_after)
+            return response
         except AuthError as exc:
             return error(str(exc), 401)
         return JSONResponse({"token": token})
@@ -455,7 +459,7 @@ def legacy_routes(service: Service) -> list[BaseRoute]:
                 if text("token"):
                     token = service.auth.refresh_token(text("token"))
                 elif cmd == "login":
-                    token = service.auth.login(text("username"), text("password"))
+                    token = service.auth.login(text("username"), text("password"), client_address(request))
                 else:
                     return failed(LOGIN_INCORRECT)
                 service.auth.check_level(service.auth.user_id_for_token(token), LEVEL_API)

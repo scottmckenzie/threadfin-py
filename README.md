@@ -37,7 +37,9 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 
 Then open `http://<this machine>:34400/web/`, add a playlist (and, for the XMLTV mode, a guide),
 and add the tuner in Plex / Emby / Jellyfin as `http://<this machine>:34400`. An existing
-`~/.threadfin` folder from the Go app is used as it is.
+`~/.threadfin` folder from the Go app is used as it is. Passwords are stored as scrypt hashes: a
+user's Go hash is replaced at their next login here, and the Go app can then no longer log that
+user in.
 
 | Option | |
 |---|---|
@@ -62,6 +64,8 @@ any name.
 JSON under `/api/v1/`; errors are `{"error": "..."}` with a 4xx status. With web authentication on,
 send `Authorization: Bearer <token>` from `POST /api/v1/login {"username", "password"}` (the user
 needs web access). A `POST` must have a JSON body or an `X-Requested-With` header (CSRF guard).
+After 10 failed logins within 15 minutes, an address gets `429` (with `Retry-After`) on every
+login and credential check until the oldest failure is 15 minutes old.
 
 | Endpoint | |
 |---|---|

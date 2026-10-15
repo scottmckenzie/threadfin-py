@@ -115,6 +115,8 @@ needs `ffmpeg`/`ffprobe`. htmx is vendored in `src/threadfin/static/` (no CDN: t
 - Keep the ffprobe channel probe and store its results.
 - Keep the existing JSON config formats (`~/.threadfin` compatible), including settings that no longer
   do anything (e.g. `ssdp`).
+- Passwords are stored as scrypt hashes; Go's password hashes are accepted and replaced at the next
+  successful login, after which the Go app cannot log that user in.
 - Providers are http(s) URLs only (no local-file sources).
 - No SSDP discovery.
 - No HDHomeRun tuners as a channel source (`files.hdhr` is kept in the config but ignored). The
