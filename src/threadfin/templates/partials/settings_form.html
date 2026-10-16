@@ -1,4 +1,5 @@
-<form hx-disinherit="*" hx-post="/web/settings" hx-target="#settings" hx-disabled-elt="find button[type=submit]">
+<form hx-disinherit="*" hx-post="/web/settings" hx-target="#settings" hx-swap="innerHTML show:window:top"
+      hx-disabled-elt="find button[type=submit]">
   {% if message %}<p class="ok">{{ message }}</p>{% endif %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   {% for title, fields in sections %}

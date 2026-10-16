@@ -284,6 +284,9 @@ class Settings(AppTestCase):
     def test_save(self) -> None:
         response = self.client.post("/web/settings", data=self.form(tuner="3", update="0300, 1500"), headers=HX)
         self.assertIn("Saved", response.text)
+        # the message is at the top of the form: the swap scrolls there (the Save button is at the bottom)
+        for page in (self.client.get("/web/settings").text, response.text):
+            self.assertIn('hx-swap="innerHTML show:window:top"', page)
         self.assertEqual((self.service.settings.tuner, self.service.settings.update), (3, ["0300", "1500"]))
         response = self.client.post("/web/settings", data=self.form(), headers=HX)
         self.assertIn("No changes", response.text)
