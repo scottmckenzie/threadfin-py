@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
+from pathlib import Path
 
 from webfixture import AppTestCase
 
@@ -271,8 +273,9 @@ class Mapping(AppTestCase):
 
 
 class Settings(AppTestCase):
-    def form(self, **changes: str) -> dict[str, str]:
-        page = self.client.get("/web/settings").text
+    def form(self, page: str | None = None, **changes: str) -> dict[str, str]:
+        """The values the settings form shows (the saved page, or ``page``), with ``changes``."""
+        page = html.unescape(page if page is not None else self.client.get("/web/settings").text)
         data = dict(re.findall(r'<input name="([^"]+)"(?: type="number")? value="([^"]*)"', page))
         data |= {name: "on" for name in re.findall(r'<input type="checkbox" name="([^"]+)" checked', page)}
         data |= dict(re.findall(r'<select name="([^"]+)">.*?<option value="([^"]*)" selected', page, re.DOTALL))
@@ -298,6 +301,35 @@ class Settings(AppTestCase):
         self.assertEqual(self.service.settings.update, ["0000"])
         response = self.client.post("/web/settings", data=self.form(tuner="many"), headers=HX)
         self.assertIn("is not a number", response.text)
+
+    def test_a_failed_save_keeps_what_was_typed(self) -> None:
+        """Restored settings with an ffmpeg path missing here: fixing the backup path first must not
+        lose the fix when the save is refused."""
+        new_backup = str(self.system.config / "elsewhere") + "/"
+        Path(new_backup).mkdir()
+        before = self.service.settings.to_json_dict()
+        response = self.client.post("/web/settings", headers=HX, data=self.form(
+            **{"backup.path": new_backup, "ffmpeg.path": "/missing/ffmpeg", "tuner": "seven"}))  # fmt: skip
+        self.assertIn('class="error"', response.text)
+        self.assertEqual(self.service.settings.to_json_dict(), before)  # nothing was saved
+        shown = self.form(page=response.text)
+        self.assertEqual(shown["backup.path"], new_backup)  # the form shows what was typed
+        self.assertEqual(shown["ffmpeg.path"], "/missing/ffmpeg")
+        self.assertEqual(shown["tuner"], "seven")
+        # the user corrects the other fields in that form and saves again
+        response = self.client.post("/web/settings", headers=HX, data={**shown, "ffmpeg.path": "", "tuner": "2"})
+        self.assertIn("Saved", response.text)
+        self.assertEqual((self.service.settings.backup_path, self.service.settings.tuner), (new_backup, 2))
+
+    def test_a_failed_save_keeps_checkboxes_and_times(self) -> None:
+        data = self.form(update="0300, 2500")
+        del data["files.update"]  # unchecked
+        response = self.client.post("/web/settings", headers=HX, data=data)
+        self.assertIn('class="error"', response.text)
+        shown = self.form(page=response.text)
+        self.assertNotIn("files.update", shown)
+        self.assertEqual(shown["update"], "0300,2500")
+        self.assertTrue(self.service.settings.files_update)  # not saved
 
     def test_turning_on_login_reloads(self) -> None:
         response = self.client.post("/web/settings", data=self.form(**{"authentication.web": "on"}), headers=HX)
