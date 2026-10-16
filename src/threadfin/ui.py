@@ -161,6 +161,21 @@ def settings_changes(form: FormData, fields: list[SettingField]) -> dict[str, An
     return changes
 
 
+def submitted_settings(form: FormData, fields: list[SettingField]) -> dict[str, Any]:
+    """The form as submitted, in the shape the settings form displays, to show it again unchanged
+    when a save is refused (text as typed, even where it is not a valid number)."""
+    values: dict[str, Any] = {}
+    for field in fields:
+        if field.kind == "bool":
+            values[field.key] = form_bool(form, field.key)
+        elif field.kind == "times":
+            text = form_text(form, field.key)
+            values[field.key] = [t.strip() for t in text.replace(";", ",").split(",") if t.strip()]
+        else:
+            values[field.key] = form_text(form, field.key)
+    return values
+
+
 def routes(service: Service) -> list[BaseRoute]:
     def render(request: Request, name: str, status: int = 200, **context: Any) -> HTMLResponse:
         context.update(
@@ -569,8 +584,16 @@ def routes(service: Service) -> list[BaseRoute]:
         return done("Deleted")
 
     # --- settings, backup ------------------------------------------------------------------------
-    def settings_form(request: Request, message: str = "", error: str = "", status: int = 200) -> Response:
-        values = service.settings.to_json_dict()
+    def settings_form(
+        request: Request,
+        message: str = "",
+        error: str = "",
+        status: int = 200,
+        submitted: Mapping[str, Any] | None = None,
+    ) -> Response:
+        """The settings form: the saved values, or after a refused save what was submitted (so the
+        user's other edits are not lost; nothing was saved)."""
+        values = {**service.settings.to_json_dict(), **(submitted or {})}
         return render(request, "settings.html" if "hx-request" not in request.headers else
                       "partials/settings_form.html", status, page="settings", sections=SETTINGS_PAGE,
                       values=values, message=message, error=error)  # fmt: skip
@@ -579,15 +602,17 @@ def routes(service: Service) -> list[BaseRoute]:
         return settings_form(request)
 
     async def settings_save(request: Request) -> Response:
+        fields = list(SETTING_FIELDS.values())
         async with request.form() as form:
+            submitted = submitted_settings(form, fields)
             try:
-                changes = settings_changes(form, list(SETTING_FIELDS.values()))
+                changes = settings_changes(form, fields)
             except AdminError as exc:
-                return settings_form(request, error=str(exc))
+                return settings_form(request, error=str(exc), submitted=submitted)
         try:
             changed = await service.change_settings(changes)
         except ERRORS as exc:
-            return settings_form(request, error=str(exc))
+            return settings_form(request, error=str(exc), submitted=submitted)
         response = settings_form(request, message="Saved" if changed else "No changes")
         if "authentication.web" in changed:
             response.headers["HX-Refresh"] = "true"  # menu and login change
