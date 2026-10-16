@@ -68,7 +68,7 @@ class ProbeService:
         if task is None:
             task = asyncio.create_task(self._probe_and_store(url, channel_key))
             self._inflight[url] = task
-            task.add_done_callback(lambda _t, u=url: self._inflight.pop(u, None))
+            task.add_done_callback(lambda _task: self._inflight.pop(url, None))
         # shield: one waiter being cancelled must not kill the probe others are awaiting
         return await asyncio.shield(task)
 

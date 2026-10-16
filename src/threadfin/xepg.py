@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, fields
 from decimal import Decimal
 from typing import Any
@@ -189,6 +189,7 @@ def go_g(value: float) -> str:
     if not math.isfinite(value):
         return "NaN" if math.isnan(value) else ("+Inf" if value > 0 else "-Inf")
     _, digits, exponent = Decimal(repr(abs(value))).as_tuple()
+    assert isinstance(exponent, int)  # only NaN / infinity have a letter here, handled above
     text = "".join(map(str, digits)).rstrip("0") or "0"
     point = len(digits) + exponent  # value = 0.<digits> * 10**point
     exp10 = point - 1
@@ -300,7 +301,7 @@ def remove_duplicates(channels: dict[str, XEPGChannel]) -> list[str]:
 # --- database update ----------------------------------------------------------------
 
 
-def _refresh_urls(channels: dict[str, XEPGChannel], streams: list[Stream]) -> None:
+def _refresh_urls(channels: dict[str, XEPGChannel], streams: Sequence[Stream]) -> None:
     """Follow a changed stream URL when the ``tvg-id`` (or ``tvg-name``) identifies it uniquely."""
     by_key: dict[tuple[str, str], list[Stream]] = {}
     for stream in streams:
@@ -312,15 +313,15 @@ def _refresh_urls(channels: dict[str, XEPGChannel], streams: list[Stream]) -> No
         key = channel.tvg_id or channel.tvg_name
         if key:
             channels_by_key.setdefault((channel.file_m3u_id, key), []).append(channel)
-    for key, candidates in channels_by_key.items():
-        matches = by_key.get(key, [])
+    for pair, candidates in channels_by_key.items():
+        matches = by_key.get(pair, [])
         if len(matches) == 1 and len(candidates) == 1:
             candidates[0].url = _stream_text(matches[0], "url")
 
 
 def update_database(
     channels: dict[str, XEPGChannel],
-    streams: list[Stream],
+    streams: Sequence[Stream],
     *,
     mapping_first_channel: float,
     filters: Mapping[str, Any],
@@ -406,9 +407,10 @@ def update_database(
             match, has_uuid, by_uuid = candidate, True, True
 
         if match is not None:
-            channel = channels.get(match.x_epg)
-            if channel is None:
+            found = channels.get(match.x_epg)
+            if found is None:
                 continue
+            channel = found
             if by_uuid:
                 # Found by its tvg-name UUID after the stream's URL and tvg-id changed. Go updated only
                 # the URL, so the channel's identity hash still differed from the stream's and cleanup
@@ -519,7 +521,7 @@ def update_database(
 
 def map_channels(
     channels: dict[str, XEPGChannel],
-    streams: list[Stream],
+    streams: Sequence[Stream],
     *,
     filters: Mapping[str, Any],
     xmltv_mapping: Mapping[str, ChannelMapping],
@@ -617,7 +619,7 @@ def cleanup(
 
 def build_xepg(
     channels: dict[str, XEPGChannel],
-    streams: list[Stream],
+    streams: Sequence[Stream],
     *,
     mapping_first_channel: float,
     filters: Mapping[str, Any],

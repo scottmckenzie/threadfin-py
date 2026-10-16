@@ -303,7 +303,8 @@ class ProviderManager:
 
     # --- access ---
     def records(self, kind: str) -> dict[str, Any]:
-        return getattr(self._settings.files, kind)
+        records: dict[str, Any] = getattr(self._settings.files, kind)
+        return records
 
     def local_path(self, kind: str, provider_id: str) -> Path:
         return self._data / (provider_id + EXTENSIONS[kind])
