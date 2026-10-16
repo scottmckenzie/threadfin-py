@@ -427,10 +427,9 @@ def routes(service: Service) -> list[BaseRoute]:
     def channel_form(request: Request, channel_id: str, channel: XEPGChannel, error: str = "") -> Response:
         file = channel.x_xmltv_file
         probe = service.probe_results([channel_id]).get(channel_id)
-        others = sorted({c.x_name for cid, c in service.channels.items() if cid != channel_id and c.x_name})
         return render(request, "partials/channel_form.html", channel_id=channel_id, c=channel, error=error,
                       labels=CHANNEL_LABELS, files=xmltv_files(service), categories=categories(service),
-                      probe=probe, other_names=others, file=file, selected=channel.x_mapping,
+                      probe=probe, file=file, selected=channel.x_mapping,
                       label=picker_label(service, file, channel.x_mapping))  # fmt: skip
 
     async def channel_edit(request: Request) -> Response:
@@ -444,7 +443,6 @@ def routes(service: Service) -> list[BaseRoute]:
             data: dict[str, Any] = {key: form_text(form, key) for key in (
                 "x-channelID", "x-name", "x-description", "tvg-logo", "x-category", "x-group-title",
                 "x-xmltv-file", "x-mapping", "x-ppv-extra",
-                "x-backup-channel-1", "x-backup-channel-2", "x-backup-channel-3",
             )}  # fmt: skip
             for key in ("x-active", "x-hide-channel", "x-update-channel-name", "x-update-channel-icon"):
                 data[key] = form_bool(form, key)

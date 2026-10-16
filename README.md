@@ -24,6 +24,7 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth, web / API login) | done, golden-tested against Go (14 step-by-step cases) |
 | Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written |
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
+| Backup channels | dropped: they failed over inside Go's stream buffer, and `/stream/` is a redirect (the names stay in `xepg.json`) |
 | HDHomeRun tuners as a channel source | dropped (`files.hdhr` is kept in settings.json but ignored) |
 | Web UI (`/web/`: status, playlists, XMLTV, filters, mapping with probe, users, settings, backup / restore, log) | done, htmx, tested through the app |
 | REST API (`/api/v1/`), Go's `/api/`, `/ppv/`, `/data_images/` | done; settings and filter saving golden-tested against Go (56 cases) |
@@ -93,6 +94,5 @@ Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the developmen
 
 ## Open questions
 
-- Backup channels cannot fail over with a plain 302; they are kept in the registry only.
 - Code review findings and recommended fixes (login throttling, password hashing, type errors ...):
   see `docs/REVIEW_2026-10.md`.

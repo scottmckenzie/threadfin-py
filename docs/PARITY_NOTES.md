@@ -118,7 +118,7 @@ asserted to still diverge).
 | Matching falls back to the UUID (`_uuid.value`, the tvg-name) when the hash changes. | kept; the stale record is no longer left behind (**fixed**) |
 | A group filter without a starting number crashed / produced `0` numbers. | **fixed**: always numbered |
 | Provider channel numbers colliding with generated ones produced duplicate numbers. | **fixed**: collisions are moved |
-| A cleared backup channel kept a stale pointer. | **fixed** |
+| A cleared backup channel kept a stale pointer. | kept: backup channels are no longer resolved, and stored entries are left as they are (see below) |
 | Channel numbers are formatted with `%g`. | kept (`go_g`) |
 
 ## XMLTV guide (`epg.py`)
@@ -146,7 +146,8 @@ Compared element by element (parsed XML) with the real `createXMLTVFile` on 50 c
 
 ## M3U output and stream ids (`playlist.py`)
 
-Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream registry).
+Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream registry; 1 deliberate
+divergence: backup channels are not copied into the registry).
 
 | Go behaviour | Status |
 |---|---|
@@ -158,7 +159,7 @@ Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream 
 | A `"` or newline in a name broke the `#EXTINF` line. | **fixed**: `'` / space |
 | The registry kept the first channel name ever seen for an id. | **changed**: refreshed on every build (first wins *within* a build, as in Go) |
 | Provider URLs were rewritten to https when "force https" was on. | not ported (streams are redirected, not proxied) |
-| Backup channels fail over inside Threadfin's stream buffer. | **not possible** with a plain redirect; the backup entries are kept in the registry only |
+| Backup channels (`x-backup-channel-1/2/3`) fail over inside Threadfin's stream buffer. | **dropped**: not possible with a plain redirect. The names and stored `backup_channel_*` entries stay in `xepg.json` untouched (for the Go app) but are never resolved; `urls.json` keeps the fields, empty; the channel editor and REST API no longer offer them |
 
 ## Build pipeline and endpoints (`service.py`, `web.py`)
 
