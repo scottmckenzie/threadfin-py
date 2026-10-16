@@ -7,6 +7,8 @@
 ``/discover.json``, ``/lineup_status.json``, ``/lineup.json``, ``/device.xml``, ``/capability``, ``/``
                         HDHomeRun emulation (see hdhr.py)
 
+The playlist and guides carry an ``ETag``; a matching ``If-None-Match`` gets a 304 without the body.
+
 Authentication (see auth.py), each switched on by its setting:
 ``authentication.m3u`` / ``authentication.xml``: ``/m3u/`` / ``/xmltv/`` need ``?username=..&password=..``;
 ``authentication.pms``: ``/lineup.json`` needs HTTP Basic credentials. Refused requests get a 403
@@ -27,9 +29,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from starlette.applications import Starlette
@@ -48,6 +52,25 @@ from .service import Service
 
 def forbidden() -> Response:
     return PlainTextResponse("Forbidden [403]\n", status_code=403)
+
+
+def etag_matches(request: Request, etag: str) -> bool:
+    """Whether ``If-None-Match`` is ``*`` or lists ``etag`` (weak comparison, RFC 9110 13.1.2)."""
+    header = request.headers.get("if-none-match", "").strip()
+    if header == "*":
+        return True
+    return any(tag.strip().removeprefix("W/") == etag for tag in header.split(",") if tag.strip())
+
+
+def not_modified(etag: str) -> Response:
+    return Response(status_code=304, headers={"ETag": etag})
+
+
+def file_or_not_modified(request: Request, path: Path, media_type: str) -> Response:
+    """The file, or a 304 when ``If-None-Match`` has its ETag (Starlette's, from the size and mtime)."""
+    response = FileResponse(path, media_type=media_type, stat_result=path.stat())
+    etag = response.headers["etag"]
+    return not_modified(etag) if etag_matches(request, etag) else response
 
 
 def too_many_attempts(exc: TooManyAttempts) -> Response:
@@ -127,10 +150,13 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         raw = request.query_params.get("group-title", "")
         groups = [g for g in raw.split(",")] if raw else []
         text = await asyncio.to_thread(service.playlist, base_url(request, service), groups)
+        etag = '"' + hashlib.sha256(text.encode()).hexdigest() + '"'  # the text depends on the URL and groups
+        if etag_matches(request, etag):
+            return not_modified(etag)
         return Response(
             text,
             media_type="audio/x-mpegurl",
-            headers={"Content-Disposition": "attachment; filename=threadfin.m3u"},
+            headers={"Content-Disposition": "attachment; filename=threadfin.m3u", "ETag": etag},
         )
 
     async def xmltv(request: Request) -> Response:
@@ -139,7 +165,7 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         path = service.xmltv_path
         if not path.exists():
             return PlainTextResponse("404 page not found\n", status_code=404)
-        return FileResponse(path, media_type="application/xml; charset=utf-8")
+        return file_or_not_modified(request, path, "application/xml; charset=utf-8")
 
     async def xmltv_gz(request: Request) -> Response:
         if refusal := url_auth_refusal(request, service, LEVEL_XML):
@@ -147,7 +173,7 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         path = service.xmltv_path.with_name(service.xmltv_path.name + ".gz")
         if not path.exists():
             return PlainTextResponse("404 page not found\n", status_code=404)
-        return FileResponse(path, media_type="application/gzip")
+        return file_or_not_modified(request, path, "application/gzip")
 
     def device(request: Request) -> hdhr.Device:
         return service.device(base_url(request, service))
