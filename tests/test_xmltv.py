@@ -1,4 +1,4 @@
-"""XMLTV helpers: programme counting (the channel-scan half is covered through tests/test_xepg.py)."""
+"""XMLTV helpers: streaming parse and programme counting (channel scans: see tests/test_xepg.py)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from unittest import mock
 
 from threadfin import xmltv
 from threadfin.xepg import XEPGChannel
-from threadfin.xmltv import DUMMY_FILE, make_program_counter, programme_counts
+from threadfin.xmltv import DUMMY_FILE, XMLTVError, iter_top_level, make_program_counter, programme_counts
 
 GUIDE = """<?xml version="1.0"?><tv>
 <channel id="a"><display-name>A</display-name></channel>
@@ -72,6 +72,43 @@ class ProgrammeCounts(unittest.TestCase):
         self.assertEqual(make_program_counter(self.folder)(channel("g.xml", "b")), 1)
         (self.folder / "g.xml").write_text(GUIDE.replace('channel="a"', 'channel="b"'), "utf-8")
         self.assertEqual(make_program_counter(self.folder)(channel("g.xml", "b")), 3)
+
+
+class StreamingParse(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.path = Path(tmp.name) / "g.xml"
+
+    def test_finished_elements_are_taken_out_of_the_root(self) -> None:
+        self.path.write_text(GUIDE, "utf-8")
+        roots = []
+        real = xmltv.ElementTree.iterparse
+
+        def spy(*args, **kwargs):
+            for event, element in real(*args, **kwargs):
+                if event == "start" and not roots:
+                    roots.append(element)
+                yield event, element
+
+        seen = []
+        with mock.patch.object(xmltv.ElementTree, "iterparse", spy):
+            for element in iter_top_level(self.path):
+                seen.append((element.tag, element.get("channel") or element.get("id")))
+                self.assertIs(roots[0][0], element)  # earlier elements were taken out of the root
+        self.assertEqual(len(roots[0]), 0)
+        self.assertEqual(seen, [("channel", "a"), ("programme", "a"), ("programme", "a"), ("programme", "b"),
+                                ("programme", None)])  # fmt: skip
+
+    def test_nested_content_is_intact_while_the_caller_has_the_element(self) -> None:
+        self.path.write_text('<tv><programme channel="a"><title lang="en">T</title><desc>D</desc></programme></tv>')
+        (element,) = [(e.find("title").text, e.find("desc").text) for e in iter_top_level(self.path)]
+        self.assertEqual(element, ("T", "D"))
+
+    def test_not_xmltv(self) -> None:
+        self.path.write_text("<rss><item/></rss>")
+        with self.assertRaisesRegex(XMLTVError, "expected element <tv> but have <rss>"):
+            list(iter_top_level(self.path))
 
 
 if __name__ == "__main__":

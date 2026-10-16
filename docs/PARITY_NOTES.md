@@ -171,7 +171,7 @@ Tested end to end with a local provider server and a real uvicorn instance.
 | `/stream/<id>` passed through the stream buffer. | **changed**: 302 to the provider URL (UDPxy rewrite of `udp://@` kept) |
 | `/m3u/threadfin.m3u?group-title=A,B`, `/xmltv/threadfin.xml`. | kept; `.xml.gz` is also served |
 | A build ran only when started by a schedule/UI; after restart group caps were gone until the next build. | **changed**: start-up always builds, from the local copies unless the start-up update below downloads first |
-| Authentication on `/m3u`, `/xmltv`. | not yet (next layer) |
+| Authentication on `/m3u`, `/xmltv`. | kept (see Authentication) |
 
 ## HDHomeRun emulation (`hdhr.py`)
 
@@ -244,7 +244,7 @@ were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
 | Folder entries written by Go on Windows (`data\images\`). | **fixed**: `\` is a separator (Go on Linux created files with backslashes in their names) |
 | Permissions come from the archive as created under umask 022, execute bits included; archives without Unix permissions give 0644. | **fixed**: only read/write bits are restored (`authentication.json` stays 0600), so a restore cannot plant an executable, e.g. an `ffprobe` next to a restored `ffmpeg.path` that the channel probe would run |
 | Same port: reload settings, re-init and `StartSystem(true)` (backup, download, build). Different port: files replaced but the running instance kept its old settings (and could save them over the restored ones), and the UI showed the new `/web/` URL. | **changed**: always reloads everything (settings object updated in place, users, stream ids, channel database), then backup + download + build; `RestoreResult.web_url()` gives Go's new-URL text when the port changed (the new port needs a restart). Refused while an update is running |
-| Restore from the command line (`-restore`, asks `yes`/`no`). | not yet: comes with the entry point |
+| Restore from the command line (`-restore`, asks `yes`/`no`). | kept (see Command line) |
 | Scheduler: once a minute, every `HHMM` in `update` that equals the local time runs backup, download (`m3u`, plus `xmltv` in XEPG mode), image-cache clean-up (unless `cache.images`), build. Skipped while a scan is in progress. | kept |
 | The loop slept 60 s *after* each check and update, so it drifted and could skip a minute (e.g. `0301` after a long `0300` update); a time listed twice ran twice. | **fixed**: wakes at each minute boundary, at most one run per minute |
 | Daily binary self-update at a random time between 00:10 and 01:58 (`ThreadfinAutoUpdate`). | **dropped** (the setting is kept in `settings.json`) |

@@ -353,6 +353,17 @@ def update_database(
             channel.tvg_name = channel.name
         known[channel_hash(channel.url, channel.tvg_id, channel.file_m3u_id)] = channel
 
+    # A stream without a hash match takes the first known channel (in the order of ``known``) of its
+    # playlist with the same UUID; this index keeps that lookup from scanning every channel.
+    uuid_index: dict[tuple[str, str], XEPGChannel] = {}
+
+    def index_uuid(channel: XEPGChannel) -> None:
+        if channel.uuid_value:
+            uuid_index.setdefault((channel.file_m3u_id, channel.uuid_value), channel)
+
+    for channel in known.values():
+        index_uuid(channel)
+
     group_filter_list = group_filters(filters)
     next_id = 0
 
@@ -362,11 +373,15 @@ def update_database(
             next_id += 1
         return f"x-ID.{next_id}"
 
+    next_free: dict[float, float] = {}  # per starting number: every number before this one is taken
+
     def free_number(start: float) -> str:
-        while start in used_numbers:
-            start += 1
-        used_numbers.add(start)
-        return go_g(start)
+        number = next_free.get(start, start)
+        while number in used_numbers:
+            number += 1
+        used_numbers.add(number)
+        next_free[start] = number + 1
+        return go_g(number)
 
     active_hashes: list[str] = []
     created: list[str] = []
@@ -387,16 +402,8 @@ def update_database(
         if match is not None:
             if uuid_value:
                 has_uuid = True
-        else:
-            for candidate in known.values():
-                if (
-                    playlist_id == candidate.file_m3u_id
-                    and candidate.uuid_value
-                    and uuid_value
-                    and candidate.uuid_value == uuid_value
-                ):
-                    match, has_uuid, by_uuid = candidate, True, True
-                    break
+        elif uuid_value and (candidate := uuid_index.get((playlist_id, uuid_value))) is not None:
+            match, has_uuid, by_uuid = candidate, True, True
 
         if match is not None:
             channel = channels.get(match.x_epg)
@@ -501,6 +508,7 @@ def update_database(
         channel.channel_unique_id = stream_hash
         channels[channel.x_epg] = channel
         known[stream_hash] = channel.copy()
+        index_uuid(known[stream_hash])
         created.append(channel.x_epg)
 
     return active_hashes, removed_duplicates, created

@@ -39,20 +39,26 @@ def _local(tag: str) -> str:
 def iter_top_level(path: str | os.PathLike[str]) -> Iterator[ElementTree.Element]:
     """Yield the direct children of the root ``<tv>`` element, one at a time.
 
-    The caller must be done with an element before asking for the next one: it is cleared.
+    The caller must be done with an element before asking for the next one: it is cleared and taken
+    out of the root, so memory stays flat however large the file is.
     """
     try:
         depth = 0
+        root = None
         for event, element in ElementTree.iterparse(str(path), events=("start", "end")):
             if event == "start":
                 depth += 1
-                if depth == 1 and _local(element.tag) != "tv":
-                    raise XMLTVError(f"expected element <tv> but have <{_local(element.tag)}>")
+                if depth == 1:
+                    if _local(element.tag) != "tv":
+                        raise XMLTVError(f"expected element <tv> but have <{_local(element.tag)}>")
+                    root = element
             else:
                 depth -= 1
                 if depth == 1:
                     yield element
                     element.clear()
+                    if root is not None:
+                        root.remove(element)  # its first child: only elements parsed ahead remain
     except ElementTree.ParseError as exc:
         raise XMLTVError(f"invalid XMLTV file: {exc}") from exc
     except OSError as exc:
