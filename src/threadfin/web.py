@@ -28,7 +28,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -176,7 +176,7 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
         return Response(hdhr.capability_xml(device(request)), media_type="application/xml")
 
     @asynccontextmanager
-    async def lifespan(app: Starlette) -> AsyncIterator[None]:
+    async def lifespan(app: Starlette) -> AsyncGenerator[None]:
         logger = logging.getLogger("threadfin")
         logger.addHandler(service.log)
         if logger.getEffectiveLevel() > logging.INFO:

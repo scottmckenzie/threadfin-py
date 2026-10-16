@@ -95,6 +95,7 @@ class PMSIds:
         self.path = Path(path) if path else None
         self.ids: dict[str, str] = {}
         if self.path and self.path.exists():
+            raw: dict[str, Any]
             try:
                 raw = jsonio.load_json_object(self.path)
             except (OSError, ValueError):

@@ -8,6 +8,7 @@ import threading
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
+from typing import override
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +30,7 @@ class LogBuffer(logging.Handler):
         with self._lock_entries:
             self._entries = deque(self._entries, maxlen=max(size, 1))
 
+    @override
     def emit(self, record: logging.LogRecord) -> None:
         try:
             message = record.getMessage()

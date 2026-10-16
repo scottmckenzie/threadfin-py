@@ -391,11 +391,13 @@ def routes(service: Service) -> list[BaseRoute]:
         text = query.get("q", "").strip().lower()
         group, state = query.get("group", ""), query.get("state", "active")
         rows = []
-        wanted: Callable[[XEPGChannel], bool] = {
+        by_state: dict[str, Callable[[XEPGChannel], bool]] = {
             "active": lambda c: c.x_active and not c.x_hide_channel,
             "inactive": lambda c: not c.x_active and not c.x_hide_channel,
             "hidden": lambda c: c.x_hide_channel,
-        }.get(state, lambda c: True)
+            "all": lambda c: True,  # also any other state
+        }
+        wanted = by_state.get(state, by_state["all"])
         for channel_id, channel in service.channels.items():
             if not wanted(channel):
                 continue
@@ -685,12 +687,15 @@ def routes(service: Service) -> list[BaseRoute]:
 
         return endpoint
 
+    def web_root(request: Request) -> Response:
+        return RedirectResponse("/web/", status_code=307)
+
     out: list[BaseRoute] = [
         Mount("/web/static", app=StaticFiles(directory=HERE / "static"), name="static"),
         Route("/web/login", login, methods=["GET", "POST"]),
         Route("/web/first-user", first_user, methods=["GET", "POST"]),
         Route("/web/logout", page(logout), methods=["POST"]),
-        Route("/web", lambda request: RedirectResponse("/web/", status_code=307), methods=["GET", "HEAD"]),
+        Route("/web", web_root, methods=["GET", "HEAD"]),
     ]
     for path, handlers in by_path.items():
         methods = sorted(set(handlers) | ({"HEAD"} if "GET" in handlers else set()))
