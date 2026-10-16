@@ -33,13 +33,6 @@
       <small>Choosing a guide channel activates the channel; “None” deactivates it.</small></div>
   </div>
   <label>{{ labels["x-ppv-extra"] }} <input name="x-ppv-extra" value="{{ c.x_ppv_extra }}" placeholder="Added to the programme title of PPV channels"></label>
-  <datalist id="channel-names">{% for n in other_names %}<option value="{{ n }}">{% endfor %}</datalist>
-  <div class="row three">
-    {% for n in (1, 2, 3) %}
-      {% set key = "x-backup-channel-" ~ n %}
-      <label>{{ labels[key] }} <input name="{{ key }}" value="{{ c['x_backup_channel_' ~ n] }}" list="channel-names"></label>
-    {% endfor %}
-  </div>
   <fieldset>
     <legend>Stream probe</legend>
     <div id="probe-result">{% with probe = probe, error = "" %}{% include "partials/probe_result.html" %}{% endwith %}</div>

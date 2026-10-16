@@ -25,10 +25,11 @@ CASES = sorted(GOLDEN.glob("*.input.json"))
 # Cases where this port deliberately differs from Go (each is asserted separately below).
 INTENTIONAL_DIVERGENCES = {
     "filter_without_starting_number_fix",
-    "backup_cleared_keeps_stale_pointer_in_go",
     "provider_chno_collision_fix",
     "existing_found_by_uuid",
+    "backup_channels",  # Go resolves backup channel names; here they are kept but never resolved
 }
+BACKUP_FIELDS = ("backup_channel_1", "backup_channel_2", "backup_channel_3")
 
 
 def run_case(case: dict, data: Path) -> tuple[dict[str, XEPGChannel], object, dict]:
@@ -77,6 +78,21 @@ class GoldenXEPGTests(unittest.TestCase):
                 self.assertEqual(result.xepg_count, len(kept))
                 self.assertGreaterEqual(golden["xepgCount"], len(kept))
                 self.assertEqual(mapping, golden["mapping"])
+
+    def test_backup_channels_are_not_resolved(self) -> None:
+        """Everything as in Go, except that the stored backup entries are left as they were loaded."""
+        name = "backup_channels"
+        case = json.loads((GOLDEN / f"{name}.input.json").read_text("utf-8"))
+        golden = json.loads((GOLDEN / f"{name}.golden.json").read_text("utf-8"))
+        with tempfile.TemporaryDirectory() as tmp:
+            channels, _result, _mapping = run_case(case, Path(tmp))
+        ours = {k: v.to_json() for k, v in channels.items()}
+        theirs, loaded = canonical(golden["xepg"]), canonical(case["xepg"])
+        strip = lambda d: {k: {f: v for f, v in c.items() if f not in BACKUP_FIELDS} for k, c in d.items()}  # noqa: E731
+        self.assertEqual(strip(ours), strip(theirs))
+        for cid, channel in ours.items():
+            self.assertEqual([channel[f] for f in BACKUP_FIELDS], [loaded.get(cid, {}).get(f) for f in BACKUP_FIELDS])
+        self.assertTrue(any(c[f] for c in theirs.values() for f in BACKUP_FIELDS))  # Go did resolve some
 
     def test_intentional_divergences_really_diverge(self) -> None:
         for name in sorted(INTENTIONAL_DIVERGENCES):
@@ -219,22 +235,15 @@ class DeliberateFixTests(unittest.TestCase):
         result = run({}, [st(1, **{"group-title": "News"}), st(2, **{"group-title": "Sports"})], filters=filters)
         self.assertEqual([c.x_channel_id for c in result.channels.values()], ["1000", "40.5"])
 
-    def test_removed_backup_is_cleared(self) -> None:
-        a = mk("x-ID.0", x_active=True, backup_channel_1=BackupStream("M1", "http://stale"))
-        result = run({"x-ID.0": a}, [st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"})])
-        self.assertIsNone(result.channels["x-ID.0"].backup_channel_1)
-
-    def test_backup_found_by_name_last_match_wins(self) -> None:
-        a = mk("x-ID.0", x_active=True, x_backup_channel_2=" Ch 2 ")
-        result = run(
-            {"x-ID.0": a},
-            [
-                st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"}),
-                st(2),
-                st(3, **{"name": "Ch 2", "tvg-name": "Ch 2"}),
-            ],
-        )
-        self.assertEqual(result.channels["x-ID.0"].backup_channel_2, BackupStream("M1", "http://p/3"))
+    def test_backup_channels_are_kept_but_not_resolved(self) -> None:
+        """They only worked inside Go's stream buffer; /stream/ is a redirect here."""
+        stale = BackupStream("M1", "http://stale")
+        a = mk("x-ID.0", x_active=True, x_backup_channel_1="Ch 2", backup_channel_2=stale)
+        result = run({"x-ID.0": a}, [st(0, url="http://p/x-ID.0", **{"tvg-id": "x-ID.0"}), st(2)])
+        channel = result.channels["x-ID.0"]
+        self.assertEqual(channel.x_backup_channel_1, "Ch 2")  # the name is kept for the Go app
+        self.assertIsNone(channel.backup_channel_1)  # but never resolved, though "Ch 2" exists
+        self.assertEqual(channel.backup_channel_2, stale)  # stored entries are left as they are
 
     def test_active_count_only_counts_kept_channels(self) -> None:
         a = mk("x-ID.0", x_active=True, file_m3u_id="GONE")

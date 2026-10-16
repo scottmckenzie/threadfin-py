@@ -27,6 +27,12 @@ def run(case: dict) -> tuple[str, StreamRegistry]:
     return build_playlist(channels, options, registry, case["groups"]), registry
 
 
+# Go copied a channel's resolved backup channels into the registry for its stream buffer; with
+# /stream/ a redirect they are never used, and the registry leaves them empty.
+BACKUPS_NOT_COPIED = {"backup_channels"}
+BACKUP_FIELDS = ("backup_channel_1", "backup_channel_2", "backup_channel_3")
+
+
 class Golden(unittest.TestCase):
     def test_cases(self) -> None:
         self.assertGreaterEqual(len(CASES), 35)
@@ -37,7 +43,11 @@ class Golden(unittest.TestCase):
                 golden = json.loads((GOLDEN / f"{name}.golden.json").read_text("utf-8"))
                 got, registry = run(case)
                 self.assertEqual(got, golden["m3u"])
-                self.assertEqual({k: v.to_json() for k, v in registry.entries.items()}, golden["registry"])
+                want = golden["registry"]
+                if name in BACKUPS_NOT_COPIED:
+                    self.assertTrue(any(e[f] for e in want.values() for f in BACKUP_FIELDS))  # Go copied them
+                    want = {k: {**e, **dict.fromkeys(BACKUP_FIELDS)} for k, e in want.items()}
+                self.assertEqual({k: v.to_json() for k, v in registry.entries.items()}, want)
 
 
 class Units(unittest.TestCase):
