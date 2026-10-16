@@ -15,10 +15,11 @@ from __future__ import annotations
 
 import argparse
 import logging
+import socket
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import TextIO
+from typing import TextIO, override
 
 from . import __version__
 from .backup import BackupError, restore_backup
@@ -153,10 +154,18 @@ def serve(system: SystemInfo, settings: Settings, bind: str, debug: int) -> None
     host, port = listen_address(bind, settings), port_number(settings)
     shown = local_address() if host in ("0.0.0.0", "::") else host
     log.info("%s %s, config folder %s", NAME, __version__, system.config)
-    log.info("Web interface: http://%s:%d/web/", shown, port)
+
+    class Server(uvicorn.Server):
+        @override
+        async def startup(self, sockets: list[socket.socket] | None = None) -> None:
+            await super().startup(sockets)  # the app's start-up (update / build), then the port is bound
+            if self.started:
+                log.info("Web interface: http://%s:%d/web/", shown, port)
+
     app = create_app(Service(system, settings))
-    uvicorn.run(app, host=host, port=port, log_level="debug" if debug >= 3 else "info" if debug else "warning",
-                access_log=debug >= 2, log_config=None)  # fmt: skip
+    config = uvicorn.Config(app, host=host, port=port, log_level="debug" if debug >= 3 else "info" if debug else "warning",
+                            access_log=debug >= 2, log_config=None)  # fmt: skip
+    Server(config).run()
 
 
 def main(argv: Sequence[str] | None = None, *, ask: Callable[[str], str] = input, out: TextIO = sys.stdout,
