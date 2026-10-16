@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import io
 import json
+import queue
 import signal
 import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 import unittest.mock
@@ -154,6 +156,34 @@ class RealServer(unittest.TestCase):
             self.assertIn(proc.returncode, (0, -signal.SIGTERM))
             self.assertIn(f"Web interface: http://127.0.0.1:{port}/web/", output)
             self.assertNotIn("Traceback", output)
+
+    def test_web_interface_is_announced_once_it_answers(self) -> None:
+        """The "Web interface" line comes after uvicorn's startup, when the port already answers."""
+        with tempfile.TemporaryDirectory() as tmp:
+            port = free_port()
+            cmd = [sys.executable, "-m", "threadfin", "-config", f"{tmp}/cfg", "-port", str(port), "-bind", "127.0.0.1",
+                   "-debug", "1"]  # fmt: skip
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            lines: queue.Queue[str] = queue.Queue()
+            reader = threading.Thread(target=lambda: [lines.put(line) for line in proc.stdout or ()], daemon=True)
+            reader.start()
+            seen: list[str] = []
+            try:
+                deadline = time.monotonic() + 30
+                while not any("Web interface:" in line for line in seen):
+                    seen.append(lines.get(timeout=max(0.1, deadline - time.monotonic())))
+                with socket.create_connection(("127.0.0.1", port), timeout=1):
+                    pass  # listening at the moment the line was logged
+            finally:
+                proc.send_signal(signal.SIGTERM)
+                proc.wait(timeout=10)
+                reader.join(timeout=5)
+                if proc.stdout:
+                    proc.stdout.close()
+            startup = next(i for i, line in enumerate(seen) if "Application startup complete" in line)
+            announced = next(i for i, line in enumerate(seen) if "Web interface:" in line)
+            self.assertLess(startup, announced)
+            self.assertIn(f"Web interface: http://127.0.0.1:{port}/web/", seen[announced])
 
 
 if __name__ == "__main__":
