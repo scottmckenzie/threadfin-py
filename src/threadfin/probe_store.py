@@ -128,7 +128,7 @@ class ProbeStore:
                     d.stream_count, run.raw_json,
                 ),
             )  # fmt: skip
-            row_id = int(cursor.lastrowid or 0)
+            row_id = cursor.lastrowid or 0
             self._prune_url(run.url, self._keep_per_url)
             self._db.commit()
         return ProbeRecord(

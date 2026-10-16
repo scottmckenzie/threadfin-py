@@ -23,8 +23,8 @@ dev = [
     "httpx2>=2.0",  # starlette.testclient
     "pytest>=9",  # unittest subTest reported per subtest
     "ruff>=0.17",
-    "mypy>=1.11",
     "coverage>=7.16.2",
+    "pyrefly>=1.4.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -56,7 +56,18 @@ ignore = [
     "SIM108",  # if/else blocks are often clearer than a long ternary
 ]
 
-[tool.mypy]
-python_version = "3.12"
-strict = true
-mypy_path = "src"
+[tool.pyrefly]
+project-includes = ["src"]
+search-path = ["src"]
+python-version = "3.12"
+preset = "strict"  # the counterpart of mypy's strict mode, which this code was checked with
+check-unannotated-defs = true
+infer-return-types = "never"  # an unannotated return is Any, as in mypy
+
+[tool.pyrefly.errors]  # mypy --strict checks that pyrefly's strict preset leaves at their defaults
+implicit-any = "error"
+implicit-any-parameter = "error"
+unannotated-return = "error"
+no-any-return = "error"
+method-assign = "error"
+redundant-cast = "warn"

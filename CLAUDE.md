@@ -56,9 +56,11 @@ Always use `uv run` to execute Python code and tools. Never call `python`, `pyte
 
 ## Check types
 
-- Tool: pyrefly (preferred), ty, or mypy
-- Run: `uv run pyrefly check`, `uv run ty check`, or `uv run mypy .`
-- Configuration lives in `pyproject.toml` under `[tool.pyrefly]`, `[tool.ty]`, or `[tool.mypy]`
+- Tool: pyrefly (migrated from mypy; ty is the alternative)
+- Run: `uv run pyrefly check --min-severity=warn` (checks `src/`; without the flag, warnings do not
+  fail it). Must report 0 diagnostics; CI runs it in the `lint` job
+- Configuration lives in `pyproject.toml` under `[tool.pyrefly]`: the `strict` preset plus the
+  stricter checks mypy's strict mode had
 
 ## Avoid these practices
 
@@ -95,10 +97,11 @@ Always use `uv run` to execute Python code and tools. Never call `python`, `pyte
     PYTHONDEVMODE=1 uv run pytest            # warnings are errors (pyproject.toml)
     uv run ruff check                        # rules in pyproject.toml; must pass
     uv run ruff format                       # `# fmt: skip` keeps hand-aligned tables
+    uv run pyrefly check --min-severity=warn # types (src/); warnings fail too
     uv run coverage run -m pytest && uv run coverage report   # fails below 95% (lines + branches)
 
-CI (`.github/workflows/ci.yml`) runs the same lint, format, test and coverage checks on every pull
-request and push to `main`, with tests on Python 3.12 and 3.14 and `ffmpeg` installed.
+CI (`.github/workflows/ci.yml`) runs the same lint, format, type, test and coverage checks on every
+pull request and push to `main`, with tests on Python 3.12 and 3.14 and `ffmpeg` installed.
 
 A commit that only reformats goes in `.git-blame-ignore-revs` (once it is on `main`).
 

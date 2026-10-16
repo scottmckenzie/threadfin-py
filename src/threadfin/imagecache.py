@@ -201,7 +201,7 @@ class ImageCache:
         if not todo:
             return 0, 0
         with ThreadPoolExecutor(max_workers=self._workers) as pool:
-            results = list(pool.map(lambda item: self._download(*item), todo))
+            results = list(pool.map(self._download, [n for n, _ in todo], [s for _, s in todo]))
         for (name, _), ok in zip(todo, results, strict=True):
             if ok:
                 self._failed.pop(name, None)

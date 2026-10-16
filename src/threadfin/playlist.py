@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +83,7 @@ class StreamRegistry:
         self.path = Path(path) if path else None
         self.entries: dict[str, StreamInfo] = {}
         if self.path and self.path.exists():
+            raw: dict[str, Any]
             try:
                 raw = jsonio.load_json_object(self.path)
             except (OSError, ValueError):
@@ -116,7 +117,7 @@ class StreamRegistry:
     def lookup(self, uid: str) -> StreamInfo | None:
         info = self.entries.get(uid)
         if info is not None:
-            info = StreamInfo(**{**{f: getattr(info, f) for f in info.__slots__}, "url": info.url.strip("\r\n")})
+            info = replace(info, url=info.url.strip("\r\n"))
         return info
 
     def replace_with(self, other: StreamRegistry) -> None:

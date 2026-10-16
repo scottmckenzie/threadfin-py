@@ -130,13 +130,13 @@ def analyze_ffprobe_output(output: str | bytes) -> ProbeAnalysis:
         raise ProbeParseError(f"failed to parse ffprobe output: {exc}") from exc
 
     if data is None:  # JSON null decodes to an empty result
-        data = {}
+        data = dict[str, Any]()
     if not isinstance(data, dict):
         raise ProbeParseError("failed to parse ffprobe output: expected a JSON object")
 
     streams = data.get("streams")
     if streams is None:
-        streams = []
+        streams = list[Any]()
     if not isinstance(streams, list):
         raise ProbeParseError("failed to parse ffprobe output: 'streams' is not a list")
 
@@ -146,7 +146,7 @@ def analyze_ffprobe_output(output: str | bytes) -> ProbeAnalysis:
 
     for entry in streams:
         if entry is None:
-            entry = {}
+            entry = dict[str, Any]()
         if not isinstance(entry, dict):
             raise ProbeParseError("failed to parse ffprobe output: stream is not an object")
 

@@ -275,7 +275,7 @@ def provider_changes(kind: str, changes: Mapping[str, Any], *, new: bool) -> dic
             raise AdminError(f"{key}: invalid value {value!r}")
         elif key == "buffer" and value not in CHOICES["buffer"]:
             raise AdminError(f"buffer: must be one of {', '.join(CHOICES['buffer'])}")
-        out[key] = value.strip() if key == "file.source" else value
+        out[key] = value.strip() if key == "file.source" and isinstance(value, str) else value
     if new and not out.get("file.source"):
         raise AdminError("file.source is required")
     if "file.source" in out and not out["file.source"]:

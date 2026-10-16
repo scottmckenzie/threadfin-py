@@ -82,11 +82,14 @@ def build_stream_database(
     for provider_id in list(manager.records("m3u")):
         name = manager.parameter("m3u", provider_id, "name")
         path = str(manager.local_path("m3u", provider_id))
+        channels: list[Stream]
+        skipped: list[SkippedEntry]
         try:
             channels, skipped = _load(manager, provider_id, name)
         except (ProviderError, ValueError) as exc:
             db.errors[provider_id] = str(exc)
-            channels, skipped = [], []
+            channels = []
+            skipped = []
         if skipped:
             db.skipped[provider_id] = skipped
 

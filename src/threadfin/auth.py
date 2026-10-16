@@ -174,7 +174,7 @@ def _parse_scrypt(stored: str) -> tuple[PasswordCost, bytes, bytes] | None:
         if set(values) != {"ln", "r", "p"} or not all(1 <= v <= m for v, m in zip(cost, _SCRYPT_LIMITS, strict=True)):
             return None
         return cost, _unb64(salt), _unb64(digest)
-    except (ValueError, KeyError, binascii.Error):
+    except (ValueError, KeyError):  # binascii.Error is a ValueError
         return None
 
 
@@ -252,7 +252,7 @@ class Authentication:
             raise AuthError(EMPTY_CREDENTIALS)
         while (user_id := "id-" + _random(_ID_CHARS, 10)) in self.users:
             pass
-        user = {
+        user: dict[str, Any] = {
             "_id": user_id,
             "_salt": _random(_TOKEN_CHARS, 20),
             "_username": credential_hash(username),
@@ -331,7 +331,7 @@ class Authentication:
                 raise AuthError(DATA_NOT_READ)
             data = user.get("data")
             if not isinstance(data, dict):
-                data = user["data"] = {}
+                data = user["data"] = dict[str, Any]()
             return data
 
     def write_user_data(self, user_id: str, data: dict[str, Any]) -> None:

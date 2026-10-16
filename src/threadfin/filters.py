@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 # Go regexes, verbatim. ``[^.]`` also matches newlines in both engines.
 _EXCLUDE_RE = re.compile(r"!+[{]+[^.]+[}]")
@@ -93,7 +93,8 @@ def _sort_key(key: str) -> tuple[int, int | str]:
 def build_filter_rules(filters: Mapping[str, Any] | Iterable[Mapping[str, Any]]) -> list[FilterRule]:
     """Compile ``Settings.filter`` into rules, in numeric key order."""
     if isinstance(filters, Mapping):
-        items = [filters[k] for k in sorted(filters, key=_sort_key)]
+        by_key = cast(Mapping[str, Any], filters)  # a Mapping here is Settings.filter (id -> filter)
+        items = [by_key[k] for k in sorted(by_key, key=_sort_key)]
     else:
         items = list(filters)
 

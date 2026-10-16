@@ -63,8 +63,8 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
   `avfs`, `go-version`, `x/text`), so the Go app cannot be built from a plain
   clone. The golden scripts fetch modules from GitHub (`GOPROXY=direct`).
 * The port was started in a sandbox without PyPI, so tests use `unittest` (they
-  also run under pytest) and providers use stdlib `urllib`. Linting (`ruff`) and
-  type-checking (`mypy`) have not been run yet.
+  also run under pytest) and providers use stdlib `urllib`. Linting and formatting
+  (`ruff`) and type-checking (`pyrefly`) run in CI.
 
 ## Stream filters (`src/threadfin/filters.py`)
 
