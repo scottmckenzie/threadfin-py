@@ -256,7 +256,7 @@ async def run_ffprobe(
     url = validate_probe_url(url, allow_local=allow_local)
     started = time.monotonic()
 
-    def finish(error: str | None, analysis: ProbeAnalysis | None = None, raw: str | None = None):
+    def finish(error: str | None, analysis: ProbeAnalysis | None = None, raw: str | None = None) -> ProbeRun:
         return ProbeRun(
             url=url,
             ok=error is None,

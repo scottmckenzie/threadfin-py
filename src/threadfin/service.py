@@ -23,6 +23,7 @@ import threading
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any, TypeVar
 
 from . import admin
@@ -112,7 +113,7 @@ class Service:
         save_settings(self.settings, self.system)
 
     @property
-    def xmltv_path(self):
+    def xmltv_path(self) -> Path:
         return self.system.folder_data / XMLTV_FILE
 
     # --- building ---------------------------------------------------------------
@@ -165,7 +166,7 @@ class Service:
         )
         self.channels = result.channels
         report.warnings += result.warnings
-        report.created, report.removed = result.created, len(result.removed_duplicates) + len(result.removed_stale)
+        report.created, report.removed = len(result.created), len(result.removed_duplicates) + len(result.removed_stale)
         save_xepg(str(system.file_xepg), self.channels)
 
         stats = self._write_guide(now)

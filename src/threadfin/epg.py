@@ -562,8 +562,8 @@ def write_xmltv(
         except XMLTVError as exc:
             stats.errors[file] = str(exc)
 
-    target = Path(path)
-    fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
+    xml_path = Path(path)
+    fd, tmp_name = tempfile.mkstemp(dir=xml_path.parent, prefix=f".{xml_path.name}.", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as out:
             out.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -582,13 +582,13 @@ def write_xmltv(
                 stats.programmes += len(chunk)
             out.write("</tv>\n")
         os.chmod(tmp_name, 0o644)
-        os.replace(tmp_name, target)
+        os.replace(tmp_name, xml_path)
     except BaseException:
         Path(tmp_name).unlink(missing_ok=True)
         raise
 
     if gzip_path is not None:
-        with open(target, "rb") as source_file, gzip.open(gzip_path, "wb") as gz_file:
+        with open(xml_path, "rb") as source_file, gzip.open(gzip_path, "wb") as gz_file:
             while block := source_file.read(1 << 20):
                 gz_file.write(block)
     return stats
