@@ -76,6 +76,7 @@ def test_failover_defaults_and_round_trip(self) -> None:
     data = s.to_json_dict()
     self.assertEqual((data["backup.failover.requests"], data["backup.failover.seconds"]), (3, 5))
 
+
 # tests/test_admin.py
 def test_failover_settings_validated(self) -> None:
     new, changed = update_settings(Settings(), {"backup.failover.requests": 4, "backup.failover.seconds": 10})
@@ -86,6 +87,7 @@ def test_failover_settings_validated(self) -> None:
                    {"backup.failover.seconds": 0}, {"backup.failover.requests": "3"}):  # fmt: skip
         with self.assertRaises(AdminError):
             update_settings(Settings(), change)
+
 
 # tests/test_ui.py: the settings page shows both fields
 self.assertIn('name="backup.failover.requests"', page)
@@ -126,9 +128,10 @@ Expected: PASS.
 ```python
 @dataclass(frozen=True, slots=True)
 class Decision:
-    step: int        # 0 = main stream, n = the n-th usable backup
-    switched: bool   # this request moved the client on
-    stuck: bool      # this request completed a burst with nowhere left to go (first time per burst)
+    step: int  # 0 = main stream, n = the n-th usable backup
+    switched: bool  # this request moved the client on
+    stuck: bool  # this request completed a burst with nowhere left to go (first time per burst)
+
 
 class Failover:
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None: ...
