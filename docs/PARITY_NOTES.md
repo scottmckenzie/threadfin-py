@@ -40,6 +40,7 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
 | On save: `backup.keep` 0 becomes 10, empty `backup.path` becomes the default, negative `buffer.timeout` becomes 0. | kept |
 | JSON `null` decodes to the zero value of the field. | kept |
 | `-port` / `-branch` command-line flags are written into `settings.json`, so they persist after the flag is removed. | kept |
+| `backup.failover.requests` and `backup.failover.seconds` (N and W above). | **added**: Python-only; the Go app does not know them and drops them when it saves `settings.json` |
 | Unknown keys are dropped on save. | **changed**: preserved, so newer settings survive |
 | Writes `settings.json` in place. | **changed**: atomic temp-file + rename |
 | `buffer*`, `ffmpeg.options`, `vlc.*`, `storeBufferInRAM`, `ffmpeg.forceHttp` | kept in the file for compatibility, **inert** (no stream buffer in this port) |
@@ -160,7 +161,7 @@ Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream 
 | A `"` or newline in a name broke the `#EXTINF` line. | **fixed**: `'` / space |
 | The registry kept the first channel name ever seen for an id. | **changed**: refreshed on every build (first wins *within* a build, as in Go) |
 | Provider URLs were rewritten to https when "force https" was on. | not ported (streams are redirected, not proxied) |
-| Backup channels fail over inside Threadfin's stream buffer. | **not possible** with a plain redirect; the backup entries are kept in the registry only |
+| Backup channels fail over inside Threadfin's stream buffer. | **changed**: Go switched inside its stream buffer; here N requests from one client within W seconds (default 3 in 5) redirect it to the next backup, staying on the last; a quiet gap of W returns it to the main stream (`failover.py`, in memory) |
 
 ## Build pipeline and endpoints (`service.py`, `web.py`)
 

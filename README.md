@@ -23,6 +23,7 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
 | Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth, web / API login) | done, golden-tested against Go (14 step-by-step cases) |
 | Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written |
+| Backup channels | changed: switched on repeated requests (Go switched inside its stream buffer); see the reverse proxy note below |
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
 | HDHomeRun tuners as a channel source | dropped (`files.hdhr` is kept in settings.json but ignored) |
 | Web UI (`/web/`: status, playlists, XMLTV, filters, mapping with probe, users, settings, backup / restore, log) | done, htmx, tested through the app |
@@ -59,6 +60,11 @@ name (for example through a reverse proxy), list it in the `THREADFIN_ALLOWED_HO
 variable (comma-separated; `*` allows any name). Player and Plex / Emby / Jellyfin endpoints answer
 any name.
 
+Behind a reverse proxy every request appears to come from the proxy. Set `FORWARDED_ALLOW_IPS` to the
+proxy's address (for example `FORWARDED_ALLOW_IPS=192.0.2.1`; CIDR ranges are allowed) so backup
+channel failover, login throttling and the access log see the real client. List only the proxy: any
+listed address can claim to be any client.
+
 ## REST API
 
 JSON under `/api/v1/`; errors are `{"error": "..."}` with a 4xx status. With web authentication on,
@@ -93,6 +99,5 @@ Go quirks that were kept or fixed on purpose, and `CLAUDE.md` for the developmen
 
 ## Open questions
 
-- Backup channels cannot fail over with a plain 302; they are kept in the registry only.
 - Code review findings and recommended fixes (login throttling, password hashing, type errors ...):
   see `docs/REVIEW_2026-10.md`.
