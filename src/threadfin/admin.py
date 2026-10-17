@@ -49,6 +49,8 @@ SETTABLE: dict[str, str] = {
     "authentication.xml": "bool",
     "backup.keep": "int",
     "backup.path": "folder",
+    "backup.failover.requests": "int",
+    "backup.failover.seconds": "int",
     "buffer": "str",
     "buffer.size.kb": "int",
     "buffer.timeout": "float",
@@ -159,6 +161,11 @@ def update_settings(settings: Settings, changes: Mapping[str, Any]) -> tuple[Set
         elif kind == "file" and value and not Path(value).is_file():
             raise AdminError(f"{value}: File not found")
         data[key] = value
+
+    if data["backup.failover.requests"] < 0 or data["backup.failover.requests"] == 1:
+        raise AdminError("backup.failover.requests: 0 (off) or at least 2")
+    if data["backup.failover.seconds"] < 1:
+        raise AdminError("backup.failover.seconds: at least 1")
 
     if not data["authentication.web"]:
         for key in _AUTH_LEVELS:

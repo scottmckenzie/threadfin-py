@@ -338,6 +338,11 @@ class Settings(AppTestCase):
         response = self.client.post("/web/settings", data=self.form(), headers=HX)
         self.assertIn("No changes", response.text)
 
+    def test_failover_fields_shown(self) -> None:
+        page = self.client.get("/web/settings").text
+        self.assertIn('name="backup.failover.requests"', page)
+        self.assertIn('name="backup.failover.seconds"', page)
+
     def test_unchecking(self) -> None:
         self.assertTrue(self.service.settings.files_update)
         data = self.form()

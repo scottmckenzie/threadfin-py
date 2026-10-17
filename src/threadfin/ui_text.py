@@ -81,6 +81,13 @@ SETTINGS_PAGE: tuple[tuple[str, tuple[SettingField, ...]], ...] = (
         SettingField("backup.keep", "Number of backups to keep", "Older backups are deleted automatically.",
                      "int"),
     )),
+    ("Backup channels", (
+        SettingField("backup.failover.requests", "Failover requests", "A client that requests the same channel "
+                     "this many times within the window below is sent to the channel's next backup. 0 turns it "
+                     "off. Behind a reverse proxy, see FORWARDED_ALLOW_IPS in the README.", "int"),
+        SettingField("backup.failover.seconds", "Failover window (seconds)", "The time in which repeated "
+                     "requests for the same channel count towards the number above.", "int"),
+    )),
     ("Authentication", (
         SettingField("authentication.web", "WEB Authentication", "Access to the web interface only with "
                      "credentials.", "bool"),
