@@ -13,7 +13,8 @@ Behaviour kept from Go, quirks included:
   group;
 * an identical ``group|stream`` pair is written once.
 
-Differences: ties between equal channel numbers are broken by the XEPG id (Go's ``sort.Slice`` is
+Entries are ordered by ``x-channelID`` as in the last Go release (1.2.37); Go main sorts by the
+provider's ``tvg-chno``. Differences: ties between equal channel numbers are broken by the XEPG id (Go's ``sort.Slice`` is
 not stable, so its order was arbitrary), the HTTPS rewrite of provider URLs is not ported (streams
 are redirected, never proxied), double quotes in values become single quotes so a line stays
 parseable, and registry entries are refreshed on every build, so a rename shows up (Go kept the first name ever seen); within one build the first channel for an id wins, as in Go.
@@ -159,10 +160,11 @@ def _value(text: str) -> str:
 
 
 def channel_order(channel: XEPGChannel) -> tuple[int, float, str, str]:
-    number = parse_float(channel.tvg_chno)
+    """By the mapped number (``x-channelID``, trimmed as Go 1.2.37 did), then by text, then by id."""
+    number = parse_float(channel.x_channel_id.strip())
     if number is not None:
         return (0, number, "", channel.x_epg)
-    return (1, 0.0, channel.tvg_chno, channel.x_epg)
+    return (1, 0.0, channel.x_channel_id, channel.x_epg)
 
 
 def build_playlist(

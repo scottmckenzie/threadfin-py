@@ -111,6 +111,10 @@ class Units(unittest.TestCase):
         channels = {f"x-ID.{n}": make(n) for n in ("10", "2", "1000", "1")}
         numbers = [e["GuideNumber"] for e in lineup_xepg(channels, StreamRegistry(), "http://h")]
         self.assertEqual(numbers, ["1", "2", "10", "1000"])
+        # the mapped number decides, not the provider's
+        channels["x-ID.1"].tvg_chno, channels["x-ID.1000"].tvg_chno = "1000", "1"
+        numbers = [e["GuideNumber"] for e in lineup_xepg(channels, StreamRegistry(), "http://h")]
+        self.assertEqual(numbers, ["1", "2", "10", "1000"])
 
     def test_device_id(self) -> None:
         self.assertEqual(Device("n", "a", "v", "U", 1, "").device_id, "U")
