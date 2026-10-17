@@ -65,6 +65,17 @@ proxy's address (for example `FORWARDED_ALLOW_IPS=192.0.2.1`; CIDR ranges are al
 channel failover, login throttling and the access log see the real client. List only the proxy: any
 listed address can claim to be any client.
 
+## Backup channels
+
+In the channel editor a channel can name up to three backup channels (`x-backup-channel-1/2/3`). A name
+is matched against the provider stream's `tvg-name`, else its `name`; a name that matches no stream is
+skipped and reported as a build warning. `/stream/<id>` is a redirect: when one client (IP address)
+requests the same stream `backup.failover.requests` times (default 3) within `backup.failover.seconds`
+(default 5), it is redirected to the next backup, and stays on the last one. HEAD requests count too.
+After `backup.failover.seconds` without a request the client returns to the main stream. Players that
+re-request the stream URL every few seconds (some HLS players) can trigger a switch: raise
+`backup.failover.requests`, or set it to 0 to turn failover off.
+
 ## REST API
 
 JSON under `/api/v1/`; errors are `{"error": "..."}` with a 4xx status. With web authentication on,

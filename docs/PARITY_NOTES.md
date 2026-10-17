@@ -40,7 +40,7 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
 | On save: `backup.keep` 0 becomes 10, empty `backup.path` becomes the default, negative `buffer.timeout` becomes 0. | kept |
 | JSON `null` decodes to the zero value of the field. | kept |
 | `-port` / `-branch` command-line flags are written into `settings.json`, so they persist after the flag is removed. | kept |
-| `backup.failover.requests` and `backup.failover.seconds` (N and W above). | **added**: Python-only; the Go app does not know them and drops them when it saves `settings.json` |
+| `backup.failover.requests` (default 3; 0 = off, else at least 2) and `backup.failover.seconds` (default 5; at least 1): see the backup channel row under M3U output. | **added**: Python-only; the Go app does not know them and drops them when it saves `settings.json` |
 | Unknown keys are dropped on save. | **changed**: preserved, so newer settings survive |
 | Writes `settings.json` in place. | **changed**: atomic temp-file + rename |
 | `buffer*`, `ffmpeg.options`, `vlc.*`, `storeBufferInRAM`, `ffmpeg.forceHttp` | kept in the file for compatibility, **inert** (no stream buffer in this port) |
@@ -151,7 +151,7 @@ Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream 
 
 | Go behaviour | Status |
 |---|---|
-| Entries link to `/stream/<md5(playlistID-url)>`; `urls.json` maps the id back to the provider URL and backups. | kept; `/stream/` will answer with a redirect |
+| Entries link to `/stream/<md5(playlistID-url)>`; `urls.json` maps the id back to the provider URL and backups. | kept; `/stream/` answers with a redirect (to a backup channel after repeated requests) |
 | A group is capped at `expected - deactivated` entries (expected from the provider label `Name (N)`). | kept |
 | The optional group filter compares `x-group-title` while the emitted group prefers `x-category`. | kept |
 | An identical `group|stream` pair is written once. | kept |
@@ -161,7 +161,7 @@ Golden-tested against the real `buildM3U` on 39 cases (playlist text and stream 
 | A `"` or newline in a name broke the `#EXTINF` line. | **fixed**: `'` / space |
 | The registry kept the first channel name ever seen for an id. | **changed**: refreshed on every build (first wins *within* a build, as in Go) |
 | Provider URLs were rewritten to https when "force https" was on. | not ported (streams are redirected, not proxied) |
-| Backup channels fail over inside Threadfin's stream buffer. | **changed**: Go switched inside its stream buffer; here N requests from one client within W seconds (default 3 in 5) redirect it to the next backup, staying on the last; a quiet gap of W returns it to the main stream (`failover.py`, in memory) |
+| Backup channels fail over inside Threadfin's stream buffer. | **changed**: Go switched inside its stream buffer; here `backup.failover.requests` requests (default 3) from one client within `backup.failover.seconds` (default 5) redirect it to the next backup, staying on the last; a quiet gap of that many seconds returns it to the main stream (`failover.py`, in memory). A backup is usable when its name matched a provider stream at the last build; it need not be a mapped channel. Unmatched names are reported as build warnings |
 
 ## Build pipeline and endpoints (`service.py`, `web.py`)
 
