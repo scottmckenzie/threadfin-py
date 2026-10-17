@@ -298,6 +298,9 @@ _CHANNEL_FIELDS: dict[str, str] = {
     "x-xmltv-file": "str",
     "x-mapping": "str",
     "x-ppv-extra": "str",
+    "x-backup-channel-1": "str",
+    "x-backup-channel-2": "str",
+    "x-backup-channel-3": "str",
     "x-channelID": "number",
 }
 # JSON key -> XEPGChannel attribute
@@ -306,7 +309,8 @@ CHANNEL_ATTRIBUTES = {
     "x-description": "x_description", "x-update-channel-name": "x_update_channel_name",
     "tvg-logo": "tvg_logo", "x-update-channel-icon": "x_update_channel_icon",
     "x-category": "x_category", "x-group-title": "x_group_title", "x-xmltv-file": "x_xmltv_file",
-    "x-mapping": "x_mapping", "x-ppv-extra": "x_ppv_extra",
+    "x-mapping": "x_mapping", "x-ppv-extra": "x_ppv_extra", "x-backup-channel-1": "x_backup_channel_1",
+    "x-backup-channel-2": "x_backup_channel_2", "x-backup-channel-3": "x_backup_channel_3",
     "x-channelID": "x_channel_id",
 }  # fmt: skip
 BULK_FIELDS = ("x-active", "x-hide-channel", "x-category", "x-group-title")

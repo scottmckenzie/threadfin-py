@@ -149,8 +149,7 @@ class Channels(AppTestCase):
     def test_patch_validation(self) -> None:
         channel_id = self.channel_ids()["Beta"]
         for body in ({"x-channelID": "x"}, {"url": "http://evil"}, {"x-xmltv-file": "nope.xml"},
-                     {"x-mapping": "zzz"}, {"x-active": True, "x-xmltv-file": "-"},
-                     {"x-backup-channel-1": "Alpha"}):  # backup channels are not supported  # fmt: skip
+                     {"x-mapping": "zzz"}, {"x-active": True, "x-xmltv-file": "-"}):  # fmt: skip
             with self.subTest(body):
                 self.assertEqual(self.client.patch(f"/api/v1/channels/{channel_id}", json=body).status_code, 400)
         self.assertEqual(self.client.patch("/api/v1/channels/nope", json={"x-name": "x"}).status_code, 404)

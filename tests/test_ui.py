@@ -156,7 +156,6 @@ class Mapping(AppTestCase):
         self.assertIn('<input type="hidden" name="x-mapping" value="b">', form)
         self.assertIn('value="Beta TV (b)"', form)  # the picker shows the chosen guide channel
         self.assertNotIn("Alpha TV", form)  # but no list of guide channels
-        self.assertNotIn("x-backup-channel", form)  # backup channels are not supported
         data = {"x-active": "on", "x-channelID": "7", "x-name": "Beta HD", "x-xmltv-file": self.service.channels[channel_id].x_xmltv_file,
                 "x-mapping": "b", "tvg-logo": "http://x/b.png"}  # fmt: skip
         response = self.client.post(f"/web/mapping/{channel_id}", data=data, headers=HX)

@@ -112,6 +112,9 @@ CHANNEL_LABELS = {
     "x-xmltv-file": "XMLTV File",
     "x-mapping": "XMLTV Channel",
     "x-ppv-extra": "PPV Extra Title",
+    "x-backup-channel-1": "Backup Channel 1",
+    "x-backup-channel-2": "Backup Channel 2",
+    "x-backup-channel-3": "Backup Channel 3",
     "x-hide-channel": "Hide channel",
 }
 

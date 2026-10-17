@@ -94,7 +94,10 @@ class StreamRegistry:
 
     def register(self, channel: XEPGChannel, *, keep: bool = False) -> str:
         """Record the channel's stream; ``keep`` leaves an existing entry untouched."""
-        return self.add(channel.file_m3u_id, channel.x_channel_id, channel.x_name, channel.url, keep=keep)
+        return self.add(
+            channel.file_m3u_id, channel.x_channel_id, channel.x_name, channel.url,
+            (channel.backup_channel_1, channel.backup_channel_2, channel.backup_channel_3), keep=keep,
+        )  # fmt: skip
 
     def add(
         self,
@@ -102,14 +105,14 @@ class StreamRegistry:
         number: str,
         name: str,
         url: str,
+        backups: tuple[BackupStream | None, BackupStream | None, BackupStream | None] = (None, None, None),
         *,
         keep: bool = False,
     ) -> str:
         uid = stream_id(playlist_id, url)
         if keep and uid in self.entries:
             return uid
-        # backup channels only worked inside Go's stream buffer: the fields stay in urls.json, empty
-        self.entries[uid] = StreamInfo(number, name, playlist_id, url, None, None, None, uid)
+        self.entries[uid] = StreamInfo(number, name, playlist_id, url, *backups, uid)
         return uid
 
     def lookup(self, uid: str) -> StreamInfo | None:

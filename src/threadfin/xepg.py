@@ -14,8 +14,7 @@ order; a stream's URL is only refreshed by ``tvg-id`` when that is unambiguous (
 last stream win and pointed all same-``tvg-id`` channels at one URL); the duplicate removal
 keeps exactly one channel per group; provider-assigned channel numbers are reserved so
 automatic numbers do not collide; an empty ``startingNumber`` no longer renumbers a group
-from 0; backup channels are not resolved, since they only worked inside Go's stream buffer
-(``/stream/`` is a redirect here).
+from 0; removed backup channels are cleared instead of staying as stale pointers.
 """
 
 from __future__ import annotations
@@ -522,23 +521,40 @@ def update_database(
 
 def map_channels(
     channels: dict[str, XEPGChannel],
+    streams: Sequence[Stream],
     *,
     filters: Mapping[str, Any],
     xmltv_mapping: Mapping[str, ChannelMapping],
 ) -> None:
-    """Automatic EPG mapping for new channels, and mapping defaults.
-
-    Backup channels (``x-backup-channel-1/2/3``) are not resolved: Go used them to fail over inside
-    its stream buffer, and ``/stream/`` here is a redirect. The names and any ``backup_channel_*``
-    entries in ``xepg.json`` are kept as they are, for the Go app.
-    """
+    """Backup channels, automatic EPG mapping for new channels, and mapping defaults."""
     group_filter_list = group_filters(filters)
+    stream_names = [
+        (
+            _stream_text(s, "tvg-name") or _stream_text(s, "name"),
+            _stream_text(s, "_file.m3u.id"),
+            _stream_text(s, "url"),
+        )
+        for s in streams
+    ]
 
     for channel_id in sorted(channels):
         channel = channels[channel_id].copy()
         if not channel.tvg_name:
             channel.tvg_name = channel.name
         saved = False  # Go only writes some code paths back to the database
+
+        wanted = [
+            channel.x_backup_channel_1.strip(" "),
+            channel.x_backup_channel_2.strip(" "),
+            channel.x_backup_channel_3.strip(" "),
+        ]
+        backups: list[BackupStream | None] = [None, None, None]
+        for index, text in enumerate(wanted):
+            if text and text != "-":
+                for stream_name, playlist_id, url in stream_names:
+                    if stream_name == text:
+                        backups[index] = BackupStream(playlist_id, url)  # the last match wins
+        channel.backup_channel_1, channel.backup_channel_2, channel.backup_channel_3 = backups
 
         if not channel.x_active and len(channel.x_xmltv_file) < 1:
             channel.x_xmltv_file = "-"
@@ -618,7 +634,7 @@ def build_xepg(
         mapping_first_channel=mapping_first_channel, filters=filters,
         xmltv_mapping=xmltv_mapping, program_count=program_count, image_url=image_url,
     )  # fmt: skip
-    map_channels(channels, filters=filters, xmltv_mapping=xmltv_mapping)
+    map_channels(channels, streams, filters=filters, xmltv_mapping=xmltv_mapping)
     removed, count = cleanup(channels, active_hashes, provider_ids)
     warnings = [WARNING_NO_ACTIVE_CHANNELS] if streams and count == 0 else []
     return BuildResult(channels, active_hashes, duplicates, removed, created, count, warnings)
