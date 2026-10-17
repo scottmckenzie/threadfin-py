@@ -50,7 +50,8 @@ def base_url(request: Request, service: Service) -> str:
 
 
 def client_address(request: Request) -> str:
-    """Who is asking, for throttling failed logins (behind a reverse proxy: the proxy)."""
+    """Who is asking, for throttling failed logins and failover: the peer address, which behind a
+    reverse proxy is the proxy unless FORWARDED_ALLOW_IPS makes uvicorn trust the forwarded headers."""
     return request.client.host if request.client else "unknown"
 
 

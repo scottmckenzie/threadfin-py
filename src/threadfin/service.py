@@ -559,7 +559,7 @@ class Service:
         self.registry.save()
         return entries
 
-    def stream_target(self, stream_id: str, client: str = "") -> str | None:
+    def stream_target(self, stream_id: str, *, client: str) -> str | None:
         """Where ``/stream/<id>`` redirects to (None if unknown).
 
         A client that keeps asking for the same stream is sent to the channel's next backup.
@@ -580,7 +580,7 @@ class Service:
             slot, url = slots[decision.step - 1]
             if decision.switched:
                 name = self._backup_name(stream_id, slot)
-                log.info("%s, switching to backup %d%s", where, decision.step, f" ({name})" if name else "")
+                log.info("%s, switching to backup %d%s", where, slot, f" ({name})" if name else "")
         if decision.stuck:
             log.info("%s, no backup left to switch to", where)
         udpxy = self.settings.udpxy
@@ -590,7 +590,7 @@ class Service:
 
     def _backup_name(self, stream_id: str, slot: int) -> str:
         """The ``x-backup-channel-<slot>`` text of the main channel behind a stream id ("" if not found)."""
-        for channel in self.channels.values():
+        for channel in list(self.channels.values()):  # build_xepg replaces the dict in a worker thread
             if stream_id_of(channel.file_m3u_id, channel.url) == stream_id:
                 return (channel.x_backup_channel_1, channel.x_backup_channel_2, channel.x_backup_channel_3)[slot - 1]
         return ""

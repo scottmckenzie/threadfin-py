@@ -184,7 +184,7 @@ class EndToEnd(Base):
         again = Service(self.service.system, self.settings)
         self.assertEqual(set(again.channels), set(self.service.channels))
         some = next(iter(self.service.registry.entries))
-        self.assertIsNotNone(again.stream_target(some))
+        self.assertIsNotNone(again.stream_target(some, client=""))
 
     async def test_rebuild_drops_vanished_channels(self) -> None:
         before = set(self.service.registry.entries)
@@ -194,17 +194,17 @@ class EndToEnd(Base):
         await asyncio.to_thread(self.service.build)
         (current,) = self.service.registry.entries
         self.assertNotIn(current, before)
-        self.assertEqual(self.service.stream_target(current), "http://s/9")
+        self.assertEqual(self.service.stream_target(current, client=""), "http://s/9")
         for old in before:
-            self.assertIsNone(self.service.stream_target(old))
+            self.assertIsNone(self.service.stream_target(old, client=""))
 
     async def test_udpxy_rewrite(self) -> None:
         self.settings.udpxy = "10.0.0.1:4022"
         uid = next(iter(self.service.registry.entries))
         self.service.registry.entries[uid].url = "udp://@239.0.0.1:1234"
-        self.assertEqual(self.service.stream_target(uid), "http://10.0.0.1:4022/udp/239.0.0.1:1234/")
+        self.assertEqual(self.service.stream_target(uid, client=""), "http://10.0.0.1:4022/udp/239.0.0.1:1234/")
         self.service.registry.entries[uid].url = "udp://239.0.0.1:1234"  # no '@': not multicast syntax
-        self.assertEqual(self.service.stream_target(uid), "udp://239.0.0.1:1234")
+        self.assertEqual(self.service.stream_target(uid, client=""), "udp://239.0.0.1:1234")
 
 
 class BackupFailover(Base):
@@ -222,7 +222,7 @@ class BackupFailover(Base):
 
     def at(self, t: float, uid: str, client: str = "10.0.0.1") -> str | None:
         self.now = t
-        return self.service.stream_target(uid, client)
+        return self.service.stream_target(uid, client=client)
 
     async def test_retries_move_to_backups(self) -> None:
         targets = [self.at(t, self.uid) for t in (0, 1, 2, 3, 4, 5, 6, 7, 8)]
@@ -230,9 +230,21 @@ class BackupFailover(Base):
 
     async def test_switch_is_logged(self) -> None:
         with self.assertLogs("threadfin", "INFO") as logs:
-            for t in (0, 1, 2):
+            for t in range(6):
                 self.at(t, self.uid)
-        self.assertIn("10.0.0.1: 3 requests in 5s, switching to backup 1 (Gamma", "\n".join(logs.output))
+        output = "\n".join(logs.output)
+        self.assertIn("10.0.0.1: 3 requests in 5s, switching to backup 1 (Gamma", output)
+        self.assertIn("switching to backup 2 (Beta)", output)
+
+    async def test_switch_log_names_the_slot_when_one_is_empty(self) -> None:
+        alpha = next(c for c in self.service.channels.values() if c.x_name == "Alpha")
+        alpha.x_backup_channel_1, alpha.x_backup_channel_2 = "", "Beta"
+        await asyncio.to_thread(self.service.build)
+        self.service.failover = Failover(clock=lambda: self.now)
+        with self.assertLogs("threadfin", "INFO") as logs:
+            targets = [self.at(t, self.uid) for t in (0, 1, 2)]
+        self.assertEqual(targets[-1], "http://s/2")
+        self.assertIn("switching to backup 2 (Beta)", "\n".join(logs.output))
 
     async def test_switch_without_known_channel_is_logged_without_name(self) -> None:
         self.service.channels.clear()
@@ -256,7 +268,7 @@ class BackupFailover(Base):
             _, headers, _ = await asyncio.to_thread(self.get, f"/stream/{self.uid}")
             locations.append(headers["location"])
         self.assertEqual(locations[-1], "http://s/3")
-        self.assertEqual(self.service.stream_target(self.uid, "10.0.0.2"), "http://s/1")
+        self.assertEqual(self.service.stream_target(self.uid, client="10.0.0.2"), "http://s/1")
 
     async def test_backup_gets_udpxy_rewrite(self) -> None:
         self.settings.udpxy = "proxy:4022"

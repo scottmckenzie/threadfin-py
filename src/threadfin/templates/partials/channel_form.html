@@ -33,7 +33,7 @@
       <small>Choosing a guide channel activates the channel; “None” deactivates it.</small></div>
   </div>
   <label>{{ labels["x-ppv-extra"] }} <input name="x-ppv-extra" value="{{ c.x_ppv_extra }}" placeholder="Added to the programme title of PPV channels"></label>
-  <datalist id="channel-names">{% for n in other_names %}<option value="{{ n }}">{% endfor %}</datalist>
+  <datalist id="channel-names">{% for text, name in backup_choices %}<option value="{{ text }}"{% if name and name != text %} label="{{ name }}"{% endif %}>{% endfor %}</datalist>
   <div class="row three">
     {% for n in (1, 2, 3) %}
       {% set key = "x-backup-channel-" ~ n %}

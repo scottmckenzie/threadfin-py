@@ -173,6 +173,22 @@ class Channels(AppTestCase):
             with self.subTest(body):
                 self.assertEqual(self.client.post("/api/v1/channels/bulk", json=body).status_code, 400)
 
+    def test_patch_backup_channel_resolves_after_a_rebuild(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        response = self.client.patch(f"/api/v1/channels/{channel_id}", json={"x-backup-channel-1": "Gamma"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.service.channels[channel_id].x_backup_channel_1, "Gamma")
+        info = next(i for i in self.service.registry.entries.values() if i.name == "Beta")
+        assert info.backup_channel_1 is not None
+        self.assertEqual(info.backup_channel_1.url, "http://s/3")
+
+    def test_unmatched_backup_is_reported(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        self.client.patch(f"/api/v1/channels/{channel_id}", json={"x-backup-channel-2": "Nowhere"})
+        self.assertTrue(any("Beta" in w and "Nowhere" in w for w in self.service.report.warnings))
+        self.client.patch(f"/api/v1/channels/{channel_id}", json={"x-backup-channel-2": "Gamma"})
+        self.assertFalse(any("Nowhere" in w for w in self.service.report.warnings))
+
     def test_xmltv_channels(self) -> None:
         files = self.client.get("/api/v1/xmltv").json()
         guide = next(name for name in files if name != "Threadfin Dummy")

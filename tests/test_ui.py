@@ -164,6 +164,37 @@ class Mapping(AppTestCase):
         self.assertEqual((channel.x_name, channel.x_channel_id, channel.tvg_logo), ("Beta HD", "7", "http://x/b.png"))
         self.assertFalse(channel.x_update_channel_name)  # unchecked box
 
+    def test_editor_offers_backup_fields_and_resolvable_names(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        form = self.client.get(f"/web/mapping/{channel_id}/edit").text
+        for n in (1, 2, 3):
+            self.assertIn(f'name="x-backup-channel-{n}"', form)
+        self.assertIn('<datalist id="channel-names">', form)
+        self.assertIn('<option value="Alpha"', form)  # the provider's tvg-name, as the build matches it
+        self.assertNotIn('<option value="Beta"', form)  # not the channel itself
+
+    def test_datalist_offers_the_text_the_build_matches(self) -> None:
+        alpha = self.channel_ids()["Alpha"]
+        self.service.channels[alpha].x_name = "Alpha Renamed"
+        beta = self.channel_ids()["Beta"]
+        form = self.client.get(f"/web/mapping/{beta}/edit").text
+        self.assertIn('<option value="Alpha" label="Alpha Renamed">', form)
+        self.assertNotIn('value="Alpha Renamed"', form.split("channel-names")[1])
+
+    def test_backup_saved_in_the_form_resolves_after_a_rebuild(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        data = {"x-active": "on", "x-channelID": "7", "x-name": "Beta", "x-xmltv-file": self.service.channels[channel_id].x_xmltv_file,
+                "x-mapping": "b", "x-backup-channel-1": "Gamma"}  # fmt: skip
+        response = self.client.post(f"/web/mapping/{channel_id}", data=data, headers=HX)
+        self.assertEqual(triggers(response)["toast"], "Saved")
+        self.assertEqual(self.service.channels[channel_id].x_backup_channel_1, "Gamma")
+        info = self.service.registry.entries[self.stream_id("Beta")]
+        assert info.backup_channel_1 is not None
+        self.assertEqual(info.backup_channel_1.url, "http://s/3")
+
+    def stream_id(self, name: str) -> str:
+        return next(uid for uid, info in self.service.registry.entries.items() if info.name == name)
+
     def test_edit_error_keeps_input(self) -> None:
         channel_id = self.channel_ids()["Beta"]
         data = {"x-active": "on", "x-channelID": "seven", "x-name": "Typed name", "x-xmltv-file": "-", "x-mapping": "-"}

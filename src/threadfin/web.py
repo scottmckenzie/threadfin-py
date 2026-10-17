@@ -140,7 +140,7 @@ class HostCheck:
 
 def create_app(service: Service, *, build_on_start: bool = True, schedule: bool = True) -> Starlette:
     async def stream(request: Request) -> Response:
-        target = service.stream_target(request.path_params["stream_id"], client_address(request))
+        target = service.stream_target(request.path_params["stream_id"], client=client_address(request))
         if target is None:
             return PlainTextResponse("404 page not found\n", status_code=404)
         return RedirectResponse(target, status_code=302)
