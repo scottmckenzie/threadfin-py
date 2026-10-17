@@ -121,6 +121,10 @@ needs `ffmpeg`/`ffprobe`. htmx is vendored in `src/threadfin/static/` (no CDN: t
 ## Scope decisions
 
 - No stream buffer: `/stream/<id>` is an HTTP 302 to the provider URL.
+- Backup channels (`x-backup-channel-1/2/3`) are used by request-based failover: when one client asks
+  for the same stream `backup.failover.requests` times (default 3) within `backup.failover.seconds`
+  (default 5), it is redirected to the next backup, staying on the last; a quiet gap of that length
+  returns it to the main stream (`failover.py`, in memory only).
 - No WebSocket UI: REST API + Jinja2/HTMX server-rendered pages. The Go WebSocket commands
   (`webserver.go`) are the feature inventory.
 - Keep the ffprobe channel probe and store its results.
@@ -133,8 +137,6 @@ needs `ffmpeg`/`ffprobe`. htmx is vendored in `src/threadfin/static/` (no CDN: t
 - No HDHomeRun tuners as a channel source (`files.hdhr` is kept in the config but ignored). The
   HDHomeRun *emulation* that Plex / Emby / Jellyfin talk to stays.
 - No binary self-update (`ThreadfinAutoUpdate` is kept in the config but ignored).
-- No backup channels: they failed over inside Go's stream buffer. `x-backup-channel-1/2/3` and
-  `backup_channel_*` stay in `xepg.json` untouched but are never resolved or offered in the UI / API.
 - Unnamed channels are skipped and reported; apostrophe and double-quote name bugs are fixed.
 
 ## Method: golden-file parity

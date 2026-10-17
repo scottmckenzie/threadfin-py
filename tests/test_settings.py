@@ -34,6 +34,10 @@ class TempDirCase(unittest.TestCase):
         self.system = make_system(self.root)
 
 
+# Settings Go does not have: the goldens cannot contain them.
+PYTHON_ONLY = {"backup.failover.requests", "backup.failover.seconds"}
+
+
 class GoldenSettingsTests(TempDirCase):
     def test_cases_present(self) -> None:
         self.assertGreaterEqual(len(CASES), 6)
@@ -67,14 +71,20 @@ class GoldenSettingsTests(TempDirCase):
                 # Every key Go writes has the same value, in the same order.
                 self.assertEqual({k: ours.get(k) for k in golden}, golden)
                 self.assertEqual([k for k in ours if k in golden], list(golden))
-                # Anything extra must be a key the input carried (Go would drop it).
-                for key in set(ours) - set(golden):
+                # Anything extra must be a key the input carried (Go would drop it) or a Python-only setting.
+                for key in set(ours) - set(golden) - PYTHON_ONLY:
                     self.assertIn(key, input_data)
 
 
 class SettingsBehaviourTests(TempDirCase):
     def write(self, data: object) -> None:
         save_json(self.system.file_settings, data)
+
+    def test_failover_defaults_and_round_trip(self) -> None:
+        s = Settings()
+        self.assertEqual((s.failover_requests, s.failover_seconds), (3, 5))
+        data = s.to_json_dict()
+        self.assertEqual((data["backup.failover.requests"], data["backup.failover.seconds"]), (3, 5))
 
     def test_unknown_keys_round_trip(self) -> None:
         self.write({"my.new.setting": {"a": 1}})

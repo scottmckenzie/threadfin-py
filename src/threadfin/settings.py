@@ -54,6 +54,8 @@ class Settings(BaseModel):
     backup_keep: int = Field(10, alias="backup.keep")
     backup_path: str = Field("", alias="backup.path")
     branch: str = Field("", alias="git.branch")
+    failover_requests: int = Field(3, alias="backup.failover.requests")
+    failover_seconds: int = Field(5, alias="backup.failover.seconds")
     buffer: str = "-"
     buffer_size: int = Field(1024, alias="buffer.size.kb")
     buffer_timeout: float = Field(500, alias="buffer.timeout")

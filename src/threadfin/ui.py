@@ -449,12 +449,26 @@ def routes(service: Service) -> list[BaseRoute]:
         return render(request, "partials/mapping_rows.html", rows=rows, total=total, limit=MAX_ROWS,
                       **mapping_context(rows))  # fmt: skip
 
+    def backup_choices(channel: XEPGChannel, channel_id: str) -> list[tuple[str, str]]:
+        """(text, label) for the backup name suggestions: the text the build matches (the stream's
+        tvg-name, else its name), labelled with the x_name of the channel made from that stream."""
+        labels = {(c.file_m3u_id, c.url): c.x_name for cid, c in service.channels.items() if cid != channel_id}
+        choices: dict[str, str] = {}
+        for stream in service.stream_db.active:
+            text = stream.get("tvg-name") or stream.get("name")
+            url, playlist = stream.get("url"), stream.get("_file.m3u.id")
+            if not isinstance(text, str) or not text or (playlist, url) == (channel.file_m3u_id, channel.url):
+                continue
+            choices.setdefault(text, labels.get((str(playlist), str(url)), ""))
+        return sorted(choices.items())
+
     def channel_form(request: Request, channel_id: str, channel: XEPGChannel, error: str = "") -> Response:
         file = channel.x_xmltv_file
         probe = service.probe_results([channel_id]).get(channel_id)
+        others = backup_choices(channel, channel_id)
         return render(request, "partials/channel_form.html", channel_id=channel_id, c=channel, error=error,
                       labels=CHANNEL_LABELS, files=xmltv_files(service), categories=categories(service),
-                      probe=probe, file=file, selected=channel.x_mapping,
+                      probe=probe, backup_choices=others, file=file, selected=channel.x_mapping,
                       label=picker_label(service, file, channel.x_mapping))  # fmt: skip
 
     async def channel_edit(request: Request) -> Response:
@@ -468,6 +482,7 @@ def routes(service: Service) -> list[BaseRoute]:
             data: dict[str, Any] = {key: form_text(form, key) for key in (
                 "x-channelID", "x-name", "x-description", "tvg-logo", "x-category", "x-group-title",
                 "x-xmltv-file", "x-mapping", "x-ppv-extra",
+                "x-backup-channel-1", "x-backup-channel-2", "x-backup-channel-3",
             )}  # fmt: skip
             for key in ("x-active", "x-hide-channel", "x-update-channel-name", "x-update-channel-icon"):
                 data[key] = form_bool(form, key)

@@ -156,7 +156,6 @@ class Mapping(AppTestCase):
         self.assertIn('<input type="hidden" name="x-mapping" value="b">', form)
         self.assertIn('value="Beta TV (b)"', form)  # the picker shows the chosen guide channel
         self.assertNotIn("Alpha TV", form)  # but no list of guide channels
-        self.assertNotIn("x-backup-channel", form)  # backup channels are not supported
         data = {"x-active": "on", "x-channelID": "7", "x-name": "Beta HD", "x-xmltv-file": self.service.channels[channel_id].x_xmltv_file,
                 "x-mapping": "b", "tvg-logo": "http://x/b.png"}  # fmt: skip
         response = self.client.post(f"/web/mapping/{channel_id}", data=data, headers=HX)
@@ -164,6 +163,37 @@ class Mapping(AppTestCase):
         channel = self.service.channels[channel_id]
         self.assertEqual((channel.x_name, channel.x_channel_id, channel.tvg_logo), ("Beta HD", "7", "http://x/b.png"))
         self.assertFalse(channel.x_update_channel_name)  # unchecked box
+
+    def test_editor_offers_backup_fields_and_resolvable_names(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        form = self.client.get(f"/web/mapping/{channel_id}/edit").text
+        for n in (1, 2, 3):
+            self.assertIn(f'name="x-backup-channel-{n}"', form)
+        self.assertIn('<datalist id="channel-names">', form)
+        self.assertIn('<option value="Alpha"', form)  # the provider's tvg-name, as the build matches it
+        self.assertNotIn('<option value="Beta"', form)  # not the channel itself
+
+    def test_datalist_offers_the_text_the_build_matches(self) -> None:
+        alpha = self.channel_ids()["Alpha"]
+        self.service.channels[alpha].x_name = "Alpha Renamed"
+        beta = self.channel_ids()["Beta"]
+        form = self.client.get(f"/web/mapping/{beta}/edit").text
+        self.assertIn('<option value="Alpha" label="Alpha Renamed">', form)
+        self.assertNotIn('value="Alpha Renamed"', form.split("channel-names")[1])
+
+    def test_backup_saved_in_the_form_resolves_after_a_rebuild(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        data = {"x-active": "on", "x-channelID": "7", "x-name": "Beta", "x-xmltv-file": self.service.channels[channel_id].x_xmltv_file,
+                "x-mapping": "b", "x-backup-channel-1": "Gamma"}  # fmt: skip
+        response = self.client.post(f"/web/mapping/{channel_id}", data=data, headers=HX)
+        self.assertEqual(triggers(response)["toast"], "Saved")
+        self.assertEqual(self.service.channels[channel_id].x_backup_channel_1, "Gamma")
+        info = self.service.registry.entries[self.stream_id("Beta")]
+        assert info.backup_channel_1 is not None
+        self.assertEqual(info.backup_channel_1.url, "http://s/3")
+
+    def stream_id(self, name: str) -> str:
+        return next(uid for uid, info in self.service.registry.entries.items() if info.name == name)
 
     def test_edit_error_keeps_input(self) -> None:
         channel_id = self.channel_ids()["Beta"]
@@ -338,6 +368,11 @@ class Settings(AppTestCase):
         self.assertEqual((self.service.settings.tuner, self.service.settings.update), (3, ["0300", "1500"]))
         response = self.client.post("/web/settings", data=self.form(), headers=HX)
         self.assertIn("No changes", response.text)
+
+    def test_failover_fields_shown(self) -> None:
+        page = self.client.get("/web/settings").text
+        self.assertIn('name="backup.failover.requests"', page)
+        self.assertIn('name="backup.failover.seconds"', page)
 
     def test_unchecking(self) -> None:
         self.assertTrue(self.service.settings.files_update)

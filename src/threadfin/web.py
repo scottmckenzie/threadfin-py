@@ -1,6 +1,7 @@
 """HTTP endpoints that clients (players, Plex/Jellyfin, DVR software) talk to.
 
-``/stream/<id>``        302 to the provider URL (no buffering / proxying)
+``/stream/<id>``        302 to the provider URL (no buffering / proxying); a client that keeps
+                        asking for it is sent to the channel's next backup
 ``/m3u/threadfin.m3u``  playlist, optional ``?group-title=A,B``
 ``/xmltv/threadfin.xml`` the guide (``.gz`` served pre-compressed)
 
@@ -139,7 +140,7 @@ class HostCheck:
 
 def create_app(service: Service, *, build_on_start: bool = True, schedule: bool = True) -> Starlette:
     async def stream(request: Request) -> Response:
-        target = service.stream_target(request.path_params["stream_id"])
+        target = service.stream_target(request.path_params["stream_id"], client=client_address(request))
         if target is None:
             return PlainTextResponse("404 page not found\n", status_code=404)
         return RedirectResponse(target, status_code=302)

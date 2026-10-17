@@ -49,6 +49,8 @@ SETTABLE: dict[str, str] = {
     "authentication.xml": "bool",
     "backup.keep": "int",
     "backup.path": "folder",
+    "backup.failover.requests": "int",
+    "backup.failover.seconds": "int",
     "buffer": "str",
     "buffer.size.kb": "int",
     "buffer.timeout": "float",
@@ -159,6 +161,11 @@ def update_settings(settings: Settings, changes: Mapping[str, Any]) -> tuple[Set
         elif kind == "file" and value and not Path(value).is_file():
             raise AdminError(f"{value}: File not found")
         data[key] = value
+
+    if data["backup.failover.requests"] < 0 or data["backup.failover.requests"] == 1:
+        raise AdminError("backup.failover.requests: 0 (off) or at least 2")
+    if data["backup.failover.seconds"] < 1:
+        raise AdminError("backup.failover.seconds: at least 1")
 
     if not data["authentication.web"]:
         for key in _AUTH_LEVELS:
@@ -298,6 +305,9 @@ _CHANNEL_FIELDS: dict[str, str] = {
     "x-xmltv-file": "str",
     "x-mapping": "str",
     "x-ppv-extra": "str",
+    "x-backup-channel-1": "str",
+    "x-backup-channel-2": "str",
+    "x-backup-channel-3": "str",
     "x-channelID": "number",
 }
 # JSON key -> XEPGChannel attribute
@@ -306,7 +316,8 @@ CHANNEL_ATTRIBUTES = {
     "x-description": "x_description", "x-update-channel-name": "x_update_channel_name",
     "tvg-logo": "tvg_logo", "x-update-channel-icon": "x_update_channel_icon",
     "x-category": "x_category", "x-group-title": "x_group_title", "x-xmltv-file": "x_xmltv_file",
-    "x-mapping": "x_mapping", "x-ppv-extra": "x_ppv_extra",
+    "x-mapping": "x_mapping", "x-ppv-extra": "x_ppv_extra", "x-backup-channel-1": "x_backup_channel_1",
+    "x-backup-channel-2": "x_backup_channel_2", "x-backup-channel-3": "x_backup_channel_3",
     "x-channelID": "x_channel_id",
 }  # fmt: skip
 BULK_FIELDS = ("x-active", "x-hide-channel", "x-category", "x-group-title")

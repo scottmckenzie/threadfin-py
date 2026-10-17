@@ -30,11 +30,13 @@ from . import admin
 from .auth import Authentication
 from .backup import AutoBackupResult, BackupError, RestoreResult, auto_backup, restore_backup
 from .epg import EPGOptions, XMLTVStats, write_xmltv
+from .failover import Failover
 from .filters import FilterError
 from .hdhr import Device, PMSIds, lineup_pms, lineup_xepg
 from .imagecache import ImageCache, ImageSession, default_base
 from .logbuffer import LogBuffer
 from .playlist import PlaylistOptions, StreamInfo, StreamRegistry, build_playlist
+from .playlist import stream_id as stream_id_of
 from .probe import resolve_ffprobe
 from .probe_service import ProbeService
 from .probe_store import ProbeRecord, ProbeStore
@@ -74,6 +76,7 @@ class Service:
             settings, system.folder_data, self.save_settings, app_name=system.app_name
         )
         self.stream_db = StreamDatabase()
+        self.failover = Failover()
         self.xmltv_mapping: dict[str, ChannelMapping] = {}
         self.report = BuildReport()
         self.log = LogBuffer(settings.log_entries_ram)
@@ -556,16 +559,41 @@ class Service:
         self.registry.save()
         return entries
 
-    def stream_target(self, stream_id: str) -> str | None:
-        """Where ``/stream/<id>`` redirects to (None if unknown)."""
+    def stream_target(self, stream_id: str, *, client: str) -> str | None:
+        """Where ``/stream/<id>`` redirects to (None if unknown).
+
+        A client that keeps asking for the same stream is sent to the channel's next backup.
+        """
         info: StreamInfo | None = self.registry.lookup(stream_id)
         if info is None or not info.url:
             return None
+        slots = [
+            (slot, backup.url)
+            for slot, backup in enumerate((info.backup_channel_1, info.backup_channel_2, info.backup_channel_3), 1)
+            if backup and backup.url
+        ]
+        requests, seconds = self.settings.failover_requests, self.settings.failover_seconds
+        decision = self.failover.request(client, stream_id, backups=len(slots), requests=requests, seconds=seconds)
+        where = f"stream {stream_id[:8]}\u2026 ({info.name}) for {client}: {requests} requests in {seconds}s"
         url = info.url
+        if decision.step:
+            slot, url = slots[decision.step - 1]
+            if decision.switched:
+                name = self._backup_name(stream_id, slot)
+                log.info("%s, switching to backup %d%s", where, slot, f" ({name})" if name else "")
+        if decision.stuck:
+            log.info("%s, no backup left to switch to", where)
         udpxy = self.settings.udpxy
         if udpxy and url.startswith("udp://@"):
             url = f"http://{udpxy}/udp/{url.removeprefix('udp://@')}/"
         return url
+
+    def _backup_name(self, stream_id: str, slot: int) -> str:
+        """The ``x-backup-channel-<slot>`` text of the main channel behind a stream id ("" if not found)."""
+        for channel in list(self.channels.values()):  # build_xepg replaces the dict in a worker thread
+            if stream_id_of(channel.file_m3u_id, channel.url) == stream_id:
+                return (channel.x_backup_channel_1, channel.x_backup_channel_2, channel.x_backup_channel_3)[slot - 1]
+        return ""
 
 
 __all__ = ["XMLTV_FILE", "BuildReport", "Service"]

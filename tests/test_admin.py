@@ -27,7 +27,7 @@ from threadfin.admin import (
     provider_changes,
     update_settings,
 )
-from threadfin.settings import load_settings, save_settings
+from threadfin.settings import Settings, load_settings, save_settings
 from threadfin.system import SystemInfo
 from threadfin.xepg import XEPGChannel
 
@@ -52,6 +52,9 @@ def normalise_filters(settings: dict[str, Any]) -> dict[str, Any]:
         settings = {**settings, "filter": {k: {kk: vv for kk, vv in v.items() if not kk.lstrip("-").isdigit()}
                                            for k, v in filters.items()}}  # fmt: skip
     return settings
+
+
+PYTHON_ONLY = ("backup.failover.requests", "backup.failover.seconds")
 
 
 class Case:
@@ -90,7 +93,10 @@ class Case:
 
     def saved(self) -> dict[str, Any]:
         text = self.system.file_settings.read_text().replace(str(self.work), "{work}")
-        return normalise_filters(json.loads(text))
+        data = json.loads(text)
+        for key in PYTHON_ONLY:  # settings Go does not have: the goldens cannot contain them
+            data.pop(key, None)
+        return normalise_filters(data)
 
     def dirs(self) -> list[str]:
         return sorted(p.relative_to(self.work).as_posix() for p in self.work.rglob("*") if p.is_dir())
@@ -139,6 +145,17 @@ class Divergences(Base):
         case = self.case("exclude_stream_https")
         self.assertEqual(case.run(), "")
         self.assertIs(case.saved()["excludeStreamHttps"], True)
+
+    def test_failover_settings_validated(self) -> None:
+        base = update_settings(Settings(), {})[0]  # with the default ffmpeg / vlc options filled in
+        new, changed = update_settings(base, {"backup.failover.requests": 4, "backup.failover.seconds": 10})
+        self.assertEqual((new.failover_requests, new.failover_seconds), (4, 10))
+        self.assertEqual(changed, {"backup.failover.requests", "backup.failover.seconds"})
+        self.assertEqual(update_settings(base, {"backup.failover.requests": 0})[0].failover_requests, 0)
+        for change in ({"backup.failover.requests": 1}, {"backup.failover.requests": -1},
+                       {"backup.failover.seconds": 0}, {"backup.failover.requests": "3"}):  # fmt: skip
+            with self.assertRaises(AdminError):
+                update_settings(base, change)
 
     def test_filter_rule_must_be_text(self) -> None:
         case = self.case("rule_not_a_string")

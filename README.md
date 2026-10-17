@@ -23,8 +23,8 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
 | HDHomeRun emulation (discover, lineup, device XML; XEPG and PMS modes) | done, golden-tested against Go (29 cases) |
 | Authentication (users, `/m3u/` + `/xmltv/` URL credentials, `/lineup.json` Basic auth, web / API login) | done, golden-tested against Go (14 step-by-step cases) |
 | Backup / restore, scheduler, start-up update | done, golden-tested against Go (32 cases); restore is checked before anything is written |
+| Backup channels | changed: switched on repeated requests (Go switched inside its stream buffer); see the reverse proxy note below |
 | SSDP discovery | dropped (add the tuner in Plex / Emby / Jellyfin by URL) |
-| Backup channels | dropped: they failed over inside Go's stream buffer, and `/stream/` is a redirect (the names stay in `xepg.json`) |
 | HDHomeRun tuners as a channel source | dropped (`files.hdhr` is kept in settings.json but ignored) |
 | Web UI (`/web/`: status, playlists, XMLTV, filters, mapping with probe, users, settings, backup / restore, log) | done, htmx, tested through the app |
 | REST API (`/api/v1/`), Go's `/api/`, `/ppv/`, `/data_images/` | done; settings and filter saving golden-tested against Go (56 cases) |
@@ -59,6 +59,22 @@ single-label names (`http://nas:34400`), `.local`, `.lan`, `.home.arpa`, `.inter
 name (for example through a reverse proxy), list it in the `THREADFIN_ALLOWED_HOSTS` environment
 variable (comma-separated; `*` allows any name). Player and Plex / Emby / Jellyfin endpoints answer
 any name.
+
+Behind a reverse proxy every request appears to come from the proxy. Set `FORWARDED_ALLOW_IPS` to the
+proxy's address (for example `FORWARDED_ALLOW_IPS=192.0.2.1`; CIDR ranges are allowed) so backup
+channel failover, login throttling and the access log see the real client. List only the proxy: any
+listed address can claim to be any client.
+
+## Backup channels
+
+In the channel editor a channel can name up to three backup channels (`x-backup-channel-1/2/3`). A name
+is matched against the provider stream's `tvg-name`, else its `name`; a name that matches no stream is
+skipped and reported as a build warning. `/stream/<id>` is a redirect: when one client (IP address)
+requests the same stream `backup.failover.requests` times (default 3) within `backup.failover.seconds`
+(default 5), it is redirected to the next backup, and stays on the last one. HEAD requests count too.
+After `backup.failover.seconds` without a request the client returns to the main stream. Players that
+re-request the stream URL every few seconds (some HLS players) can trigger a switch: raise
+`backup.failover.requests`, or set it to 0 to turn failover off.
 
 ## REST API
 
