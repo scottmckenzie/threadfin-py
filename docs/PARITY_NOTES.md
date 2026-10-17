@@ -155,6 +155,8 @@ divergence: backup channels are not copied into the registry).
 | A group is capped at `expected - deactivated` entries (expected from the provider label `Name (N)`). | kept |
 | The optional group filter compares `x-group-title` while the emitted group prefers `x-category`. | kept |
 | An identical `group|stream` pair is written once. | kept |
+| Go main (1.2.38+, unreleased) orders entries by the provider's `tvg-chno`; the last release (1.2.37) orders them by `x-channelID`, the number the playlist shows. | **1.2.37 kept**: ordered by `x-channelID` (numbers first, then text), so renumbered channels stay in order; the HDHomeRun lineup uses the same order |
+| 1.2.37 dropped channels whose `x-channelID` is not a number and kept one random channel per number. | **fixed**: all are listed |
 | Channels with equal numbers came out in arbitrary order (`sort.Slice` is unstable). | **fixed**: tie-break by XEPG id |
 | A `"` or newline in a name broke the `#EXTINF` line. | **fixed**: `'` / space |
 | The registry kept the first channel name ever seen for an id. | **changed**: refreshed on every build (first wins *within* a build, as in Go) |

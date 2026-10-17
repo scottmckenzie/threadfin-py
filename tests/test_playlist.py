@@ -59,6 +59,27 @@ class Units(unittest.TestCase):
     def test_label_parsing(self) -> None:
         self.assertEqual(expected_group_counts(["A (3)", "B (x)", "C", "D (+2)", "E (1"]), {"A": 3, "D": 2})
 
+    def test_ordered_by_the_mapped_channel_number(self) -> None:
+        # released Go (1.2.37) sorted by x-channelID, the number the playlist shows; main (1.2.38+)
+        # sorts by the provider's tvg-chno, which puts renumbered channels out of order
+        def make(number: str, provider_number: str) -> XEPGChannel:
+            return XEPGChannel.from_json(
+                {
+                    "x-active": True,
+                    "x-name": f"C{number}",
+                    "x-channelID": number,
+                    "tvg-chno": provider_number,
+                    "x-epg": f"x-ID.{provider_number}",
+                    "url": f"http://p/{number}",
+                    "_file.m3u.id": "M1",
+                }
+            )
+
+        channels = {c.x_epg: c for c in (make("3", "1"), make("1", "20"), make(" 2 ", "3"), make("x", "0"))}
+        text = build_playlist(channels, PlaylistOptions(), StreamRegistry())
+        numbers = [line.split('tvg-chno="')[1].split('"')[0] for line in text.splitlines()[1::2]]
+        self.assertEqual(numbers, ["1", " 2 ", "3", "x"])
+
     def test_quotes_never_break_a_line(self) -> None:
         channel = XEPGChannel.from_json(
             {
