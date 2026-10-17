@@ -11,6 +11,7 @@ from webfixture import AppTestCase
 
 from threadfin.access import COOKIE
 from threadfin.auth import LEVEL_API, LEVEL_WEB
+from threadfin.ui import dom_id
 
 HX = {"HX-Request": "true"}
 
@@ -264,6 +265,53 @@ class Mapping(AppTestCase):
         )
         self.assertIn('value="old"', response.text)
         self.assertIn("logos must be one of", response.text)
+
+    def fake_ffprobe(self, output: str) -> None:
+        """Probes run a script that prints ``output`` (the ffprobe next to the configured ffmpeg)."""
+        bin_dir = self.system.config / "bin"
+        bin_dir.mkdir()
+        (bin_dir / "ffmpeg").touch()
+        script = bin_dir / "ffprobe"
+        script.write_text(f"#!/bin/sh\n{output}\n")
+        script.chmod(0o755)
+        self.service.settings.ffmpeg_path = str(bin_dir / "ffmpeg")
+
+    def probe_cell(self, page: str, channel_id: str) -> str:
+        """The inside of the channel's Probe cell: in the list (up to ``</td>``) or a probe response (its end)."""
+        target = rf'<div id="probe-{re.escape(dom_id(channel_id))}"[^>]*>'
+        cell = re.search(target + r"(.*?)</div>(?:</td>|\s*$)", page, re.DOTALL)
+        assert cell is not None, page
+        return cell.group(1)
+
+    def test_probe_updates_the_list_row(self) -> None:
+        """The dialog's probe also replaces the channel's Probe cell (htmx out-of-band), so the list is
+        current after Cancel, without reloading it (which would drop the ticked rows)."""
+        channel_id = self.channel_ids()["Alpha"]
+        self.fake_ffprobe(f"cat {Path(__file__).parent / 'golden' / 'probe' / 'hd_stereo.input.json'}")
+        self.assertEqual(self.probe_cell(self.client.get("/web/mapping/rows").text, channel_id).strip(), "")
+        response = self.client.post(f"/web/mapping/{channel_id}/probe", headers=HX)
+        self.assertNotIn("refresh-list", triggers(response))
+        self.assertIn(f'<div id="probe-{dom_id(channel_id)}" hx-swap-oob="true">', response.text)
+        cell = self.probe_cell(response.text, channel_id)
+        self.assertIn("1080p", cell)
+        rows = self.client.get("/web/mapping/rows").text
+        self.assertEqual(self.probe_cell(rows, channel_id), cell)  # the same cell the list renders
+        self.assertNotIn("hx-swap-oob", rows)
+
+    def test_failed_probe_updates_the_list_row(self) -> None:
+        channel_id = self.channel_ids()["Beta"]
+        self.fake_ffprobe("echo 'Connection refused' >&2; exit 1")
+        response = self.client.post(f"/web/mapping/{channel_id}/probe", headers=HX)
+        self.assertIn("Probe failed", response.text)
+        self.assertIn(">failed</span>", self.probe_cell(response.text, channel_id))
+
+    def test_dom_id(self) -> None:
+        self.assertEqual(dom_id("x-ID.12"), "x-ID_2e12")
+        self.assertEqual(dom_id('a_b c"#'), "a_5fb_20c_22_23")
+        ids = ["x-ID.1", "x-ID_2e1", "x-ID_1", "x-ID 1"]
+        self.assertEqual(len({dom_id(i) for i in ids}), len(ids))
+        for value in ids:
+            self.assertRegex(dom_id(value), r"^[A-Za-z0-9_-]*$")
 
     def test_probe_refuses_local_urls(self) -> None:
         channel_id = self.channel_ids()["Alpha"]
