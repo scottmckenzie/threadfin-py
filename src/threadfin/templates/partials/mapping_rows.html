@@ -17,7 +17,7 @@
       <td>{% if c.x_xmltv_file in ("", "-") %}<span class="muted">–</span>{% else %}
         {{ names.get(c.x_xmltv_file, {}).get(c.x_mapping, c.x_mapping) }}
         <div class="muted">{{ providers.get(c.x_xmltv_file, c.x_xmltv_file) }}</div>{% endif %}</td>
-      <td class="nowrap">{% if p %}{% if p.ok %}{{ p.summary.resolution }} {{ p.summary.frame_rate }}{% if p.summary.frame_rate %}fps{% endif %}<div class="muted">{{ p.summary.audio_channels }}</div>{% else %}<span class="error" title="{{ p.error }}">failed</span>{% endif %}{% endif %}</td>
+      <td class="nowrap">{% include "partials/probe_cell.html" %}</td>
       <td class="actions"><button type="button" hx-get="/web/mapping/{{ id }}/edit" hx-target="#dialog-body" hx-swap="innerHTML">Edit</button></td>
     </tr>
   {% endfor %}

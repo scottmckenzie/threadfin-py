@@ -1,0 +1,3 @@
+{# The Probe column of a mapping row (id, p: its latest ProbeRecord or None); with oob, an htmx
+   out-of-band replacement for that cell. #}
+<div id="probe-{{ id|dom_id }}"{% if oob %} hx-swap-oob="true"{% endif %}>{% if p %}{% if p.ok %}{{ p.summary.resolution }} {{ p.summary.frame_rate }}{% if p.summary.frame_rate %}fps{% endif %}<div class="muted">{{ p.summary.audio_channels }}</div>{% else %}<span class="error" title="{{ p.error }}">failed</span>{% endif %}{% endif %}</div>

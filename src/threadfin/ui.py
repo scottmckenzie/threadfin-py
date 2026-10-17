@@ -49,6 +49,16 @@ from .xmltv import DUMMY_FILE
 
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
+
+
+def dom_id(value: str) -> str:
+    """``value`` as part of an HTML id that is also a plain CSS ``#id`` selector (htmx looks up
+    out-of-band targets that way): characters other than letters, digits and ``-`` become ``_<hex>``,
+    so ``x-ID.12`` gives ``x-ID_2e12`` and different values never share an id."""
+    return "".join(c if c.isascii() and (c.isalnum() or c == "-") else f"_{ord(c):x}" for c in value)
+
+
+templates.env.filters["dom_id"] = dom_id
 Handler = Callable[[Request], Awaitable[Response]]
 MAX_ROWS = 500
 ERRORS = (AdminError, AuthError, BackupError, ProviderError, InvalidProbeURLError)
@@ -492,7 +502,8 @@ def routes(service: Service) -> list[BaseRoute]:
             record = await service.probe_channel(channel_id, force=True)
         except ERRORS as exc:
             return render(request, "partials/probe_result.html", error=str(exc), probe=None)
-        return render(request, "partials/probe_result.html", probe=record, error="")
+        # the result for the dialog, and the channel's Probe cell in the list behind it (out-of-band)
+        return render(request, "partials/probe_done.html", probe=record, error="", id=channel_id, p=record)
 
     async def mapping_bulk(request: Request) -> Response:
         async with request.form() as form:
