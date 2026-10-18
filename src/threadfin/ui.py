@@ -451,15 +451,18 @@ def routes(service: Service) -> list[BaseRoute]:
 
     def backup_choices(channel: XEPGChannel, channel_id: str) -> list[tuple[str, str]]:
         """(text, label) for the backup name suggestions: the text the build matches (the stream's
-        tvg-name, else its name), labelled with the x_name of the channel made from that stream."""
-        labels = {(c.file_m3u_id, c.url): c.x_name for cid, c in service.channels.items() if cid != channel_id}
+        tvg-name, else its name), labelled "<number> · <x_name>" from the channel made from that stream,
+        so typing a channel number finds it (browsers match the label as well as the value)."""
+        made = {(c.file_m3u_id, c.url): c for cid, c in service.channels.items() if cid != channel_id}
         choices: dict[str, str] = {}
         for stream in service.stream_db.active:
             text = stream.get("tvg-name") or stream.get("name")
             url, playlist = stream.get("url"), stream.get("_file.m3u.id")
             if not isinstance(text, str) or not text or (playlist, url) == (channel.file_m3u_id, channel.url):
                 continue
-            choices.setdefault(text, labels.get((str(playlist), str(url)), ""))
+            other = made.get((str(playlist), str(url)))
+            label = " · ".join(filter(None, (other.x_channel_id, other.x_name or text))) if other else ""
+            choices.setdefault(text, label)
         return sorted(choices.items())
 
     def channel_form(request: Request, channel_id: str, channel: XEPGChannel, error: str = "") -> Response:
