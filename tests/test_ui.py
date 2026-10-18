@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 from webfixture import AppTestCase
@@ -43,6 +45,17 @@ class Pages(AppTestCase):
         panel = self.client.get("/web/status/panel").text
         self.assertIn("http://testserver/m3u/threadfin.m3u", panel)
         self.assertIn("<strong>3 / 3</strong>", panel)
+
+    def test_status_shows_when_playlist_and_guide_were_updated(self) -> None:
+        os.utime(self.service.system.file_xepg, (0, datetime(2026, 3, 1, 9, 30).timestamp()))
+        os.utime(self.service.xmltv_path, (0, datetime(2026, 3, 2, 18, 5).timestamp()))
+        for page in ("/web/", "/web/status/panel"):
+            with self.subTest(page=page):
+                text = self.client.get(page).text
+                self.assertIn('threadfin.m3u</code> <span class="muted">updated 2026-03-01 09:30</span>', text)
+                self.assertIn('threadfin.xml</code> <span class="muted">updated 2026-03-02 18:05</span>', text)
+        self.service.xmltv_path.unlink()
+        self.assertIn('threadfin.xml</code> <span class="muted">updated never</span>', self.client.get("/web/").text)
 
     def test_csrf(self) -> None:
         self.assertEqual(self.client.post("/web/rebuild").status_code, 403)

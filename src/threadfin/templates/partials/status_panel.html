@@ -11,8 +11,8 @@
   <dl class="pairs">
     <dt>DVR (Plex / Emby / Jellyfin)</dt><dd><code>{{ info["url.dvr"] }}</code></dd>
     {% if xepg %}
-      <dt>M3U playlist</dt><dd><code>{{ info["url.m3u"] }}</code></dd>
-      <dt>XMLTV guide</dt><dd><code>{{ info["url.xepg"] }}</code></dd>
+      <dt>M3U playlist</dt><dd><code>{{ info["url.m3u"] }}</code> <span class="muted">updated {{ updated.m3u }}</span></dd>
+      <dt>XMLTV guide</dt><dd><code>{{ info["url.xepg"] }}</code> <span class="muted">updated {{ updated.xmltv }}</span></dd>
     {% else %}
       <dt>M3U / XMLTV</dt><dd class="muted">Only available with the EPG source XEPG (Settings).</dd>
     {% endif %}
