@@ -178,8 +178,25 @@ class Mapping(AppTestCase):
         self.service.channels[alpha].x_name = "Alpha Renamed"
         beta = self.channel_ids()["Beta"]
         form = self.client.get(f"/web/mapping/{beta}/edit").text
-        self.assertIn('<option value="Alpha" label="Alpha Renamed">', form)
+        number = self.service.channels[alpha].x_channel_id
+        self.assertIn(f'<option value="Alpha" label="{number} · Alpha Renamed">', form)
         self.assertNotIn('value="Alpha Renamed"', form.split("channel-names")[1])
+
+    def test_datalist_labels_carry_the_channel_number(self) -> None:
+        # Browsers match typed text against an option's label too, so the number makes it searchable.
+        gamma = self.channel_ids()["Gamma"]
+        self.service.channels[gamma].x_channel_id = "1042"
+        form = self.client.get(f"/web/mapping/{self.channel_ids()['Beta']}/edit").text
+        self.assertIn('<option value="Gamma" label="1042 · Gamma">', form)
+        self.service.channels[gamma].x_name = ""  # no name of its own: the stream's name stands in
+        form = self.client.get(f"/web/mapping/{self.channel_ids()['Beta']}/edit").text
+        self.assertIn('<option value="Gamma" label="1042 · Gamma">', form)
+
+    def test_datalist_label_without_a_channel(self) -> None:
+        gamma = self.channel_ids()["Gamma"]
+        del self.service.channels[gamma]  # a provider stream that no channel was made from
+        form = self.client.get(f"/web/mapping/{self.channel_ids()['Beta']}/edit").text
+        self.assertIn('<option value="Gamma">', form)
 
     def test_backup_saved_in_the_form_resolves_after_a_rebuild(self) -> None:
         channel_id = self.channel_ids()["Beta"]
