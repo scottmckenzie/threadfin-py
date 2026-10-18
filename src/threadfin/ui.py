@@ -16,6 +16,7 @@ import json
 import os
 import tempfile
 from collections.abc import Awaitable, Callable, Mapping
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -64,6 +65,13 @@ MAX_ROWS = 500
 ERRORS = (AdminError, AuthError, BackupError, ProviderError, InvalidProbeURLError)
 
 PROVIDER_TITLES = {"m3u": "M3U playlist", "xmltv": "XMLTV guide"}
+
+
+def file_updated(path: Path) -> str:
+    """When ``path`` was last written, as the UI shows times, or "never" while it does not exist."""
+    if not path.exists():
+        return "never"
+    return datetime.fromtimestamp(path.stat().st_mtime).astimezone().strftime("%Y-%m-%d %H:%M")
 
 
 def events(**triggers: Any) -> dict[str, str]:
@@ -268,13 +276,16 @@ def routes(service: Service) -> list[BaseRoute]:
         return response
 
     # --- status, log, update ---------------------------------------------------------------------
+    def status_context(request: Request) -> dict[str, Any]:
+        """The playlist is generated from the channel database, so its date is that file's."""
+        updated = {"m3u": file_updated(service.system.file_xepg), "xmltv": file_updated(service.xmltv_path)}
+        return {"info": service.status(base_url(request, service)), "report": service.report, "updated": updated}
+
     async def status_page(request: Request) -> Response:
-        return render(request, "status.html", page="status", info=service.status(base_url(request, service)),
-                      report=service.report)  # fmt: skip
+        return render(request, "status.html", page="status", **status_context(request))
 
     async def status_panel(request: Request) -> Response:
-        return render(request, "partials/status_panel.html", info=service.status(base_url(request, service)),
-                      report=service.report)  # fmt: skip
+        return render(request, "partials/status_panel.html", **status_context(request))
 
     async def update_all(request: Request) -> Response:
         if service.busy:
