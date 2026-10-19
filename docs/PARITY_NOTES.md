@@ -323,5 +323,5 @@ Tested with the real command (`tests/test_cli.py` starts and stops a server proc
 | `-dev` (web files from the source tree); `-branch` chose the self-update branch. | `-dev` **dropped**; `-branch` accepted and saved, nothing updates itself |
 | Binary self-update check at start-up. | **dropped** (see Backup, restore and scheduler) |
 | Request logging. | **new**: from `-debug 2` (off below, since `/m3u/` and `/xmltv/` URLs can carry credentials) |
-| The request log shows each path without its query string, so credentials in `/m3u/?username=...` do not reach the log. | **new**: at `-debug 2` and up the log shows `/m3u/threadfin.m3u?…` |
+| No request log. | **new**: at `-debug 2` and up the log shows `/m3u/threadfin.m3u?…` |
 
