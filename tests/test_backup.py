@@ -542,6 +542,35 @@ class Restore(Base):
         after = dump_tree(self.work, STAMP)
         self.assertEqual(after, before)
 
+    def test_zip64_locator_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"1",
+                "data/b.bin": b"2",
+                "data/c.bin": b"3",
+                "data/d.bin": b"4",
+            }
+        )
+        data = archive.read_bytes()
+        eocd_idx = data.rfind(b"PK\x05\x06")
+        data = data[:eocd_idx] + b"PK\x06\x07" + b"\x00" * 16 + data[eocd_idx:]
+        self.assertIn(b"PK\x06\x07", data)
+        self.assertLess(
+            struct.unpack_from("<I", data, eocd_idx + 20 + 12)[0],
+            backup.MAX_CENTRAL_DIRECTORY,
+        )
+        (self.work / "modified.zip").write_bytes(data)
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(zipfile, "ZipFile", side_effect=AssertionError),
+        ):
+            restore_backup(self.system, self.work / "modified.zip", "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
     def test_entries_are_streamed(self) -> None:
         (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
         archive = self.archive(

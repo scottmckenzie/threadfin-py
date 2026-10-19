@@ -174,7 +174,8 @@ def _free_space(path: Path) -> int:
 
 
 def _central_directory_size(path: str | os.PathLike[str]) -> int | None:
-    """Return the central directory size from the zip's end-of-central-directory record, or None."""
+    """Return the central directory size from the zip's end-of-central-directory record, or None.
+    Refuses archives with Zip64 end-of-central-directory locator."""
     try:
         with open(path, "rb") as f:
             f.seek(0, 2)
@@ -187,6 +188,8 @@ def _central_directory_size(path: str | os.PathLike[str]) -> int | None:
             return None
         if idx + 16 > len(tail):
             return None
+        if idx >= 20 and tail[idx - 20 : idx - 16] == b"PK\x06\x07":
+            return 0xFFFFFFFF
         value: int = struct.unpack_from("<I", tail, idx + 12)[0]
         return value
     except OSError:
