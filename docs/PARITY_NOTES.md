@@ -104,6 +104,7 @@ Go `buildDatabaseDVR` on 28 cases.
 | Providers were visited in random map order. | **changed**: settings order |
 | With no filters and at most 480 streams everything is active; above that everything is inactive plus a warning. Plex warning above 480 active. | kept |
 | Loopback hosts bypass proxies. | kept |
+| Error messages showed the full provider URL. | **changed**: URLs in errors are shown without the query string, fragment or userinfo password (`redact.py`) |
 
 
 ## Channel database (`xmltv.py`, `xepg.py`)
