@@ -38,6 +38,19 @@ def display_url(url: str) -> str:
         return urlunsplit((scheme, netloc, path, "", ""))
     except ValueError:
         # Fallback for malformed URLs
+        if "://" in url:
+            scheme_end = url.index("://") + 3
+            rest = url[scheme_end:]
+            slash_pos = rest.find("/")
+            authority_end = slash_pos if slash_pos != -1 else len(rest)
+            authority = rest[:authority_end]
+            if "@" in authority:
+                userinfo, _, host = authority.rpartition("@")
+                if ":" in userinfo:
+                    user, _, _ = userinfo.partition(":")
+                    authority = f"{user}:***@{host}"
+                rest = authority + rest[authority_end:]
+            url = url[:scheme_end] + rest
         if "?" in url:
             return url[: url.index("?")] + "?…"
         return url

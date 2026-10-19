@@ -41,6 +41,10 @@ class DisplayURL(unittest.TestCase):
         self.assertEqual(display_url(""), "")
         self.assertEqual(display_url("no url"), "no url")
 
+    def test_unparseable_userinfo_password_hidden(self) -> None:
+        self.assertEqual(display_url("http://u:pw@[::1/x"), "http://u:***@[::1/x")
+        self.assertEqual(display_url("http://u:pw@[::1/x?a=1"), "http://u:***@[::1/x?…")
+
 
 class CleanText(unittest.TestCase):
     def test_every_url_in_text(self) -> None:
