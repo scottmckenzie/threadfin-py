@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import unittest
 
-from threadfin.redact import clean_text, display_url
+from threadfin.redact import RedactAccessLog, clean_text, display_url
 
 
 class DisplayURL(unittest.TestCase):
@@ -60,3 +61,48 @@ class CleanText(unittest.TestCase):
         self.assertNotIn("pw", result)
         self.assertNotIn("k=v", result)
         self.assertEqual(result, "fetch ftp://u:***@h/x?… failed")
+
+
+class AccessLog(unittest.TestCase):
+    def test_path_query_hidden(self) -> None:
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg='%s - "%s %s HTTP/%s" %d',
+            args=("1.2.3.4:5", "GET", "/m3u/threadfin.m3u?username=u&password=SECRET", "1.1", 200),
+            exc_info=None,
+        )
+        filter_ = RedactAccessLog()
+        self.assertTrue(filter_.filter(record))
+        self.assertEqual(
+            record.getMessage(),
+            '1.2.3.4:5 - "GET /m3u/threadfin.m3u?… HTTP/1.1" 200',
+        )
+
+    def test_other_records_unchanged(self) -> None:
+        filter_ = RedactAccessLog()
+        record1 = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="hello",
+            args=(),
+            exc_info=None,
+        )
+        self.assertTrue(filter_.filter(record1))
+        self.assertEqual(record1.getMessage(), "hello")
+
+        record2 = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="hello %(a)s",
+            args=({"a": "x"},),
+            exc_info=None,
+        )
+        self.assertTrue(filter_.filter(record2))
+        self.assertEqual(record2.getMessage(), "hello x")

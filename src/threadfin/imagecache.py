@@ -33,6 +33,7 @@ from urllib.parse import urlsplit
 
 from .jsonio import write_bytes_atomic
 from .providers import Download, ProviderError, download
+from .redact import clean_text, display_url
 
 log = logging.getLogger(__name__)
 
@@ -184,10 +185,10 @@ class ImageCache:
             fetched = self._fetch(src, user_agent=self._user_agent(), timeout=DOWNLOAD_TIMEOUT,
                                   max_bytes=MAX_IMAGE_BYTES)  # fmt: skip
         except (ProviderError, OSError) as exc:
-            log.debug("image %s: %s", src, exc)
+            log.debug("image %s: %s", display_url(src), clean_text(str(exc)))
             return False
         if not looks_like_image(fetched.body, name):
-            log.debug("image %s: not an image", src)
+            log.debug("image %s: not an image", display_url(src))
             return False
         self.folder.mkdir(parents=True, exist_ok=True)
         write_bytes_atomic(self.folder / name, fetched.body)

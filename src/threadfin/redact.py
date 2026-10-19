@@ -6,7 +6,9 @@ See spec finding 3 (docs/superpowers/specs/2026-10-19-credentials-and-size-limit
 
 from __future__ import annotations
 
+import logging
 import re
+from typing import override
 from urllib.parse import urlsplit, urlunsplit
 
 
@@ -60,3 +62,13 @@ def clean_text(text: str) -> str:
         return display_url(body) + tail
 
     return re.sub(pattern, _clean, text)
+
+
+class RedactAccessLog(logging.Filter):
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
+        args = record.args
+        if isinstance(args, tuple) and len(args) >= 3 and isinstance(args[2], str):
+            args = (*args[:2], display_url(args[2]), *args[3:])
+            record.args = args
+        return True

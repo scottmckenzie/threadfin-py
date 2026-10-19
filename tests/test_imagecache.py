@@ -190,6 +190,22 @@ class Downloads(unittest.TestCase):
         self.assertEqual(self.cache.fill(session2), (0, 0))
         self.assertEqual(self.calls, ["http://h/a.png"])
 
+    def test_failure_log_hides_query(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        url = "http://127.0.0.1:9/a.png?token=SECRET"
+
+        def fetch(url: str, **kw: Any) -> Download:
+            raise ProviderError(f"cannot fetch {url}")
+
+        cache = ImageCache(Path(tmp.name) / "images", fetch=fetch, user_agent=lambda: "UA", clock=lambda: self.now)
+        session = cache.session("http://me")
+        session.url(url)
+        with self.assertLogs("threadfin", level="DEBUG") as cm:
+            cache.fill(session)
+        self.assertNotIn("SECRET", "\n".join(cm.output))
+        self.assertIn("http://127.0.0.1:9/a.png?…", "\n".join(cm.output))
+
 
 class ThroughTheApp(AppTestCase):
     def setUp(self) -> None:
