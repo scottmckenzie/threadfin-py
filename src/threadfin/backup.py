@@ -17,6 +17,7 @@ import json
 import lzma
 import os
 import shutil
+import struct
 import tempfile
 import zipfile
 import zlib
@@ -36,6 +37,8 @@ STAMP_FORMAT = "%Y%m%d_%H%M"
 MB = 1024 * 1024
 MAX_RESTORE_TOTAL = 256 * MB
 MAX_SETTINGS_BYTES = 8 * MB
+MAX_CENTRAL_DIRECTORY = 4 * MB
+MAX_ENTRIES = 10_000
 
 
 class BackupError(ValueError):
@@ -170,21 +173,48 @@ def _free_space(path: Path) -> int:
     return shutil.disk_usage(parent).free
 
 
+def _central_directory_size(path: str | os.PathLike[str]) -> int | None:
+    """Return the central directory size from the zip's end-of-central-directory record, or None."""
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            read_size = min(size, 65536 + 22)
+            f.seek(-read_size, 2)
+            tail = f.read(read_size)
+        idx = tail.rfind(b"PK\x05\x06")
+        if idx == -1:
+            return None
+        if idx + 16 > len(tail):
+            return None
+        value: int = struct.unpack_from("<I", tail, idx + 12)[0]
+        return value
+    except OSError:
+        return None
+
+
 def restore_backup(system: SystemInfo, archive: str | os.PathLike[str], current_port: str) -> RestoreResult:
     """Unpack a backup into the config folder (Go ``ThreadfinRestore``, without the reload).
 
     Raises ``BackupError`` before writing anything if the archive is not a zip, has an entry
     outside the config folder, holds more than ``MAX_RESTORE_TOTAL`` bytes or more than fits on the
-    disk, has a corrupt entry (``testzip`` reads every entry and checks its CRC), or lacks a loadable
-    ``settings.json`` of at least ``system.compatibility``. Entries are streamed to disk.
+    disk, has a corrupt entry (``testzip`` reads every entry and checks its CRC), lacks a loadable
+    ``settings.json`` of at least ``system.compatibility``, or exceeds entry/central-directory limits.
+    Entries are streamed to disk.
     The caller reloads the running state afterwards.
     """
     try:
+        if (cd_size := _central_directory_size(archive)) is not None and (
+            cd_size == 0xFFFFFFFF or cd_size > MAX_CENTRAL_DIRECTORY
+        ):
+            raise BackupError("archive has too many entries")
         zf = zipfile.ZipFile(archive)
     except (OSError, zipfile.BadZipFile) as exc:
         raise BackupError(f"not a backup archive: {exc}") from exc
 
     with zf:
+        if len(zf.infolist()) > MAX_ENTRIES:
+            raise BackupError("archive has too many entries")
         plan: list[tuple[zipfile.ZipInfo, str]] = []
         total = 0
         for info in zf.infolist():

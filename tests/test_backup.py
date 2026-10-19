@@ -502,6 +502,46 @@ class Restore(Base):
         after = dump_tree(self.system.config, STAMP)
         self.assertEqual(after, before)
 
+    def test_too_many_entries_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"1",
+                "data/b.bin": b"2",
+                "data/c.bin": b"3",
+                "data/d.bin": b"4",
+            }
+        )
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(backup, "MAX_ENTRIES", 3),
+        ):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_large_central_directory_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"1",
+                "data/b.bin": b"2",
+                "data/c.bin": b"3",
+                "data/d.bin": b"4",
+            }
+        )
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(backup, "MAX_CENTRAL_DIRECTORY", 100),
+        ):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
     def test_entries_are_streamed(self) -> None:
         (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
         archive = self.archive(
