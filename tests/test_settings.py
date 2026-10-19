@@ -5,14 +5,16 @@ Golden files come from ``tools/go_golden/run_settings_golden.sh``.
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import shutil
+import stat
 import tempfile
 import unittest
 from pathlib import Path
 
-from threadfin.jsonio import JSONFileError, load_json_object, save_json
+from threadfin.jsonio import JSONFileError, copy_atomic, load_json_object, save_json
 from threadfin.settings import Settings, SettingsError, create_uuid, load_settings
 from threadfin.system import SYSTEM_FILES, SystemInfo
 
@@ -139,6 +141,25 @@ class SystemAndJsonTests(TempDirCase):
     def test_atomic_write_leaves_no_temp_files(self) -> None:
         save_json(self.root / "a.json", {"x": 1})
         self.assertEqual([p.name for p in self.root.iterdir()], ["a.json"])
+
+    def test_copy_atomic(self) -> None:
+        source = io.BytesIO(b"hello")
+        out = self.root / "out.bin"
+        copy_atomic(out, source, 0o600)
+        self.assertEqual(out.read_bytes(), b"hello")
+        self.assertEqual(stat.S_IMODE(out.stat().st_mode), 0o600)
+
+        keep = self.root / "keep.bin"
+        keep.write_bytes(b"old")
+
+        class BadReader:
+            def read(self, size=-1):
+                raise OSError("boom")
+
+        with self.assertRaises(OSError):
+            copy_atomic(keep, BadReader())
+        self.assertEqual(keep.read_bytes(), b"old")
+        self.assertEqual(sorted(p.name for p in self.root.iterdir()), ["keep.bin", "out.bin"])
 
     def test_load_json_object_rejects_non_objects(self) -> None:
         path = self.root / "list.json"

@@ -6,11 +6,13 @@ leave a half-written ``settings.json``.
 
 from __future__ import annotations
 
+import io
 import json
 import os
+import shutil
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 
 class JSONFileError(ValueError):
@@ -37,18 +39,23 @@ def load_json_object(path: str | os.PathLike[str]) -> dict[str, Any]:
     return data
 
 
-def write_bytes_atomic(path: str | os.PathLike[str], data: bytes, mode: int = 0o644) -> None:
-    """Write ``data`` to ``path`` via a temp file in the same directory."""
+def copy_atomic(path: str | os.PathLike[str], source: IO[bytes], mode: int = 0o644) -> None:
+    """Stream ``source`` to ``path`` via a temp file in the same directory."""
     target = Path(path)
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
     try:
         with os.fdopen(fd, "wb") as handle:
-            handle.write(data)
+            shutil.copyfileobj(source, handle)
         os.chmod(tmp_name, mode)
         os.replace(tmp_name, target)
     except BaseException:
         Path(tmp_name).unlink(missing_ok=True)
         raise
+
+
+def write_bytes_atomic(path: str | os.PathLike[str], data: bytes, mode: int = 0o644) -> None:
+    """Write ``data`` to ``path`` via a temp file in the same directory."""
+    copy_atomic(path, io.BytesIO(data), mode)
 
 
 def write_text_atomic(path: str | os.PathLike[str], text: str, mode: int = 0o644) -> None:
