@@ -14,10 +14,12 @@ files deflated, Unix permissions kept.
 from __future__ import annotations
 
 import json
+import lzma
 import os
 import shutil
 import tempfile
 import zipfile
+import zlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -201,7 +203,35 @@ def restore_backup(system: SystemInfo, archive: str | os.PathLike[str], current_
             raise BackupError(f"settings.json in the archive exceeds {MAX_SETTINGS_BYTES // MB} MB")
 
         try:
-            raw = json.loads(zf.read(settings_entry))
+            name = zf.testzip()
+        except (
+            zipfile.BadZipFile,
+            EOFError,
+            zlib.error,
+            NotImplementedError,
+            RuntimeError,
+            lzma.LZMAError,
+            OSError,
+        ) as exc:
+            raise BackupError(f"corrupt archive: {exc}") from exc
+        if name is not None:
+            raise BackupError(f"corrupt archive entry: {name}")
+
+        try:
+            raw_bytes = zf.read(settings_entry)
+        except (
+            zipfile.BadZipFile,
+            EOFError,
+            zlib.error,
+            NotImplementedError,
+            RuntimeError,
+            lzma.LZMAError,
+            OSError,
+        ) as exc:
+            raise BackupError(f"corrupt archive: {exc}") from exc
+
+        try:
+            raw = json.loads(raw_bytes)
         except ValueError as exc:
             raise BackupError(f"invalid settings.json in the archive: {exc}") from exc
         if not isinstance(raw, dict):
@@ -216,13 +246,6 @@ def restore_backup(system: SystemInfo, archive: str | os.PathLike[str], current_
 
         if _free_space(system.config) < total:
             raise BackupError(f"not enough free space to restore ({total} bytes needed)")
-
-        try:
-            name = zf.testzip()
-        except (zipfile.BadZipFile, EOFError) as exc:
-            raise BackupError(f"corrupt archive: {exc}") from exc
-        if name is not None:
-            raise BackupError(f"corrupt archive entry: {name}")
 
         for info, rel in plan:
             target = system.config / rel

@@ -441,6 +441,67 @@ class Restore(Base):
         after = dump_tree(self.system.config, STAMP)
         self.assertEqual(after, before)
 
+    def test_bad_settings_crc_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {"settings.json": json.dumps({"version": "0.5.0", "port": "1"})}
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_STORED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        local_idx = raw.index(b"settings.json") - 30
+        data_start = local_idx + 30 + len(b"settings.json") + 1
+        raw[data_start] ^= 0xFF
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
+    def test_corrupt_deflate_stream_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {
+            "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+            "data/x.bin": (bytes(range(256)) * 40)[:10000],
+        }
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        central_idx = raw.rindex(b"data/x.bin") - 46
+        compressed_size = struct.unpack_from("<I", raw, central_idx + 20)[0]
+        local_idx = struct.unpack_from("<I", raw, central_idx + 42)[0]
+        data_start = local_idx + 30 + len(b"data/x.bin")
+        middle = data_start + compressed_size // 2
+        raw[middle : middle + 8] = b"\xff" * 8
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
+    def test_unknown_compression_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {"settings.json": json.dumps({"version": "0.5.0", "port": "1"})}
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_STORED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        local_idx = raw.index(b"settings.json") - 30
+        struct.pack_into("<H", raw, local_idx + 8, 99)
+        central_idx = raw.rindex(b"settings.json") - 46
+        struct.pack_into("<H", raw, central_idx + 10, 99)
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
     def test_entries_are_streamed(self) -> None:
         (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
         archive = self.archive(
