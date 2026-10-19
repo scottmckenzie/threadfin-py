@@ -57,6 +57,7 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
 | ffprobe path = first `"ffmpeg"` substring replaced in the whole ffmpeg path. | **fixed**: sibling of the ffmpeg binary, then `PATH` |
 | Any string was passed to ffprobe (`file:`, `concat:`, options). | **fixed**: URL scheme allow-list |
 | Results were thrown away. | **new**: stored in SQLite (`data/probes.sqlite3`), history per URL, TTL cache (24 h ok / 5 min failed), shared in-flight probes, concurrency limit (default 1: providers cap connections per account) |
+| ffprobe error text could contain the stream URL with its credentials. | **new**: URLs in probe errors show without their query string, and errors stored before this change are cleaned when read |
 
 ## Environment notes
 

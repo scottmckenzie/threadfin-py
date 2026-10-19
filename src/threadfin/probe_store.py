@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .probe import ProbeDetails, ProbeRun, ProbeSummary
+from .redact import clean_text
 
 SCHEMA_VERSION = 1
 
@@ -224,7 +225,7 @@ def _row_to_record(row: sqlite3.Row) -> ProbeRecord:
         channel_key=row["channel_key"],
         probed_at=datetime.fromisoformat(row["probed_at"]),
         ok=bool(row["ok"]),
-        error=row["error"],
+        error=clean_text(row["error"]) if row["error"] else row["error"],
         duration_ms=row["duration_ms"],
         summary=ProbeSummary(row["resolution"], row["frame_rate"], row["audio_channels"]),
         details=ProbeDetails(

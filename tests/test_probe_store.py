@@ -7,6 +7,7 @@ import sqlite3
 import stat
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest import mock
@@ -52,6 +53,14 @@ class StoreTests(unittest.TestCase):
         self.assertFalse(loaded.ok)
         self.assertEqual(loaded.error, "boom")
         self.assertEqual(loaded.summary, ProbeSummary())
+
+    def test_old_errors_are_cleaned_on_read(self) -> None:
+        run = replace(make_run(ok=False), error="ffprobe exited with status 1: http://h/x?token=SECRET: 404")
+        self.store.record(run, probed_at=T0)
+        loaded = self.store.latest("http://h/a")
+        assert loaded is not None
+        self.assertNotIn("SECRET", loaded.error or "")
+        self.assertEqual(loaded.url, "http://h/a")
 
     def test_latest_is_newest_and_history_is_ordered(self) -> None:
         for i, res in enumerate(("480p", "720p", "1080p")):

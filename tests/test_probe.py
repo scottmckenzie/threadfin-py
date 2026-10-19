@@ -140,6 +140,8 @@ class RunnerTests(unittest.IsolatedAsyncioTestCase):
             'case "$url" in\n'
             "  *slow*) exec sleep 5 ;;\n"
             '  *fail*) echo "Connection refused" >&2; exit 1 ;;\n'
+            '  *leak*) echo "$url: Server returned 404 Not Found" >&2; exit 1 ;;\n'
+            f'  *long*) printf "%s " "$url" >&2; printf "%s" "{"x" * 480}" >&2; exit 1 ;;\n'
             '  *garbage*) echo "not json" ;;\n'
             '  *) cat "$FAKE_JSON" ;;\n'
             "esac\n"
@@ -167,6 +169,19 @@ class RunnerTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(run.ok)
         self.assertIn("status 1", run.error or "")
         self.assertIn("Connection refused", run.error or "")
+
+    async def test_error_hides_query(self) -> None:
+        run = await self.run_probe("http://example.invalid/leak?token=SECRET")
+        self.assertFalse(run.ok)
+        self.assertIn("http://example.invalid/leak?…: Server returned 404", run.error or "")
+        self.assertNotIn("SECRET", run.error or "")
+        self.assertEqual(run.url, "http://example.invalid/leak?token=SECRET")
+
+    async def test_cut_error_hides_query(self) -> None:
+        run = await self.run_probe("http://example.invalid/long?token=SECRET")
+        self.assertFalse(run.ok)
+        self.assertNotIn("SECRET", run.error or "")
+        self.assertNotIn("token=", run.error or "")
 
     async def test_garbage_output(self) -> None:
         run = await self.run_probe("http://example.invalid/garbage")

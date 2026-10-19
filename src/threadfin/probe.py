@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from .redact import clean_text
+
 ALLOWED_SCHEMES = frozenset({"http", "https", "rtmp", "rtmps", "rtsp", "rtsps", "rtp", "udp", "srt", "tcp"})
 _HTTP_SCHEMES = frozenset({"http", "https"})
 
@@ -279,7 +281,7 @@ async def run_ffprobe(
             stderr=asyncio.subprocess.PIPE,
         )
     except OSError as exc:
-        return finish(f"failed to execute ffprobe: {exc}")
+        return finish(f"failed to execute ffprobe: {clean_text(str(exc))}")
 
     try:
         stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
@@ -293,11 +295,11 @@ async def run_ffprobe(
         raise
 
     if process.returncode != 0:
-        detail = stderr.decode("utf-8", errors="replace").strip()[-500:]
+        detail = clean_text(stderr.decode("utf-8", errors="replace").strip())[-500:]
         return finish(f"ffprobe exited with status {process.returncode}: {detail}".rstrip(": "))
 
     try:
         analysis = analyze_ffprobe_output(stdout)
     except ProbeParseError as exc:
-        return finish(str(exc))
+        return finish(clean_text(str(exc)))
     return finish(None, analysis, stdout.decode("utf-8", errors="replace"))
