@@ -180,7 +180,7 @@ def _central_directory_size(path: str | os.PathLike[str]) -> int | None:
         with open(path, "rb") as f:
             f.seek(0, 2)
             size = f.tell()
-            read_size = min(size, 65536 + 22)
+            read_size = min(size, 65536 + 22 + 20)
             f.seek(-read_size, 2)
             tail = f.read(read_size)
         idx = tail.rfind(b"PK\x05\x06")
