@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import zipfile
+from unittest import mock
 
+from starlette.requests import Request
 from webfixture import AppTestCase
 
 from threadfin.access import COOKIE
@@ -272,6 +275,9 @@ class Login(AppTestCase):
         self.assertIn(me, self.service.auth.users)
 
 
+MB = 1024 * 1024
+
+
 class Backup(AppTestCase):
     def test_download_and_restore(self) -> None:
         response = self.client.get("/api/v1/backup")
@@ -286,6 +292,31 @@ class Backup(AppTestCase):
         self.assertEqual(restored.status_code, 200, restored.text)
         self.assertEqual(restored.json(), {"portChanged": False, "webURL": ""})
         self.assertEqual(self.service.settings.tuner, 1)
+
+    def padded_archive(self) -> bytes:
+        backup = self.client.get("/api/v1/backup")
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(backup.content)) as src, zipfile.ZipFile(zip_buffer, "w") as dst:
+            for name in src.namelist():
+                dst.writestr(name, src.read(name))
+            dst.writestr("data/padding.bin", os.urandom(9 * MB), zipfile.ZIP_STORED)
+        return zip_buffer.getvalue()
+
+    def test_restore_over_the_general_limit(self) -> None:
+        padded = self.padded_archive()
+        response = self.client.post(
+            "/api/v1/restore", content=padded, headers={"content-type": "application/zip", "X-Requested-With": "x"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual((self.system.config / "data" / "padding.bin").stat().st_size, 9 * MB)
+
+    def test_restore_does_not_read_the_whole_body(self) -> None:
+        backup = self.client.get("/api/v1/backup").content
+        with mock.patch.object(Request, "body", side_effect=AssertionError):
+            response = self.client.post(
+                "/api/v1/restore", content=backup, headers={"content-type": "application/zip", "X-Requested-With": "x"}
+            )
+        self.assertEqual(response.status_code, 200)
 
     def test_restore_rejects_junk(self) -> None:
         response = self.client.post("/api/v1/restore", content=b"not a zip",

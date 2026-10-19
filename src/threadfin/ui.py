@@ -38,7 +38,7 @@ from .access import (
     current_user,
     request_token,
 )
-from .admin import CHANNEL_ATTRIBUTES, PROVIDER_KINDS, AdminError, save_logo
+from .admin import CHANNEL_ATTRIBUTES, PROVIDER_KINDS, AdminError, receive_upload, save_logo
 from .auth import LEVEL_WEB, AuthError, TooManyAttempts
 from .backup import BackupError, create_backup
 from .probe import InvalidProbeURLError
@@ -664,15 +664,12 @@ def routes(service: Service) -> list[BaseRoute]:
                             background=BackgroundTask(path.unlink, missing_ok=True))  # fmt: skip
 
     async def restore(request: Request) -> Response:
-        async with request.form() as form:
-            upload = form.get("archive")
-            data = await upload.read() if isinstance(upload, UploadFile) else b""
-        if not data:
-            return render(request, "partials/restore_result.html", error="Choose a backup file")
         fd, tmp = tempfile.mkstemp(suffix=".zip")
         try:
-            with os.fdopen(fd, "wb") as handle:
-                handle.write(data)
+            os.close(fd)
+            size = await receive_upload(request, Path(tmp), "archive")
+            if not size:
+                return render(request, "partials/restore_result.html", error="Choose a backup file")
             result = await service.restore(tmp)
         except ERRORS as exc:
             return render(request, "partials/restore_result.html", error=str(exc))
