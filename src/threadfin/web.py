@@ -171,12 +171,12 @@ class BodyLimit:
             if name == b"content-length":
                 try:
                     content_length = int(value.decode())
-                    if content_length > limit:
-                        response = self.too_large(path, limit)
-                        await response(scope, receive, send)
-                        return
                 except ValueError:
-                    pass
+                    continue
+                if content_length > limit:
+                    response = self.too_large(path, limit)
+                    await response(scope, receive, send)
+                    return
 
         total_bytes = 0
 
