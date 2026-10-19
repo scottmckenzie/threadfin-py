@@ -272,6 +272,7 @@ every request); the rest is tested through the app (`tests/test_ui.py`, `tests/t
 | New filters get the lowest free number; changes to unknown filter ids are ignored; an empty rule is `Invalid filter rule`. | kept |
 | A new filter was stored with the whole request nested in it (`{"-1": {...}, "0": {...}, ...}`). | **fixed**: only the filter's fields |
 | A filter field of the wrong type (e.g. a numeric rule) was saved and broke every later build. | **fixed**: refused |
+| Request bodies had no size limit. | **changed**: bodies over 8 MB (64 MB for a restore) get `413`, checked from `Content-Length` and while the body is read. |
 | Provider dialogs: new providers are downloaded first and dropped if that fails; editing does not download. | kept; fields are type-checked (Go stored whatever the browser sent, including internal keys) |
 | Mapping: the browser sent the whole channel database back and Go saved it as it came. | **changed**: per-channel changes of the editable fields only, checked (number, XMLTV file and channel must exist; an active channel needs a guide), then a rebuild |
 | Bulk edit with `x-channels-start` numbers the selected channels from there. | kept (in their current order) |

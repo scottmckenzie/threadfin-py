@@ -138,6 +138,76 @@ class HostCheck:
         )
 
 
+MB = 1024 * 1024
+MAX_BODY_BYTES = 8 * MB
+MAX_RESTORE_BYTES = 64 * MB
+RESTORE_PATHS = frozenset({"/api/v1/restore", "/web/restore"})
+
+
+class _BodyTooLarge(Exception):
+    pass
+
+
+class BodyLimit:
+    """ASGI middleware: refuse request bodies over a size limit (413)."""
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    def too_large(self, path: str, limit: int) -> Response:
+        text = f"request body too large (limit {limit // MB} MB)"
+        return api.error(text, 413) if path == "/api" or path.startswith("/api/") else PlainTextResponse(text, 413)
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        limit = MAX_RESTORE_BYTES if path in RESTORE_PATHS else MAX_BODY_BYTES
+
+        headers = scope.get("headers", [])
+        for name, value in headers:
+            if name == b"content-length":
+                try:
+                    content_length = int(value.decode())
+                    if content_length > limit:
+                        response = self.too_large(path, limit)
+                        await response(scope, receive, send)
+                        return
+                except ValueError:
+                    pass
+
+        total_bytes = 0
+
+        async def counted_receive() -> Any:
+            nonlocal total_bytes
+            message = await receive()
+            if message.get("type") == "http.request":
+                body = message.get("body", b"")
+                total_bytes += len(body)
+                if total_bytes > limit:
+                    raise _BodyTooLarge()
+            return message
+
+        response_started = False
+
+        async def tracked_send(message: Any) -> None:
+            nonlocal response_started
+            if message.get("type") == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, counted_receive, tracked_send)
+        except _BodyTooLarge:
+            if not response_started:
+                response = self.too_large(path, limit)
+                await response(scope, receive, send)
+            else:
+                raise
+
+
 def create_app(service: Service, *, build_on_start: bool = True, schedule: bool = True) -> Starlette:
     async def stream(request: Request) -> Response:
         target = service.stream_target(request.path_params["stream_id"], client=client_address(request))
@@ -238,7 +308,7 @@ def create_app(service: Service, *, build_on_start: bool = True, schedule: bool 
             *ui.routes(service),
         ],
         lifespan=lifespan,
-        middleware=[Middleware(HostCheck, service=service)],
+        middleware=[Middleware(BodyLimit), Middleware(HostCheck, service=service)],
     )
     app.state.service = service
     return app
