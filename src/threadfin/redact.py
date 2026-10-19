@@ -26,7 +26,7 @@ def display_url(url: str) -> str:
         scheme, netloc, path, _, _ = parsed
         # Handle userinfo password redaction
         if "@" in netloc:
-            userinfo, _, host = netloc.partition("@")
+            userinfo, _, host = netloc.rpartition("@")
             if ":" in userinfo:
                 user, _, _ = userinfo.partition(":")
                 netloc = f"{user}:***@{host}"
@@ -51,5 +51,12 @@ def clean_text(text: str) -> str:
     Returns:
         The text with all URLs redacted.
     """
-    pattern = r"https?://[^\s\"']*[^\s\"':,;)]"
-    return re.sub(pattern, lambda m: display_url(m.group(0)), text)
+    pattern = r"[A-Za-z][A-Za-z0-9+.-]*://[^\s'\"<>]+"
+
+    def _clean(match: re.Match[str]) -> str:
+        run = match.group(0)
+        body = run.rstrip(":,;)")
+        tail = run[len(body) :]
+        return display_url(body) + tail
+
+    return re.sub(pattern, _clean, text)
