@@ -664,10 +664,15 @@ def routes(service: Service) -> list[BaseRoute]:
                             background=BackgroundTask(path.unlink, missing_ok=True))  # fmt: skip
 
     async def restore(request: Request) -> Response:
+        if not request.headers.get("content-type", "").startswith("multipart/form-data"):
+            return render(request, "partials/restore_result.html", error="Choose a backup file")
         fd, tmp = tempfile.mkstemp(suffix=".zip")
         try:
             os.close(fd)
-            size = await receive_upload(request, Path(tmp), "archive")
+            try:
+                size = await receive_upload(request, Path(tmp), "archive")
+            except AdminError:
+                return render(request, "partials/restore_result.html", error="Choose a backup file")
             if not size:
                 return render(request, "partials/restore_result.html", error="Choose a backup file")
             result = await service.restore(tmp)

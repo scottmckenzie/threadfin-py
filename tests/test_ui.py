@@ -482,6 +482,15 @@ class Settings(AppTestCase):
             )
         self.assertIn("Backup restored", response.text)
 
+    def test_restore_without_archive_field(self) -> None:
+        response = self.client.post("/web/restore", files={"other": ("b.zip", b"x", "application/zip")}, headers=HX)
+        self.assertIn("Choose a backup file", response.text)
+        self.assertNotIn("missing file field", response.text)
+
+    def test_restore_not_multipart(self) -> None:
+        response = self.client.post("/web/restore", content=b"junk", headers=HX)
+        self.assertIn("Choose a backup file", response.text)
+
 
 class Log(AppTestCase):
     def test_entries_and_clear(self) -> None:
