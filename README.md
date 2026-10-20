@@ -36,17 +36,20 @@ and extended with stored results. Existing `~/.threadfin` config folders stay co
     uv tool install .        # after an update: uv tool install --reinstall .
     threadfin                # or, from the checkout: uv run threadfin
 
-Then open `http://<this machine>:34400/web/`, add a playlist (and, for the XMLTV mode, a guide),
-and add the tuner in Plex / Emby / Jellyfin as `http://<this machine>:34400`. An existing
-`~/.threadfin` folder from the Go app is used as it is. Passwords are stored as scrypt hashes: a
-user's Go hash is replaced at their next login here, and the Go app can then no longer log that
-user in.
+Then open `http://127.0.0.1:34400/web/`, add a playlist (and, for the XMLTV mode, a guide),
+and add the tuner in Plex / Emby / Jellyfin. A new config listens on `127.0.0.1` only, so other
+machines cannot reach the admin UI or API until you set `-bind` or `bindIpAddress` (for example
+`-bind 0.0.0.0`). Turn on web authentication before exposing the server. An install that already
+has web authentication on, and no bind address saved, still listens on all interfaces so that
+login keeps working. An existing `~/.threadfin` folder from the Go app is used as it is. Passwords
+are stored as scrypt hashes: a user's Go hash is replaced at their next login here, and the Go app
+can then no longer log that user in.
 
 | Option | |
 |---|---|
 | `-config DIR` | config folder (default `~/.threadfin`) |
 | `-port PORT` | server port, saved to settings.json (default 34400) |
-| `-bind IP` | listen address (default: the `bindIpAddress` setting, else all interfaces) |
+| `-bind IP` | listen address (default: `bindIpAddress`; if that is empty, all interfaces when web authentication is on, otherwise `127.0.0.1`) |
 | `-restore FILE` | restore a backup (asks first), then exit |
 | `-info` | show the configuration, then exit |
 | `-debug 0-3` | more logging; 2 and up logs every request |

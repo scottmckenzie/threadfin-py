@@ -101,6 +101,7 @@ Go `buildDatabaseDVR` on 28 cases.
 | The last provider's error was the only one returned from a refresh-all or database build, so one bad provider's failure depended on random map order. | **fixed**: every provider's outcome is reported (`RefreshResult`, `StreamDatabase.errors`) and the rest still loads |
 | The timeout covered the whole request; no size limit. | kept (total deadline, enforced even for slow trickling bodies); **new**: size limit |
 | `strings.Contains(source, "http://")` decided between URL and local file; local files could be read. | **changed**: sources must be http/https URLs; local files are not supported |
+| The local copy was written to `file.threadfin` joined onto the data folder, so an absolute path or `..` in that field (from the API, settings.json, or a restored backup) was created outside the data folder. | **fixed**: the name must be a single file name and the resolved path must stay inside the data folder; anything else fails that provider's refresh and writes nothing |
 | Group labels and values were sorted as two independent lists (a label could end up beside the wrong value, e.g. groups `a` and `a (1)`). | **fixed**: one list of `(name, count)` sorted by name |
 | Providers were visited in random map order. | **changed**: settings order |
 | With no filters and at most 480 streams everything is active; above that everything is inactive plus a warning. Plex warning above 480 active. | kept |
@@ -319,7 +320,7 @@ Tested with the real command (`tests/test_cli.py` starts and stops a server proc
 |---|---|
 | Flags `-config`, `-port`, `-restore`, `-info`, `-debug`, `-bind`, `-branch`, `-h`; `-port` is saved to settings.json. | kept (also as `--config` etc.) |
 | `-restore`: shows version, file and config folder, asks `yes` / `no` (any other answer: `Invalid input`), restores, exits. | kept; a failed restore is reported and changes nothing (see Backup) |
-| The server listened only on the first LAN address found (not even `localhost`), and the `bindIpAddress` setting won over `-bind`. | **changed**: all interfaces by default; `-bind` wins over the setting |
+| The server listened only on the first LAN address found (not even `localhost`), and the `bindIpAddress` setting won over `-bind`. | **changed**: `-bind` wins over `bindIpAddress`. With neither set, the server listens on `127.0.0.1` unless `authentication.web` is already on, in which case it listens on all interfaces so an existing login stays reachable |
 | `-dev` (web files from the source tree); `-branch` chose the self-update branch. | `-dev` **dropped**; `-branch` accepted and saved, nothing updates itself |
 | Binary self-update check at start-up. | **dropped** (see Backup, restore and scheduler) |
 | Request logging. | **new**: from `-debug 2` (off below, since `/m3u/` and `/xmltv/` URLs can carry credentials) |
