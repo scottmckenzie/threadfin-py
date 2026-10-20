@@ -45,13 +45,17 @@ user in.
 | Option | |
 |---|---|
 | `-config DIR` | config folder (default `~/.threadfin`) |
-| `-port PORT` | server port, saved to settings.json (default 34400) |
-| `-bind IP` | listen address (default: the `bindIpAddress` setting, else all interfaces) |
+| `-port PORT` | server port, saved to settings.json (default: `THREADFIN_PORT`, else the setting, else 34400) |
+| `-bind IP` | listen address (default: `THREADFIN_BIND`, else the `bindIpAddress` setting, else all interfaces) |
 | `-restore FILE` | restore a backup (asks first), then exit |
 | `-info` | show the configuration, then exit |
 | `-debug 0-3` | more logging; 2 and up logs every request |
 
-Go's single-dash spelling and `--config` etc. both work. Stop the server with Ctrl+C or SIGTERM.
+Go's single-dash spelling and `--config` etc. both work. The `THREADFIN_PORT` and `THREADFIN_BIND`
+environment variables (handy in a container) stand in for `-port` and `-bind`; a flag wins over its
+variable, and a port from `THREADFIN_PORT` is saved to settings.json just like `-port`. A bind
+address of `::` listens on IPv6 only, so in a container (where `-p` publishes over IPv4) use
+`0.0.0.0` or leave the bind address unset. Stop the server with Ctrl+C or SIGTERM.
 
 The web UI and the APIs answer only host names that cannot be used for DNS rebinding: IP addresses,
 single-label names (`http://nas:34400`), `.local`, `.lan`, `.home.arpa`, `.internal` and
