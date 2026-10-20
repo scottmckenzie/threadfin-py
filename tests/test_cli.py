@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import queue
 import signal
 import socket
@@ -18,7 +19,8 @@ import urllib.request
 from pathlib import Path
 
 from threadfin.backup import create_backup
-from threadfin.cli import listen_address, main, parser, port_number
+from threadfin.cli import listen_address, main, parser, port_number, setup_logging
+from threadfin.redact import RedactAccessLog
 from threadfin.settings import Settings, SettingsError, load_settings, save_settings
 from threadfin.system import SystemInfo
 
@@ -128,6 +130,24 @@ class Commands(unittest.TestCase):
                     run=lambda *a: self.runs.append(a))  # fmt: skip
         self.assertEqual(self.runs, [])
         self.assertEqual((code, out.getvalue().strip().splitlines()[-1]), (1, "Invalid input"))
+
+    def test_access_log_is_redacted(self) -> None:
+        logger = logging.getLogger("uvicorn.access")
+        self.addCleanup(lambda: [logger.filters.remove(f) for f in logger.filters if isinstance(f, RedactAccessLog)])
+        setup_logging(2)
+        setup_logging(2)
+        self.assertEqual(len([f for f in logger.filters if isinstance(f, RedactAccessLog)]), 1)
+        with self.assertLogs("uvicorn.access", level="INFO") as cm:
+            logger.info(
+                '%s - "%s %s HTTP/%s" %d',
+                "1.2.3.4:5",
+                "GET",
+                "/m3u/threadfin.m3u?username=u&password=SECRET",
+                "1.1",
+                200,
+            )
+        self.assertNotIn("SECRET", "\n".join(cm.output))
+        self.assertIn("/m3u/threadfin.m3u?…", "\n".join(cm.output))
 
 
 class RealServer(unittest.TestCase):

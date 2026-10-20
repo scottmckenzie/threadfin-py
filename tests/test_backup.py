@@ -7,17 +7,21 @@ compression method and content). The time stamp of the run is normalised to ``{t
 
 from __future__ import annotations
 
+import collections
 import io
 import json
 import os
 import stat
+import struct
 import tempfile
 import unittest
+import unittest.mock
 import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from threadfin import backup
 from threadfin.backup import (
     BackupError,
     auto_backup,
@@ -364,6 +368,257 @@ class Restore(Base):
             zf.writestr(info, "{}")
         restore_backup(self.system, path, "1")
         self.assertEqual(stat.S_IMODE((self.system.config / "pms.json").stat().st_mode), 0o644)
+
+    def test_total_over_limit_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"x" * 1000,
+                "data/b.bin": b"x" * 1000,
+            }
+        )
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "archive contents exceed"),
+            unittest.mock.patch.object(backup, "MAX_RESTORE_TOTAL", 1500),
+        ):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_large_settings_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "xepg.json": "{}",
+            }
+        )
+        before = dump_tree(self.work, STAMP)
+        with self.assertRaises(BackupError), unittest.mock.patch.object(backup, "MAX_SETTINGS_BYTES", 10):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_not_enough_disk_space_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/x.bin": b"x" * 1000,
+            }
+        )
+        usage = collections.namedtuple("usage", "total used free")(100, 90, 10)
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "not enough free space"),
+            unittest.mock.patch.object(backup.shutil, "disk_usage", return_value=usage),
+        ):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_understated_entry_refused_before_writing(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {
+            "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+            "data/x.bin": bytes(range(256)) * 40,
+        }
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        local_idx = raw.index(b"data/x.bin") - 30
+        struct.pack_into("<I", raw, local_idx + 22, 1000)
+        central_idx = raw.rindex(b"data/x.bin") - 46
+        struct.pack_into("<I", raw, central_idx + 24, 1000)
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
+    def test_bad_settings_crc_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {"settings.json": json.dumps({"version": "0.5.0", "port": "1"})}
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_STORED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        local_idx = raw.index(b"settings.json") - 30
+        data_start = local_idx + 30 + len(b"settings.json") + 1
+        raw[data_start] ^= 0xFF
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
+    def test_corrupt_deflate_stream_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {
+            "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+            "data/x.bin": (bytes(range(256)) * 40)[:10000],
+        }
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        central_idx = raw.rindex(b"data/x.bin") - 46
+        compressed_size = struct.unpack_from("<I", raw, central_idx + 20)[0]
+        local_idx = struct.unpack_from("<I", raw, central_idx + 42)[0]
+        data_start = local_idx + 30 + len(b"data/x.bin")
+        middle = data_start + compressed_size // 2
+        raw[middle : middle + 8] = b"\xff" * 8
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
+    def test_unknown_compression_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        entries = {"settings.json": json.dumps({"version": "0.5.0", "port": "1"})}
+        archive_path = self.work / "a.zip"
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_STORED) as zf:
+            for name, data in entries.items():
+                zf.writestr(name, data)
+        raw = bytearray(archive_path.read_bytes())
+        local_idx = raw.index(b"settings.json") - 30
+        struct.pack_into("<H", raw, local_idx + 8, 99)
+        central_idx = raw.rindex(b"settings.json") - 46
+        struct.pack_into("<H", raw, central_idx + 10, 99)
+        archive_path.write_bytes(raw)
+        before = dump_tree(self.system.config, STAMP)
+        with self.assertRaises(BackupError):
+            restore_backup(self.system, archive_path, "1")
+        after = dump_tree(self.system.config, STAMP)
+        self.assertEqual(after, before)
+
+    def test_too_many_entries_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"1",
+                "data/b.bin": b"2",
+                "data/c.bin": b"3",
+                "data/d.bin": b"4",
+            }
+        )
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(backup, "MAX_ENTRIES", 3),
+        ):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_large_central_directory_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"1",
+                "data/b.bin": b"2",
+                "data/c.bin": b"3",
+                "data/d.bin": b"4",
+            }
+        )
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(backup, "MAX_CENTRAL_DIRECTORY", 100),
+        ):
+            restore_backup(self.system, archive, "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_zip64_locator_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "data/a.bin": b"1",
+                "data/b.bin": b"2",
+                "data/c.bin": b"3",
+                "data/d.bin": b"4",
+            }
+        )
+        data = archive.read_bytes()
+        eocd_idx = data.rfind(b"PK\x05\x06")
+        data = data[:eocd_idx] + b"PK\x06\x07" + b"\x00" * 16 + data[eocd_idx:]
+        self.assertIn(b"PK\x06\x07", data)
+        self.assertLess(
+            struct.unpack_from("<I", data, eocd_idx + 20 + 12)[0],
+            backup.MAX_CENTRAL_DIRECTORY,
+        )
+        (self.work / "modified.zip").write_bytes(data)
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(zipfile, "ZipFile", side_effect=AssertionError),
+        ):
+            restore_backup(self.system, self.work / "modified.zip", "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_zip64_locator_with_long_comment_refused(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        path = self.work / "a.zip"
+        with zipfile.ZipFile(path, "w") as zf:
+            zf.writestr("settings.json", json.dumps({"version": "0.5.0", "port": "1"}))
+            zf.writestr("data/a.bin", b"1")
+            zf.writestr("data/b.bin", b"2")
+            zf.writestr("data/c.bin", b"3")
+            zf.writestr("data/d.bin", b"4")
+            zf.comment = b"x" * 65530
+        data = path.read_bytes()
+        eocd_idx = data.rfind(b"PK\x05\x06")
+        data = data[:eocd_idx] + b"PK\x06\x07" + b"\x00" * 16 + data[eocd_idx:]
+        self.assertIn(b"PK\x06\x07", data)
+        self.assertLess(
+            struct.unpack_from("<I", data, eocd_idx + 20 + 12)[0],
+            backup.MAX_CENTRAL_DIRECTORY,
+        )
+        (self.work / "modified_comment.zip").write_bytes(data)
+        before = dump_tree(self.work, STAMP)
+        with (
+            self.assertRaisesRegex(BackupError, "too many entries"),
+            unittest.mock.patch.object(zipfile, "ZipFile", side_effect=AssertionError),
+        ):
+            restore_backup(self.system, self.work / "modified_comment.zip", "1")
+        after = dump_tree(self.work, STAMP)
+        self.assertEqual(after, before)
+
+    def test_entries_are_streamed(self) -> None:
+        (self.system.config / "settings.json").write_text(json.dumps({"version": "0.5.0", "port": "1"}))
+        archive = self.archive(
+            {
+                "settings.json": json.dumps({"version": "0.5.0", "port": "1"}),
+                "xepg.json": "{}",
+                "data/x.bin": b"abc",
+            }
+        )
+        original_read = zipfile.ZipFile.read
+
+        def guarded_read(zf: zipfile.ZipFile, name: str | zipfile.ZipInfo, pwd: bytes | None = None) -> bytes:
+            name = getattr(name, "filename", name)
+            if name not in ("settings.json",):
+                raise AssertionError(f"Unexpected read of {name}")
+            return original_read(zf, name, pwd)
+
+        with unittest.mock.patch.object(zipfile.ZipFile, "read", guarded_read):
+            restore_backup(self.system, archive, "1")
+        self.assertEqual((self.system.config / "data" / "x.bin").read_bytes(), b"abc")
 
 
 class AutoBackup(Base):

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import html
+import io
 import json
 import os
 import re
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
@@ -16,6 +18,7 @@ from threadfin.auth import LEVEL_API, LEVEL_WEB
 from threadfin.ui import dom_id
 
 HX = {"HX-Request": "true"}
+MB = 1024 * 1024
 
 
 def triggers(response) -> dict:  # type: ignore[no-untyped-def]
@@ -465,6 +468,28 @@ class Settings(AppTestCase):
             "/web/restore", files={"archive": ("b.zip", b"junk", "application/zip")}, headers=HX
         )
         self.assertIn("Restore failed: not a backup archive", response.text)
+
+    def test_restore_over_the_general_limit(self) -> None:
+        archive = self.client.get("/web/backup")
+        with io.BytesIO(archive.content) as src, zipfile.ZipFile(src, "r") as zf:
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, "w") as new_zf:
+                for item in zf.infolist():
+                    new_zf.writestr(item, zf.read(item))
+                new_zf.writestr("data/padding.bin", os.urandom(9 * MB), zipfile.ZIP_STORED)
+            response = self.client.post(
+                "/web/restore", files={"archive": ("b.zip", buffer.getvalue(), "application/zip")}, headers=HX
+            )
+        self.assertIn("Backup restored", response.text)
+
+    def test_restore_without_archive_field(self) -> None:
+        response = self.client.post("/web/restore", files={"other": ("b.zip", b"x", "application/zip")}, headers=HX)
+        self.assertIn("Choose a backup file", response.text)
+        self.assertNotIn("missing file field", response.text)
+
+    def test_restore_not_multipart(self) -> None:
+        response = self.client.post("/web/restore", content=b"junk", headers=HX)
+        self.assertIn("Choose a backup file", response.text)
 
 
 class Log(AppTestCase):

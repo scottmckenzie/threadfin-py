@@ -13,11 +13,16 @@ and then saved it with the next change).
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
+import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
+
+from starlette.datastructures import UploadFile
+from starlette.requests import Request
 
 from .jsonio import write_bytes_atomic
 from .settings import Settings
@@ -27,6 +32,26 @@ from .xepg import XEPGChannel, parse_float
 
 class AdminError(ValueError):
     """A change was refused; nothing was changed."""
+
+
+async def receive_upload(request: Request, target: Path, field: str) -> int:
+    """Save an uploaded file to the target path and return its size."""
+    content_type = request.headers.get("content-type", "")
+    size = 0
+    if content_type.startswith("multipart/form-data"):
+        async with request.form() as form:
+            upload = form.get(field)
+            if not isinstance(upload, UploadFile):
+                raise AdminError(f"missing file field {field!r}")
+            with target.open("wb") as handle:
+                await asyncio.to_thread(shutil.copyfileobj, upload.file, handle)
+                size = handle.tell()
+    else:
+        with target.open("wb") as handle:
+            async for chunk in request.stream():
+                await asyncio.to_thread(handle.write, chunk)
+            size = handle.tell()
+    return size
 
 
 # Go error texts (screen.go), kept where the UI shows them.

@@ -24,6 +24,7 @@ from typing import TextIO, override
 from . import __version__
 from .backup import BackupError, restore_backup
 from .imagecache import local_address
+from .redact import RedactAccessLog
 from .settings import Settings, SettingsError, load_settings
 from .system import NAME, SystemInfo, default_config_folder
 
@@ -66,6 +67,9 @@ def setup_logging(debug: int) -> None:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    access_logger = logging.getLogger("uvicorn.access")
+    if not any(isinstance(f, RedactAccessLog) for f in access_logger.filters):
+        access_logger.addFilter(RedactAccessLog())
 
 
 def prepare(config: str) -> SystemInfo:

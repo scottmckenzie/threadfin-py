@@ -57,6 +57,7 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
 | ffprobe path = first `"ffmpeg"` substring replaced in the whole ffmpeg path. | **fixed**: sibling of the ffmpeg binary, then `PATH` |
 | Any string was passed to ffprobe (`file:`, `concat:`, options). | **fixed**: URL scheme allow-list |
 | Results were thrown away. | **new**: stored in SQLite (`data/probes.sqlite3`), history per URL, TTL cache (24 h ok / 5 min failed), shared in-flight probes, concurrency limit (default 1: providers cap connections per account) |
+| ffprobe error text could contain the stream URL with its credentials. | **new**: URLs in probe errors show without their query string, and errors stored before this change are cleaned when read |
 
 ## Environment notes
 
@@ -104,6 +105,7 @@ Go `buildDatabaseDVR` on 28 cases.
 | Providers were visited in random map order. | **changed**: settings order |
 | With no filters and at most 480 streams everything is active; above that everything is inactive plus a warning. Plex warning above 480 active. | kept |
 | Loopback hosts bypass proxies. | kept |
+| Error messages showed the full provider URL. | **changed**: URLs in errors are shown without the query string, fragment or userinfo password (`redact.py`) |
 
 
 ## Channel database (`xmltv.py`, `xepg.py`)
@@ -244,6 +246,7 @@ were Go panics; `tests/test_backup.py` asserts the fixed behaviour for each.
 | Entries were unpacked with `filepath.Join`, so `../evil.txt` was written outside the config folder (and outside the temp folder during the check). | **fixed**: the archive is refused and nothing is written |
 | Files in folders without their own folder entry failed to unpack (`no such file or directory`). | **fixed**: folders are created |
 | The archive was unpacked into the temp folder first; on error, and when the port was unchanged, that copy was left behind. | **changed**: checked in memory, no temp copy; the archive is validated completely before the first file is written |
+| The whole archive was read into memory entry by entry, with no limit on its size, and a damaged entry could fail halfway through the unpacking. | **fixed**: an archive is refused, before anything is written, if its entries add up to more than 256 MB, if `settings.json` is over 8 MB, if the config folder's disk has less free space than the entries need, or if an entry is corrupt (every CRC is checked); entries are then streamed to disk |
 | Folder entries written by Go on Windows (`data\images\`). | **fixed**: `\` is a separator (Go on Linux created files with backslashes in their names) |
 | Permissions come from the archive as created under umask 022, execute bits included; archives without Unix permissions give 0644. | **fixed**: only read/write bits are restored (`authentication.json` stays 0600), so a restore cannot plant an executable, e.g. an `ffprobe` next to a restored `ffmpeg.path` that the channel probe would run |
 | Same port: reload settings, re-init and `StartSystem(true)` (backup, download, build). Different port: files replaced but the running instance kept its old settings (and could save them over the restored ones), and the UI showed the new `/web/` URL. | **changed**: always reloads everything (settings object updated in place, users, stream ids, channel database), then backup + download + build; `RestoreResult.web_url()` gives Go's new-URL text when the port changed (the new port needs a restart). Refused while an update is running |
@@ -270,6 +273,7 @@ every request); the rest is tested through the app (`tests/test_ui.py`, `tests/t
 | New filters get the lowest free number; changes to unknown filter ids are ignored; an empty rule is `Invalid filter rule`. | kept |
 | A new filter was stored with the whole request nested in it (`{"-1": {...}, "0": {...}, ...}`). | **fixed**: only the filter's fields |
 | A filter field of the wrong type (e.g. a numeric rule) was saved and broke every later build. | **fixed**: refused |
+| Request bodies had no size limit. | **changed**: bodies over 8 MB (64 MB for a restore) get `413`, checked from `Content-Length` and while the body is read. |
 | Provider dialogs: new providers are downloaded first and dropped if that fails; editing does not download. | kept; fields are type-checked (Go stored whatever the browser sent, including internal keys) |
 | Mapping: the browser sent the whole channel database back and Go saved it as it came. | **changed**: per-channel changes of the editable fields only, checked (number, XMLTV file and channel must exist; an active channel needs a guide), then a rebuild |
 | Bulk edit with `x-channels-start` numbers the selected channels from there. | kept (in their current order) |
@@ -319,4 +323,5 @@ Tested with the real command (`tests/test_cli.py` starts and stops a server proc
 | `-dev` (web files from the source tree); `-branch` chose the self-update branch. | `-dev` **dropped**; `-branch` accepted and saved, nothing updates itself |
 | Binary self-update check at start-up. | **dropped** (see Backup, restore and scheduler) |
 | Request logging. | **new**: from `-debug 2` (off below, since `/m3u/` and `/xmltv/` URLs can carry credentials) |
+| No request log. | **new**: at `-debug 2` and up the log shows `/m3u/threadfin.m3u?…` |
 

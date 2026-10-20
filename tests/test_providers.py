@@ -68,9 +68,11 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(M3U.encode(), headers={"Content-Disposition": 'attachment; filename="Pkg.m3u"; size=3'})
         elif path == "/redir":
             self.reply(b"", 302, {"Location": "/list.m3u"})
+        elif path == "/redir-secret":
+            self.reply(b"", 302, {"Location": "/nope?token=SECRET"})
         elif path == "/204":
             self.reply(b"", 204)
-        elif path == "/slow":
+        elif path.startswith("/slow"):
             time.sleep(1.5)
             self.reply(M3U.encode())
         elif path == "/drip":  # many small writes: no single socket read ever stalls
@@ -145,6 +147,29 @@ class DownloadTests(ServerCase):
         with self.assertRaises(ProviderError) as ctx:
             download(f"{self.base}/nope")
         self.assertEqual(str(ctx.exception), f"404: {self.base}/nope Not Found")
+
+    def test_errors_hide_query_strings(self) -> None:
+        cases = [
+            (f"{self.base}/nope?password=SECRET", {}),
+            (f"{self.base}/slow?password=SECRET", {"timeout": 0.3}),
+            ("http://127.0.0.1:9/x?password=SECRET", {}),
+            (f"{self.base}/redir-secret", {}),
+        ]
+        for url, kwargs in cases:
+            with self.subTest(url=url):
+                with self.assertRaises(ProviderError) as ctx:
+                    download(url, **kwargs)
+                self.assertNotIn("SECRET", str(ctx.exception))
+                if url == f"{self.base}/nope?password=SECRET":
+                    self.assertEqual(str(ctx.exception), f"404: {self.base}/nope?… Not Found")
+
+    async def test_invalid_and_unsupported_sources_hide_passwords(self) -> None:
+        with self.assertRaises(ProviderError) as ctx:
+            download("ftp://u:SECRET@h/x?k=SECRET")
+        self.assertNotIn("SECRET", str(ctx.exception))
+        with self.assertRaises(ProviderError) as ctx:
+            await self.manager.add("m3u", {"file.source": "ftp://u:SECRET@h/x"})
+        self.assertNotIn("SECRET", str(ctx.exception))
 
     def test_non_200_success_status_is_an_error(self) -> None:
         with self.assertRaises(ProviderError) as ctx:

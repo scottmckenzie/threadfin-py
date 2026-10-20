@@ -40,6 +40,7 @@ from xml.etree import ElementTree
 
 from .jsonio import write_bytes_atomic
 from .m3u import InvalidM3UError, SkippedEntry, parse_m3u_report, serialize_m3u
+from .redact import clean_text, display_url
 
 KINDS = ("m3u", "xmltv")
 EXTENSIONS = {"m3u": ".m3u", "xmltv": ".xml"}
@@ -149,7 +150,7 @@ def download(
     """Blocking HTTP GET with a total deadline (run it in a thread)."""
     parts = urlsplit(url)
     if parts.scheme.lower() not in ("http", "https") or not parts.hostname:
-        raise ProviderError(f"parse {url!r}: invalid URI for request")
+        raise ProviderError(f"parse {display_url(url)!r}: invalid URI for request")
 
     if proxy:
         handler = urllib.request.ProxyHandler({"http": proxy, "https": proxy})
@@ -164,26 +165,26 @@ def download(
     try:
         with opener.open(request, timeout=timeout) as response:
             if response.status != 200:
-                raise ProviderError(_status_error(response.status, url))
+                raise ProviderError(_status_error(response.status, display_url(url)))
             disposition = response.headers.get("Content-Disposition", "")
             filename = filename_from_content_disposition(disposition) or filename_from_url(url)
             chunks: list[bytes] = []
             size = 0
             while True:
                 if time.monotonic() > deadline:
-                    raise ProviderError(f"download of {url} timed out after {timeout:g}s")
+                    raise ProviderError(f"download of {display_url(url)} timed out after {timeout:g}s")
                 chunk = response.read1(1 << 16)  # returns what has arrived; read() would block for all 64 KiB
                 if not chunk:
                     break
                 size += len(chunk)
                 if size > max_bytes:
-                    raise ProviderError(f"download of {url} exceeds {max_bytes} bytes")
+                    raise ProviderError(f"download of {display_url(url)} exceeds {max_bytes} bytes")
                 chunks.append(chunk)
     except urllib.error.HTTPError as exc:
         exc.close()
-        raise ProviderError(_status_error(exc.code, url)) from exc
+        raise ProviderError(_status_error(exc.code, display_url(url))) from exc
     except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as exc:
-        raise ProviderError(f"{url}: {exc}") from exc
+        raise ProviderError(f"{display_url(url)}: {clean_text(str(exc))}") from exc
     return Download(filename, b"".join(chunks))
 
 
@@ -410,7 +411,7 @@ class ProviderManager:
         if scheme in ("http", "https"):
             fetched = self._fetch(source, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes)
             return fetched.filename, fetched.body
-        raise ProviderError(f"unsupported source {source!r}: use an http:// or https:// URL")
+        raise ProviderError(f"unsupported source {display_url(source)!r}: use an http:// or https:// URL")
 
     def _store(
         self,

@@ -28,7 +28,7 @@ from starlette.responses import FileResponse, JSONResponse, PlainTextResponse, R
 from starlette.routing import BaseRoute, Route
 
 from .access import NotLoggedIn, base_url, client_address, csrf_ok, current_user, request_token
-from .admin import LOGO_TYPES, PROVIDER_KINDS, AdminError, logo_filename, save_logo
+from .admin import LOGO_TYPES, PROVIDER_KINDS, AdminError, logo_filename, receive_upload, save_logo
 from .auth import LEVEL_API, LEVEL_WEB, AuthError, TooManyAttempts
 from .backup import BackupError, create_backup
 from .imagecache import image_headers
@@ -344,13 +344,12 @@ def routes(service: Service) -> list[BaseRoute]:
                             background=BackgroundTask(path.unlink, missing_ok=True))  # fmt: skip
 
     async def restore(request: Request) -> Response:
-        _, data = await upload_bytes(request)
-        if not data:
-            raise AdminError("no archive uploaded")
         fd, tmp = tempfile.mkstemp(suffix=".zip")
         try:
-            with os.fdopen(fd, "wb") as handle:
-                handle.write(data)
+            os.close(fd)
+            size = await receive_upload(request, Path(tmp), "file")
+            if not size:
+                raise AdminError("no archive uploaded")
             result = await service.restore(tmp)
         finally:
             await asyncio.to_thread(Path(tmp).unlink, missing_ok=True)

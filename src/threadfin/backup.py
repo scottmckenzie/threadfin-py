@@ -14,22 +14,31 @@ files deflated, Unix permissions kept.
 from __future__ import annotations
 
 import json
+import lzma
 import os
+import shutil
+import struct
 import tempfile
 import zipfile
+import zlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
 from pydantic import ValidationError
 
-from .jsonio import write_bytes_atomic
+from .jsonio import copy_atomic
 from .settings import Settings
 from .system import SYSTEM_FILES, SystemInfo
 
 AUTO_MARKER = "threadfin_auto_backup"
 MANUAL_PREFIX = "threadfin_backup_"
 STAMP_FORMAT = "%Y%m%d_%H%M"
+MB = 1024 * 1024
+MAX_RESTORE_TOTAL = 256 * MB
+MAX_SETTINGS_BYTES = 8 * MB
+MAX_CENTRAL_DIRECTORY = 4 * MB
+MAX_ENTRIES = 10_000
 
 
 class BackupError(ValueError):
@@ -158,31 +167,104 @@ def _mode(info: zipfile.ZipInfo) -> int:
     return (mode & 0o644) or 0o644
 
 
+def _free_space(path: Path) -> int:
+    """Return available disk space for the nearest existing ancestor of path."""
+    parent = next(p for p in (path, *path.parents) if p.exists())
+    return shutil.disk_usage(parent).free
+
+
+def _central_directory_size(path: str | os.PathLike[str]) -> int | None:
+    """Return the central directory size from the zip's end-of-central-directory record, or None.
+    Refuses archives with Zip64 end-of-central-directory locator."""
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            read_size = min(size, 65536 + 22 + 20)
+            f.seek(-read_size, 2)
+            tail = f.read(read_size)
+        idx = tail.rfind(b"PK\x05\x06")
+        if idx == -1:
+            return None
+        if idx + 16 > len(tail):
+            return None
+        if idx >= 20 and tail[idx - 20 : idx - 16] == b"PK\x06\x07":
+            return 0xFFFFFFFF
+        value: int = struct.unpack_from("<I", tail, idx + 12)[0]
+        return value
+    except OSError:
+        return None
+
+
 def restore_backup(system: SystemInfo, archive: str | os.PathLike[str], current_port: str) -> RestoreResult:
     """Unpack a backup into the config folder (Go ``ThreadfinRestore``, without the reload).
 
     Raises ``BackupError`` before writing anything if the archive is not a zip, has an entry
-    outside the config folder, or lacks a loadable ``settings.json`` of at least
-    ``system.compatibility``. The caller reloads the running state afterwards.
+    outside the config folder, holds more than ``MAX_RESTORE_TOTAL`` bytes or more than fits on the
+    disk, has a corrupt entry (``testzip`` reads every entry and checks its CRC), lacks a loadable
+    ``settings.json`` of at least ``system.compatibility``, or exceeds entry/central-directory limits.
+    Entries are streamed to disk.
+    The caller reloads the running state afterwards.
     """
     try:
+        if (cd_size := _central_directory_size(archive)) is not None and (
+            cd_size == 0xFFFFFFFF or cd_size > MAX_CENTRAL_DIRECTORY
+        ):
+            raise BackupError("archive has too many entries")
         zf = zipfile.ZipFile(archive)
     except (OSError, zipfile.BadZipFile) as exc:
         raise BackupError(f"not a backup archive: {exc}") from exc
 
     with zf:
+        if len(zf.infolist()) > MAX_ENTRIES:
+            raise BackupError("archive has too many entries")
         plan: list[tuple[zipfile.ZipInfo, str]] = []
+        total = 0
         for info in zf.infolist():
             rel = _entry_path(info.filename)
             if rel is None:
                 raise BackupError(f"archive entry outside the config folder: {info.filename}")
             plan.append((info, rel))
+            total += info.file_size
+            if total > MAX_RESTORE_TOTAL:
+                raise BackupError(f"archive contents exceed {MAX_RESTORE_TOTAL // MB} MB")
 
         settings_entry = next((i for i, rel in plan if rel == "settings.json" and not i.is_dir()), None)
         if settings_entry is None:
             raise BackupError("the archive contains no settings.json")
+        if settings_entry.file_size > MAX_SETTINGS_BYTES:
+            raise BackupError(f"settings.json in the archive exceeds {MAX_SETTINGS_BYTES // MB} MB")
+
         try:
-            raw = json.loads(zf.read(settings_entry))
+            name = zf.testzip()
+        except (
+            zipfile.BadZipFile,
+            EOFError,
+            zlib.error,
+            NotImplementedError,
+            RuntimeError,
+            lzma.LZMAError,
+            OSError,
+        ) as exc:
+            raise BackupError(f"corrupt archive: {exc}") from exc
+        if name is not None:
+            raise BackupError(f"corrupt archive entry: {name}")
+
+        try:
+            raw_bytes = zf.read(settings_entry)
+        except (
+            zipfile.BadZipFile,
+            EOFError,
+            zlib.error,
+            NotImplementedError,
+            RuntimeError,
+            lzma.LZMAError,
+            OSError,
+        ) as exc:
+            raise BackupError(f"corrupt archive: {exc}") from exc
+
+        try:
+            raw = json.loads(raw_bytes)
         except ValueError as exc:
             raise BackupError(f"invalid settings.json in the archive: {exc}") from exc
         if not isinstance(raw, dict):
@@ -195,13 +277,17 @@ def restore_backup(system: SystemInfo, archive: str | os.PathLike[str], current_
         except ValidationError as exc:
             raise BackupError(f"invalid settings.json in the archive: {exc}") from exc
 
+        if _free_space(system.config) < total:
+            raise BackupError(f"not enough free space to restore ({total} bytes needed)")
+
         for info, rel in plan:
             target = system.config / rel
             if info.is_dir() or info.filename.endswith("\\"):
                 target.mkdir(parents=True, exist_ok=True)
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
-            write_bytes_atomic(target, zf.read(info), _mode(info))
+            with zf.open(info) as source:
+                copy_atomic(target, source, _mode(info))
 
     return RestoreResult(old_port=current_port, new_port=restored.port)
 
