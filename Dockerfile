@@ -1,5 +1,7 @@
 # Threadfin (Python port). Build:  docker build -t threadfin-py .
 # Run:  docker run -d -p 34400:34400 -v threadfin-config:/config threadfin-py
+# Another port or listen address:  -e THREADFIN_PORT=34500 -p 34500:34500 -e THREADFIN_BIND=0.0.0.0
+# (THREADFIN_PORT is saved to settings.json like -port; unset, the port setting or 34400 is used).
 # The config folder (settings.json, xepg.json, data/, backup/) is /config; an existing ~/.threadfin
 # from the Go app can be mounted there as-is.
 
@@ -37,6 +39,7 @@ RUN groupadd --system --gid 1000 threadfin \
     && mkdir /config && chown threadfin:threadfin /config
 
 COPY --from=build /app/.venv /app/.venv
+COPY docker/healthcheck.py /app/healthcheck.py
 ENV PATH=/app/.venv/bin:$PATH \
     PYTHONUNBUFFERED=1
 
@@ -44,8 +47,10 @@ USER threadfin
 VOLUME /config
 EXPOSE 34400
 
-# Assumes the default port; change it here too if settings.json uses another.
+# THREADFIN_PORT / THREADFIN_BIND are deliberately not set here: a default THREADFIN_PORT would replace
+# the port in a mounted settings.json at every start. EXPOSE is only the default; publish your port.
+# The health check follows THREADFIN_PORT / THREADFIN_BIND and settings.json.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:34400/discover.json', timeout=4)"]
+    CMD ["python", "-I", "/app/healthcheck.py"]
 
 ENTRYPOINT ["threadfin", "-config", "/config"]
