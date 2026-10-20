@@ -64,8 +64,9 @@ SETTINGS_PAGE: tuple[tuple[str, tuple[SettingField, ...]], ...] = (
                      "(or the one on the PATH).", placeholder="/usr/bin/ffmpeg"),
     )),
     ("Network", (
-        SettingField("bindIpAddress", "Bind IP Address for WebUI/API", "Set the address to listen on, for "
-                     "systems with several network interfaces."),
+        SettingField("bindIpAddress", "Bind IP Address for WebUI/API", "Address to listen on. Leave empty "
+                     "for 127.0.0.1, or all interfaces when web authentication is on. -bind overrides "
+                     "this. Restart to apply."),
         SettingField("httpThreadfinDomain", "HTTP Threadfin Domain", "Use this domain instead of the address "
                      "clients used in M3U and EPG links (without http://)."),
         SettingField("forceHttps", "Force HTTPS", "Use https:// and the HTTPS domain below in M3U and EPG "

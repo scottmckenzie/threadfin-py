@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 
 from threadfin.backup import create_backup
-from threadfin.cli import listen_address, main, parser, port_number, setup_logging
+from threadfin.cli import listen_address, listening_on_loopback, main, parser, port_number, setup_logging
 from threadfin.redact import RedactAccessLog
 from threadfin.settings import Settings, SettingsError, load_settings, save_settings
 from threadfin.system import SystemInfo
@@ -45,9 +45,21 @@ class Flags(unittest.TestCase):
             parser().parse_args(["-debug", "4"])
 
     def test_listen_address(self) -> None:
-        self.assertEqual(listen_address("", Settings()), "0.0.0.0")
-        self.assertEqual(listen_address("", Settings.model_validate({"bindIpAddress": "10.0.0.2"})), "10.0.0.2")
-        self.assertEqual(listen_address("10.0.0.3", Settings.model_validate({"bindIpAddress": "10.0.0.2"})), "10.0.0.3")
+        # No address and web authentication off: loopback, so the admin UI and API are not on the network.
+        self.assertEqual(listen_address("", Settings()), "127.0.0.1")
+        self.assertTrue(listening_on_loopback("127.0.0.1"))
+        self.assertTrue(listening_on_loopback("::1"))
+        self.assertTrue(listening_on_loopback("localhost"))
+        self.assertFalse(listening_on_loopback("0.0.0.0"))
+        self.assertFalse(listening_on_loopback("::"))
+        # An explicit address is kept, including the old all-interfaces value, and -bind wins.
+        self.assertEqual(listen_address("", Settings(bind_ip_address="10.0.0.2")), "10.0.0.2")
+        self.assertEqual(listen_address("", Settings(bind_ip_address="0.0.0.0")), "0.0.0.0")
+        self.assertEqual(listen_address("10.0.0.3", Settings(bind_ip_address="10.0.0.2")), "10.0.0.3")
+        self.assertEqual(listen_address("0.0.0.0", Settings()), "0.0.0.0")
+        # Web authentication already on, and no address chosen: keep all interfaces so login still works.
+        self.assertEqual(listen_address("", Settings(authentication_web=True)), "0.0.0.0")
+        self.assertEqual(listen_address("", Settings(bind_ip_address="10.0.0.2", authentication_web=True)), "10.0.0.2")
 
     def test_port(self) -> None:
         self.assertEqual(port_number(Settings()), 34400)
@@ -68,6 +80,28 @@ class Commands(unittest.TestCase):
         code = main(["-config", str(self.config), *argv], ask=lambda _: answer, out=out,
                     run=lambda *a: self.runs.append(a))  # fmt: skip
         return code, out.getvalue()
+
+    def test_open_bind_without_auth_is_logged(self) -> None:
+        with self.assertLogs("threadfin", level="WARNING") as captured:
+            code, _ = self.run_main("-bind", "0.0.0.0")
+        self.assertEqual(code, 0)
+        self.assertIn("authentication.web is off", "\n".join(captured.output))
+        self.assertIn("0.0.0.0", "\n".join(captured.output))
+
+    def test_loopback_and_web_auth_do_not_warn(self) -> None:
+        with self.assertNoLogs("threadfin", level="WARNING"):
+            code, _ = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertEqual(listen_address("", self.runs[-1][1]), "127.0.0.1")
+
+        self.run_main("-info")  # create the config, then turn web authentication on
+        settings = load_settings(SystemInfo(config=self.config))
+        settings.authentication_web = True
+        save_settings(settings, SystemInfo(config=self.config))
+        with self.assertNoLogs("threadfin", level="WARNING"):
+            code, _ = self.run_main("-bind", "0.0.0.0")
+        self.assertEqual(code, 0)
+        self.assertTrue(self.runs[-1][1].authentication_web)
 
     def test_start(self) -> None:
         code, _ = self.run_main("-port", "34999", "-bind", "127.0.0.1", "-debug", "1")

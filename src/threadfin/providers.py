@@ -15,7 +15,9 @@ Differences from Go (all fixes, see docs/PARITY_NOTES.md):
   parameters after the file name no longer end up in the name;
 * every provider's outcome is returned (Go only returned the last provider's error);
 * downloads have a hard total deadline and size limits;
-* values containing ``"`` survive the playlist copy (see :func:`threadfin.m3u.serialize_m3u`).
+* values containing ``"`` survive the playlist copy (see :func:`threadfin.m3u.serialize_m3u`);
+* ``file.<app>`` is only ever a file name inside the data directory. An absolute path, a
+  ``..`` segment, or a symlink that leaves that directory fails the refresh and writes nothing.
 """
 
 from __future__ import annotations
@@ -242,6 +244,27 @@ def availability(errors: float, downloads: float) -> int:
     return int(errors * 100 / downloads * -1 + 100)
 
 
+def provider_file(data_dir: Path, name: Any) -> Path:
+    """Local copy of a provider, which must stay inside ``data_dir``.
+
+    ``name`` is ``file.<app>`` from the API, ``settings.json``, or a restored backup. It has to be
+    a single file name: an absolute path or anything with a directory segment (``../``, ``a/b``)
+    is rejected. A name that is a symlink pointing outside the data directory is rejected too.
+    The returned path is ``data_dir / name`` and not the symlink target, so a later write replaces
+    the link instead of following it.
+    """
+    if not isinstance(name, str) or not name or "\x00" in name or name in (".", "..") or name != Path(name).name:
+        raise ProviderError(f"provider file {name!r} must stay inside the data directory")
+    root = data_dir.resolve()
+    try:
+        resolved = (root / name).resolve()
+    except OSError as exc:
+        raise ProviderError(f"provider file {name!r} must stay inside the data directory") from exc
+    if resolved == root or not resolved.is_relative_to(root):
+        raise ProviderError(f"provider file {name!r} must stay inside the data directory")
+    return data_dir / name
+
+
 def apply_defaults(
     data: dict[str, Any], *, kind: str, provider_id: str, source: str, server_name: str, app: str
 ) -> None:
@@ -438,7 +461,7 @@ class ProviderManager:
         else:
             record["compatibility"] = check_xmltv(body)
 
-        write_bytes_atomic(self._data / str(record[f"file.{self._app}"]), body)
+        write_bytes_atomic(provider_file(self._data, record.get(f"file.{self._app}")), body)
         record["last.update"] = _now()
         record["counter.download"] = _number(record.get("counter.download")) + 1
         return RefreshResult(provider_id, kind, True, None, count, skipped)

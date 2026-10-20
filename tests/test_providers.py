@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import gzip
 import os
+import shutil
 import tempfile
 import threading
 import time
@@ -27,6 +28,7 @@ from threadfin.providers import (
     filename_from_url,
     go_base,
     new_provider_id,
+    provider_file,
 )
 from threadfin.settings import Settings
 
@@ -317,6 +319,46 @@ class RefreshTests(ServerCase):
         self.assertEqual(seen["user_agent"], "TestAgent/1")
         self.assertEqual(seen["timeout"], 500.0)  # buffer.timeout default
 
+    async def test_provider_file_outside_the_data_directory_is_not_written(self) -> None:
+        """A file.threadfin from the API, settings, or a restored backup cannot leave the data dir."""
+        outside = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, outside, True)
+        absolute = outside / "absolute.m3u"
+        with self.assertRaises(ProviderError) as ctx:
+            await self.manager.add("m3u", {"file.source": f"{self.base}/list.m3u", "file.threadfin": str(absolute)})
+        self.assertIn("must stay inside the data directory", str(ctx.exception))
+        self.assertFalse(absolute.exists())
+        self.assertEqual(self.settings.files.m3u, {})
+        self.assertEqual(list(self.data.iterdir()), [])
+
+        await self.manager.add("m3u", {"file.source": f"{self.base}/list.m3u"})
+        pid, record = next(iter(self.settings.files.m3u.items()))
+        kept = (self.data / f"{pid}.m3u").read_bytes()
+        parent_escape = self.data.parent / "escaped.m3u"
+        self.addCleanup(parent_escape.unlink, missing_ok=True)
+        for name in (str(absolute), "../escaped.m3u", "nested/../../escaped.m3u", "..", "a/b.m3u"):
+            with self.subTest(name=name):
+                record["file.threadfin"] = name
+                (result,) = await self.manager.refresh("m3u", pid)
+                self.assertFalse(result.ok)
+                self.assertIn("must stay inside the data directory", result.error or "")
+                self.assertFalse(absolute.exists())
+                self.assertFalse(parent_escape.exists())
+                self.assertEqual((self.data / f"{pid}.m3u").read_bytes(), kept)
+
+        link = self.data / "linked.m3u"
+        link.symlink_to(absolute)
+        record["file.threadfin"] = "linked.m3u"
+        (result,) = await self.manager.refresh("m3u", pid)
+        self.assertFalse(result.ok)
+        self.assertFalse(absolute.exists())
+        self.assertTrue(link.is_symlink())  # the link was not replaced with the playlist
+
+        record["file.threadfin"] = pid + ".m3u"
+        (result,) = await self.manager.refresh("m3u", pid)
+        self.assertTrue(result.ok)
+        self.assertTrue((self.data / f"{pid}.m3u").is_file())
+
     async def test_parameter_and_compatibility_helpers(self) -> None:
         self.settings.files.m3u["M1"] = {"name": "N", "tuner": 3.0, "flag": True}
         self.assertEqual(self.manager.parameter("m3u", "M1", "name"), "N")
@@ -373,6 +415,33 @@ class PureTests(unittest.TestCase):
     def test_ids(self) -> None:
         self.assertEqual(len({new_provider_id("xmltv") for _ in range(50)}), 50)
         self.assertTrue(new_provider_id("m3u").startswith("M"))
+
+    def test_provider_file_rejects_paths_that_leave_the_data_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            data = Path(tmp) / "data"
+            data.mkdir()
+            outside = Path(tmp) / "proof.m3u"
+            self.assertEqual(provider_file(data, "ok.m3u"), data / "ok.m3u")
+            for name in (
+                str(outside),
+                "../proof.m3u",
+                "nested/../../proof.m3u",
+                "..",
+                ".",
+                "",
+                "/etc/passwd",
+                "a/b.m3u",
+                None,
+                3,
+            ):
+                with self.subTest(name=name), self.assertRaises(ProviderError):
+                    provider_file(data, name)
+            self.assertFalse(outside.exists())
+            link = data / "link.m3u"
+            link.symlink_to(outside)
+            with self.assertRaises(ProviderError):
+                provider_file(data, "link.m3u")
+            self.assertFalse(outside.exists())
 
     def test_apply_defaults_keeps_existing(self) -> None:
         data = {"name": "Mine", "counter.error": 2}

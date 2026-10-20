@@ -6,14 +6,17 @@ a backup.
     threadfin -info
 
 Go's single-dash flags work, and so do ``--config`` etc. ``-port`` is saved to settings.json, as in
-Go. Differences: the server listens on all interfaces unless ``-bind`` or the ``bindIpAddress``
-setting says otherwise (Go listened only on the first LAN address it found, and the setting won
-over the flag); ``-dev`` is gone; ``-branch`` is accepted and saved but nothing updates itself.
+Go. Differences: with no ``-bind`` and no ``bindIpAddress``, the server listens on ``127.0.0.1``
+unless web authentication is already on, in which case it still listens on all interfaces (Go
+listened only on the first LAN address it found, and the setting won over the flag). ``-bind``
+wins over the setting. ``-dev`` is gone; ``-branch`` is accepted and saved but nothing updates
+itself.
 """
 
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import logging
 import socket
 import sys
@@ -43,7 +46,8 @@ def parser() -> argparse.ArgumentParser:
         "--bind",
         default="",
         metavar="IP",
-        help="address to listen on (default: the bindIpAddress setting, else all interfaces)",
+        help="address to listen on (default: bindIpAddress, else all interfaces when web "
+        "authentication is on, else 127.0.0.1)",
     )
     p.add_argument("-restore", "--restore", metavar="FILE", default="", help="restore a backup, then exit")
     p.add_argument("-info", "--info", action="store_true", help="show system info, then exit")
@@ -80,8 +84,32 @@ def prepare(config: str) -> SystemInfo:
     return system
 
 
+def listening_on_loopback(host: str) -> bool:
+    """True for ``localhost`` and loopback IPs. ``0.0.0.0`` and ``::`` are not loopback."""
+    if host.lower() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
 def listen_address(flag: str, settings: Settings) -> str:
-    return flag or settings.bind_ip_address or "0.0.0.0"
+    """``-bind``, else ``bindIpAddress``, else a safe default.
+
+    An install that has not chosen an address and has not turned on web authentication listens
+    on ``127.0.0.1`` only, so the admin UI and API are not reachable from other machines. A saved
+    ``bindIpAddress`` (including ``0.0.0.0``) or ``-bind`` is used as given. Web authentication
+    already on, with no address set, still listens on all interfaces so that login keeps working
+    from the network.
+    """
+    if flag:
+        return flag
+    if settings.bind_ip_address:
+        return settings.bind_ip_address
+    if settings.authentication_web:
+        return "0.0.0.0"
+    return "127.0.0.1"
 
 
 def port_number(settings: Settings) -> int:
@@ -185,6 +213,14 @@ def main(argv: Sequence[str] | None = None, *, ask: Callable[[str], str] = input
             show_info(system, settings, out)
             return 0
         port_number(settings)
+        host = listen_address(args.bind, settings)
+        if not listening_on_loopback(host) and not settings.authentication_web:
+            log.warning(
+                "authentication.web is off and %s is listening on %s, so the admin UI and API are "
+                "reachable without a login. Turn on web authentication, or listen on 127.0.0.1.",
+                NAME,
+                host,
+            )
         run(system, settings, args.bind, args.debug)
     except (SettingsError, OSError) as exc:
         print(f"{NAME}: {exc}", file=sys.stderr)
@@ -192,4 +228,4 @@ def main(argv: Sequence[str] | None = None, *, ask: Callable[[str], str] = input
     return 0
 
 
-__all__ = ["listen_address", "main", "parser", "port_number"]
+__all__ = ["listen_address", "listening_on_loopback", "main", "parser", "port_number"]
