@@ -2,6 +2,7 @@
 # Run:  docker run -d -p 34400:34400 -v threadfin-config:/config threadfin-py
 # Another port or listen address:  -e THREADFIN_PORT=34500 -p 34500:34500 -e THREADFIN_BIND=0.0.0.0
 # (THREADFIN_PORT is saved to settings.json like -port; unset, the port setting or 34400 is used).
+# Use THREADFIN_BIND=0.0.0.0, not ::, which listens on IPv6 only and so is not reachable through -p.
 # The config folder (settings.json, xepg.json, data/, backup/) is /config; an existing ~/.threadfin
 # from the Go app can be mounted there as-is.
 
