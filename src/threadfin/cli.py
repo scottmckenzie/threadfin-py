@@ -5,8 +5,9 @@ a backup.
     threadfin -restore /path/to/threadfin_backup.zip
     threadfin -info
 
-Go's single-dash flags work, and so do ``--config`` etc. ``-port`` is saved to settings.json, as in
-Go. Differences: the server listens on all interfaces unless ``-bind`` or the ``bindIpAddress``
+Go's single-dash flags work, and so do ``--config`` etc. ``-port`` and ``-bind`` can also be set with
+``THREADFIN_PORT`` and ``THREADFIN_BIND`` (new; the flag wins, an empty value counts as unset).
+``-port`` is saved to settings.json, as in Go, and so is ``THREADFIN_PORT``. Differences: the server listens on all interfaces unless ``-bind`` or the ``bindIpAddress``
 setting says otherwise (Go listened only on the first LAN address it found, and the setting won
 over the flag); ``-dev`` is gone; ``-branch`` is accepted and saved but nothing updates itself.
 """
@@ -15,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import socket
 import sys
 from collections.abc import Callable, Sequence
@@ -30,6 +32,9 @@ from .system import NAME, SystemInfo, default_config_folder
 
 log = logging.getLogger("threadfin")
 
+PORT_ENV = "THREADFIN_PORT"
+BIND_ENV = "THREADFIN_BIND"
+
 
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="threadfin", description=f"{NAME} {__version__}: M3U proxy and EPG mapper "
@@ -37,13 +42,18 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument(
         "-config", "--config", metavar="DIR", default="", help=f"config folder (default: {default_config_folder()})"
     )
-    p.add_argument("-port", "--port", default="", help="server port, saved to settings.json (default: 34400)")
+    p.add_argument(
+        "-port",
+        "--port",
+        default=os.environ.get(PORT_ENV, ""),
+        help=f"server port, saved to settings.json (default: ${PORT_ENV}, else the port setting, else 34400)",
+    )
     p.add_argument(
         "-bind",
         "--bind",
-        default="",
+        default=os.environ.get(BIND_ENV, ""),
         metavar="IP",
-        help="address to listen on (default: the bindIpAddress setting, else all interfaces)",
+        help=f"address to listen on (default: ${BIND_ENV}, else the bindIpAddress setting, else all interfaces)",
     )
     p.add_argument("-restore", "--restore", metavar="FILE", default="", help="restore a backup, then exit")
     p.add_argument("-info", "--info", action="store_true", help="show system info, then exit")
@@ -192,4 +202,4 @@ def main(argv: Sequence[str] | None = None, *, ask: Callable[[str], str] = input
     return 0
 
 
-__all__ = ["listen_address", "main", "parser", "port_number"]
+__all__ = ["BIND_ENV", "PORT_ENV", "listen_address", "main", "parser", "port_number"]

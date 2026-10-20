@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import os
 import queue
 import signal
 import socket
@@ -40,6 +41,17 @@ class Flags(unittest.TestCase):
                 args = parser().parse_args(argv)
                 self.assertEqual((args.config, args.port, args.bind, args.debug), ("/c", "1", "10.0.0.1", 2))
 
+    def test_environment(self) -> None:
+        env = {"THREADFIN_PORT": "2", "THREADFIN_BIND": "10.0.0.2"}
+        with unittest.mock.patch.dict("os.environ", env):
+            args = parser().parse_args([])
+            self.assertEqual((args.port, args.bind), ("2", "10.0.0.2"))
+            args = parser().parse_args(["-port", "1", "-bind", "10.0.0.1"])  # the flags win
+            self.assertEqual((args.port, args.bind), ("1", "10.0.0.1"))
+        with unittest.mock.patch.dict("os.environ", {"THREADFIN_PORT": "", "THREADFIN_BIND": ""}):
+            args = parser().parse_args([])
+            self.assertEqual((args.port, args.bind), ("", ""))  # empty is unset
+
     def test_debug_range(self) -> None:
         with self.assertRaises(SystemExit), io.StringIO() as err, unittest.mock.patch("sys.stderr", err):
             parser().parse_args(["-debug", "4"])
@@ -62,6 +74,11 @@ class Commands(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.config = Path(tmp.name) / "cfg"
         self.runs: list[tuple[SystemInfo, Settings, str, int]] = []
+        env = unittest.mock.patch.dict("os.environ")
+        env.start()
+        self.addCleanup(env.stop)
+        for name in ("THREADFIN_PORT", "THREADFIN_BIND"):
+            os.environ.pop(name, None)
 
     def run_main(self, *argv: str, answer: str = "") -> tuple[int, str]:
         out = io.StringIO()
@@ -77,6 +94,14 @@ class Commands(unittest.TestCase):
         self.assertTrue(system.folder_backup.is_dir())
         self.assertTrue(system.file_authentication.is_file())
         self.assertEqual(json.loads(system.file_settings.read_text())["port"], "34999")  # saved, as in Go
+
+    def test_start_from_environment(self) -> None:
+        os.environ.update(THREADFIN_PORT="34998", THREADFIN_BIND="127.0.0.2")
+        code, _ = self.run_main()
+        self.assertEqual(code, 0)
+        [(system, settings, bind, _debug)] = self.runs
+        self.assertEqual((settings.port, bind), ("34998", "127.0.0.2"))
+        self.assertEqual(json.loads(system.file_settings.read_text())["port"], "34998")  # saved, like -port
 
     def test_invalid_port_does_not_start(self) -> None:
         with unittest.mock.patch("sys.stderr", io.StringIO()) as err:

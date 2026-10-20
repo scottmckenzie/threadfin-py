@@ -320,6 +320,7 @@ Tested with the real command (`tests/test_cli.py` starts and stops a server proc
 | Flags `-config`, `-port`, `-restore`, `-info`, `-debug`, `-bind`, `-branch`, `-h`; `-port` is saved to settings.json. | kept (also as `--config` etc.) |
 | `-restore`: shows version, file and config folder, asks `yes` / `no` (any other answer: `Invalid input`), restores, exits. | kept; a failed restore is reported and changes nothing (see Backup) |
 | The server listened only on the first LAN address found (not even `localhost`), and the `bindIpAddress` setting won over `-bind`. | **changed**: all interfaces by default; `-bind` wins over the setting |
+| Flags only; no environment variables. | **new**: `THREADFIN_PORT` / `THREADFIN_BIND` set `-port` / `-bind` when the flag is absent (empty counts as unset); `THREADFIN_PORT` is saved to settings.json like `-port` |
 | `-dev` (web files from the source tree); `-branch` chose the self-update branch. | `-dev` **dropped**; `-branch` accepted and saved, nothing updates itself |
 | Binary self-update check at start-up. | **dropped** (see Backup, restore and scheduler) |
 | Request logging. | **new**: from `-debug 2` (off below, since `/m3u/` and `/xmltv/` URLs can carry credentials) |
