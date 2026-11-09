@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import gc
+import gzip
 import json
 import tempfile
 import tracemalloc
 import unittest
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import IO
 from xml.etree import ElementTree
 from zoneinfo import ZoneInfo
 
@@ -16,6 +19,8 @@ from test_epg import channel
 
 from threadfin.epg import EPGOptions, write_xmltv
 from threadfin.jsonio import save_json, to_json
+from threadfin.providers import ProviderManager, check_xmltv, gunzip_file
+from threadfin.settings import Settings
 from threadfin.xepg import XEPGChannel
 
 NOW = datetime(2026, 10, 12, 10, tzinfo=ZoneInfo("Australia/Sydney"))
@@ -150,3 +155,52 @@ class MemoryCeiling(unittest.TestCase):
                 save_json(path, {"bad": object()})
             self.assertEqual(json.loads(path.read_text("utf-8")), {"ok": 1})
             self.assertEqual([p.name for p in Path(td).iterdir()], ["x.json"])
+
+
+class ProviderDownload(unittest.TestCase):
+    """A provider's guide goes to disk as it downloads and is unzipped and checked from files."""
+
+    def setUp(self) -> None:
+        self._td = tempfile.TemporaryDirectory()
+        self.addCleanup(self._td.cleanup)
+        self.folder = Path(self._td.name)
+        programmes = [(f"src.{i % 50}", "x" * 300 + str(i)) for i in range(60000)]
+        self.xml = guide(programmes).encode("utf-8")
+        self.assertGreater(len(self.xml), 20 << 20)
+
+    def test_check_xmltv_drops_counted_elements(self) -> None:
+        path = self.folder / "tv.xml"
+        path.write_bytes(self.xml)
+        peak = traced_peak(check_xmltv, path)
+        self.assertLess(peak, 2 << 20, f"peak={peak}")
+        self.assertEqual(check_xmltv(path), {"xmltv.channels": 0, "xmltv.programs": 60000})
+
+    def test_gunzip_file_works_in_blocks(self) -> None:
+        source, dest = self.folder / "tv.xml.gz", self.folder / "tv.xml"
+        source.write_bytes(gzip.compress(self.xml, compresslevel=1))
+        peak = traced_peak(gunzip_file, source, dest)
+        self.assertLess(peak, 8 << 20, f"peak={peak}")
+        self.assertEqual(dest.read_bytes(), self.xml)
+
+    def test_adding_a_gzipped_guide(self) -> None:
+        body = gzip.compress(self.xml, compresslevel=1)
+
+        def fetch(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            for i in range(0, len(body), 1 << 16):
+                dest.write(body[i : i + (1 << 16)])
+            return "tv.xml.gz"
+
+        data = self.folder / "data"
+        data.mkdir()
+        settings = Settings()
+        manager = ProviderManager(settings, data, lambda: None, fetch=fetch)
+
+        def add() -> None:
+            asyncio.run(manager.add("xmltv", {"file.source": "http://prov/tv.xml.gz"}))
+
+        peak = traced_peak(add)
+        self.assertLess(peak, 10 << 20, f"peak={peak} unzipped={len(self.xml)}")
+        ((pid, record),) = settings.files.xmltv.items()
+        self.assertEqual((data / f"{pid}.xml").read_bytes(), self.xml)
+        self.assertEqual(record["compatibility"], {"xmltv.channels": 0, "xmltv.programs": 60000})
+        self.assertEqual(sorted(p.name for p in data.iterdir()), [f"{pid}.xml"])

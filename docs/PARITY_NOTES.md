@@ -96,6 +96,7 @@ Go `buildDatabaseDVR` on 28 cases.
 | The local copy is a normalised playlist holding only `tvg-id`, `tvg-name`, `tvg-chno`, `tvg-logo`, `group-title`, name and URL, so custom filters only see those values. | kept |
 | ...but a value containing `"` produced a broken line in that copy. | **fixed**: written with single quotes (both kinds: inner `"` becomes `'`) |
 | gzip bodies are unpacked; corrupt or truncated gzip falls back to the raw bytes. | kept; **new**: size limit on the unpacked data |
+| The download, its unpacked copy and the XMLTV check all held the whole file in memory. | **changed**: the download is written to a temp file in the data folder as it arrives, unpacked into a second one and checked from disk; an XMLTV copy is then renamed into place, so memory stays flat whatever the guide size (a playlist is still read into memory to be parsed and rewritten) |
 | `Content-Disposition` without `=` panicked, and `filename="a.m3u"; size=3` became `a.m3u size`. | **fixed**: proper header parsing (also `filename*=`), path parts stripped |
 | HDHomeRun tuners as a source (`files.hdhr`: the tuner's `lineup.json` read as a playlist). | **dropped**: records are kept in settings.json but never fetched or read; their channels are no longer in the stream database |
 | The last provider's error was the only one returned from a refresh-all or database build, so one bad provider's failure depended on random map order. | **fixed**: every provider's outcome is reported (`RefreshResult`, `StreamDatabase.errors`) and the rest still loads |

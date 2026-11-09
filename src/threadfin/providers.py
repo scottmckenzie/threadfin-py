@@ -21,8 +21,10 @@ Differences from Go (all fixes, see docs/PARITY_NOTES.md):
 from __future__ import annotations
 
 import asyncio
+import gzip
 import http
 import http.client
+import io
 import ipaddress
 import os
 import secrets
@@ -34,7 +36,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from email.message import Message
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 from urllib.parse import urlsplit
 from xml.etree import ElementTree
 
@@ -48,6 +50,7 @@ ID_PREFIX = {"m3u": "M", "xmltv": "X"}
 
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_BYTES = 1 << 30  # 1 GiB, both on the wire and after gunzip
+_BLOCK = 1 << 20  # unzip and copy in 1 MiB blocks
 
 _ID_ALPHABET = "AB1CD2EF3GH4IJ5KL6MN7OP8QR9ST0UVWXYZ"
 
@@ -95,33 +98,34 @@ def filename_from_content_disposition(header: str) -> str | None:
     return name or None
 
 
-def extract_gzip(body: bytes, *, max_bytes: int = DEFAULT_MAX_BYTES) -> bytes:
-    """Gunzip ``body``; anything that is not (valid) gzip is returned unchanged, as in Go.
+def gunzip_file(
+    source: str | os.PathLike[str], dest: str | os.PathLike[str], *, max_bytes: int = DEFAULT_MAX_BYTES
+) -> bool:
+    """Gunzip ``source`` into ``dest`` in blocks; False if ``source`` is not (valid) gzip.
 
-    Concatenated gzip members are joined (Go reads them too). A truncated or corrupt stream
-    yields the raw bytes, which then fail validation with a clear error. Output beyond
-    ``max_bytes`` raises, so a small download cannot expand without bound.
+    The caller then uses the raw file, as Go does. Concatenated gzip members are joined (Go
+    reads them too). A truncated or corrupt stream gives False, so the raw bytes then fail
+    validation with a clear error; ``dest`` may be left partly written. Output beyond
+    ``max_bytes`` raises, so a small download cannot expand without bound. ``dest`` is only
+    created when ``source`` starts with the gzip magic number.
     """
-    if body[:2] != b"\x1f\x8b":
-        return body
-    out = bytearray()
-    data = body
-    try:
-        while data:
-            member = zlib.decompressobj(wbits=31)
-            while not member.eof:
-                room = max_bytes + 1 - len(out)
-                chunk = member.decompress(data if data else member.unconsumed_tail, room)
-                out += chunk
-                if len(out) > max_bytes:
+    with open(source, "rb") as raw:
+        if raw.read(2) != b"\x1f\x8b":
+            return False
+        raw.seek(0)
+        size = 0
+        with gzip.GzipFile(fileobj=raw, mode="rb") as unpacked, open(dest, "wb") as out:
+            while True:
+                try:
+                    block = unpacked.read(_BLOCK)
+                except (OSError, EOFError, zlib.error):  # gzip.BadGzipFile is an OSError
+                    return False
+                if not block:
+                    return True
+                size += len(block)
+                if size > max_bytes:
                     raise ProviderError(f"decompressed file exceeds {max_bytes} bytes")
-                data = b""
-                if not chunk and not member.eof and not member.unconsumed_tail:
-                    return body  # input ended inside a member
-            data = member.unused_data
-    except zlib.error:
-        return body
-    return bytes(out)
+                out.write(block)
 
 
 def _is_loopback(host: str) -> bool:
@@ -147,7 +151,25 @@ def download(
     timeout: float = DEFAULT_TIMEOUT,
     max_bytes: int = DEFAULT_MAX_BYTES,
 ) -> Download:
-    """Blocking HTTP GET with a total deadline (run it in a thread)."""
+    """Blocking HTTP GET into memory, for small files (see :func:`download_to`)."""
+    buffer = io.BytesIO()
+    filename = download_to(url, buffer, proxy=proxy, user_agent=user_agent, timeout=timeout, max_bytes=max_bytes)
+    return Download(filename, buffer.getvalue())
+
+
+def download_to(
+    url: str,
+    dest: IO[bytes],
+    *,
+    proxy: str = "",
+    user_agent: str = "",
+    timeout: float = DEFAULT_TIMEOUT,
+    max_bytes: int = DEFAULT_MAX_BYTES,
+) -> str:
+    """Blocking HTTP GET with a total deadline, written to ``dest`` as it arrives (run it in a thread).
+
+    Returns the server's file name. On error ``dest`` may hold part of the body.
+    """
     parts = urlsplit(url)
     if parts.scheme.lower() not in ("http", "https") or not parts.hostname:
         raise ProviderError(f"parse {display_url(url)!r}: invalid URI for request")
@@ -168,7 +190,6 @@ def download(
                 raise ProviderError(_status_error(response.status, display_url(url)))
             disposition = response.headers.get("Content-Disposition", "")
             filename = filename_from_content_disposition(disposition) or filename_from_url(url)
-            chunks: list[bytes] = []
             size = 0
             while True:
                 if time.monotonic() > deadline:
@@ -179,13 +200,13 @@ def download(
                 size += len(chunk)
                 if size > max_bytes:
                     raise ProviderError(f"download of {display_url(url)} exceeds {max_bytes} bytes")
-                chunks.append(chunk)
+                dest.write(chunk)
     except urllib.error.HTTPError as exc:
         exc.close()
         raise ProviderError(_status_error(exc.code, display_url(url))) from exc
     except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as exc:
         raise ProviderError(f"{display_url(url)}: {clean_text(str(exc))}") from exc
-    return Download(filename, b"".join(chunks))
+    return filename
 
 
 def _status_error(status: int, url: str) -> str:
@@ -199,18 +220,28 @@ def _status_error(status: int, url: str) -> str:
 # --- content handling -----------------------------------------------------------
 
 
-def check_xmltv(body: bytes) -> dict[str, int]:
-    """Validate an XMLTV file and count its channels and programmes (Go ``checkXMLCompatibility``)."""
-    import io
+def check_xmltv(source: bytes | str | os.PathLike[str]) -> dict[str, int]:
+    """Validate an XMLTV file (its bytes or its path) and count its channels and programmes.
 
+    Go ``checkXMLCompatibility``. Each top-level element is dropped once counted, so memory
+    stays flat whatever the file size.
+    """
+    with io.BytesIO(source) if isinstance(source, bytes) else open(source, "rb") as handle:
+        return _count_xmltv(handle)
+
+
+def _count_xmltv(handle: IO[bytes]) -> dict[str, int]:
     channels = programmes = 0
     depth = 0
+    root: ElementTree.Element | None = None
     try:
-        for event, element in ElementTree.iterparse(io.BytesIO(body), events=("start", "end")):
+        for event, element in ElementTree.iterparse(handle, events=("start", "end")):
             if event == "start":
                 depth += 1
-                if depth == 1 and element.tag != "tv":
-                    raise ProviderError(f"expected element <tv> but have <{element.tag}>")
+                if depth == 1:
+                    if element.tag != "tv":
+                        raise ProviderError(f"expected element <tv> but have <{element.tag}>")
+                    root = element
             else:
                 depth -= 1
                 if depth == 1:
@@ -219,6 +250,8 @@ def check_xmltv(body: bytes) -> dict[str, int]:
                     elif element.tag == "programme":
                         programmes += 1
                     element.clear()
+                    if root is not None:
+                        root.remove(element)
     except ElementTree.ParseError as exc:
         raise ProviderError(f"invalid XMLTV file: {exc}") from exc
     return {"xmltv.channels": channels, "xmltv.programs": programmes}
@@ -292,7 +325,7 @@ class ProviderManager:
         *,
         app_name: str = "threadfin",
         max_bytes: int = DEFAULT_MAX_BYTES,
-        fetch: Callable[..., Download] = download,
+        fetch: Callable[..., str] = download_to,
     ) -> None:
         self._settings = settings
         self._data = Path(data_folder)
@@ -393,24 +426,31 @@ class ProviderManager:
         if isinstance(ip, str) and isinstance(port, str) and ip and port:
             proxy = f"http://{ip}:{port}"
 
+        # the download goes to disk, never all into memory; refreshes run one at a time (self._lock)
+        raw = self._data / f".{provider_id}.download.tmp"
         try:
-            filename, body = await asyncio.to_thread(self._fetch_source, kind, source, proxy)
-            result = await asyncio.to_thread(self._store, kind, provider_id, record, source, filename, body)
+            filename = await asyncio.to_thread(self._fetch_source, kind, source, proxy, raw)
+            result = await asyncio.to_thread(self._store, kind, provider_id, record, source, filename, raw)
         except (ProviderError, InvalidM3UError, OSError) as exc:
             return self._failed(kind, provider_id, record, str(exc), new)
+        finally:
+            raw.unlink(missing_ok=True)
         if not new:
             self._update_availability(record)
         await asyncio.to_thread(self._save)
         return result
 
-    def _fetch_source(self, kind: str, source: str, proxy: str) -> tuple[str, bytes]:
+    def _fetch_source(self, kind: str, source: str, proxy: str, dest: Path) -> str:
         timeout = self._settings.buffer_timeout
         timeout = float(timeout) if timeout and timeout > 0 else DEFAULT_TIMEOUT
         agent = self._settings.user_agent
         scheme = urlsplit(source).scheme.lower()
         if scheme in ("http", "https"):
-            fetched = self._fetch(source, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes)
-            return fetched.filename, fetched.body
+            with open(dest, "wb") as out:
+                filename: str = self._fetch(
+                    source, out, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes
+                )
+            return filename
         raise ProviderError(f"unsupported source {display_url(source)!r}: use an http:// or https:// URL")
 
     def _store(
@@ -420,25 +460,29 @@ class ProviderManager:
         record: dict[str, Any],
         source: str,
         server_name: str,
-        body: bytes,
+        raw: Path,
     ) -> RefreshResult:
         apply_defaults(
             record, kind=kind, provider_id=provider_id, source=source,
             server_name=server_name, app=self._app,
         )  # fmt: skip
-        body = extract_gzip(body, max_bytes=self._max_bytes)
-
+        target = self._data / str(record[f"file.{self._app}"])
+        unpacked = raw.with_name(raw.name + ".gunzip")
         skipped: list[SkippedEntry] = []
         count = 0
-        if kind == "m3u":
-            parsed = parse_m3u_report(body)
-            skipped = parsed.skipped
-            count = len(parsed.streams)
-            body = serialize_m3u(parsed.streams).encode("utf-8")
-        else:
-            record["compatibility"] = check_xmltv(body)
-
-        write_bytes_atomic(self._data / str(record[f"file.{self._app}"]), body)
+        try:
+            local = unpacked if gunzip_file(raw, unpacked, max_bytes=self._max_bytes) else raw
+            if kind == "m3u":
+                parsed = parse_m3u_report(local.read_bytes())  # playlists are small; the parser needs it all
+                skipped = parsed.skipped
+                count = len(parsed.streams)
+                write_bytes_atomic(target, serialize_m3u(parsed.streams).encode("utf-8"))
+            else:
+                record["compatibility"] = check_xmltv(local)
+                os.chmod(local, 0o644)
+                os.replace(local, target)  # same folder, so the swap is atomic
+        finally:
+            unpacked.unlink(missing_ok=True)
         record["last.update"] = _now()
         record["counter.download"] = _number(record.get("counter.download")) + 1
         return RefreshResult(provider_id, kind, True, None, count, skipped)

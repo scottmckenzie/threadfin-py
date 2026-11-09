@@ -11,7 +11,7 @@ import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import ClassVar
+from typing import IO, ClassVar
 from unittest import mock
 
 from threadfin.m3u import parse_m3u
@@ -22,10 +22,11 @@ from threadfin.providers import (
     availability,
     check_xmltv,
     download,
-    extract_gzip,
+    download_to,
     filename_from_content_disposition,
     filename_from_url,
     go_base,
+    gunzip_file,
     new_provider_id,
 )
 from threadfin.settings import Settings
@@ -268,6 +269,7 @@ class RefreshTests(ServerCase):
         self.assertEqual((record["counter.error"], record["counter.download"]), (1, 2))
         self.assertEqual(record["provider.availability"], 50)
         self.assertEqual((self.data / f"{pid}.m3u").read_bytes(), copy)  # old copy kept
+        self.assertEqual([p.name for p in self.data.iterdir()], [f"{pid}.m3u"])  # no temp files
 
         Handler.fail = False
         await self.manager.refresh("m3u", pid)
@@ -292,6 +294,28 @@ class RefreshTests(ServerCase):
         self.assertNotIn("tuner", record)
         self.assertTrue((self.data / f"{pid}.xml").exists())
 
+    async def test_invalid_xmltv_refresh_keeps_old_copy(self) -> None:
+        bodies = {"body": gzip.compress(XMLTV.encode())}
+
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            dest.write(bodies["body"])
+            return "tv.xml.gz"
+
+        manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
+        await manager.add("xmltv", {"file.source": "http://prov/tv.xml.gz"})
+        ((pid, record),) = self.settings.files.xmltv.items()
+        local = self.data / f"{pid}.xml"
+        self.assertEqual(local.read_bytes(), XMLTV.encode())  # stored unzipped
+        self.assertEqual(oct(local.stat().st_mode & 0o777), "0o644")
+        for bad in (gzip.compress(b"<rss></rss>"), gzip.compress(XMLTV.encode())[:-6], b"<tv><channel></tv>"):
+            with self.subTest(bad=bad):
+                bodies["body"] = bad
+                (result,) = await manager.refresh("xmltv", pid)
+                self.assertFalse(result.ok)
+                self.assertEqual(local.read_bytes(), XMLTV.encode())
+                self.assertEqual([p.name for p in self.data.iterdir()], [local.name])
+        self.assertEqual(record["compatibility"], {"xmltv.channels": 1, "xmltv.programs": 2})
+
     async def test_remove(self) -> None:
         await self.manager.add("m3u", {"file.source": f"{self.base}/list.m3u"})
         pid = next(iter(self.settings.files.m3u))
@@ -304,9 +328,9 @@ class RefreshTests(ServerCase):
     async def test_proxy_setting_is_used(self) -> None:
         seen = {}
 
-        def fake(url: str, **kwargs: object):
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
             seen.update(kwargs, url=url)
-            return download(f"{self.base}/list.m3u")
+            return download_to(f"{self.base}/list.m3u", dest)
 
         manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
         await manager.add(
@@ -353,19 +377,35 @@ class PureTests(unittest.TestCase):
         self.assertIsNone(f("filename"))  # Go indexed past the end here
         self.assertIsNone(f('attachment; filename=""'))
 
-    def test_extract_gzip(self) -> None:
-        self.assertEqual(extract_gzip(gzip.compress(b"hello")), b"hello")
-        self.assertEqual(extract_gzip(b"plain"), b"plain")
-        self.assertEqual(extract_gzip(gzip.compress(b"a") + gzip.compress(b"b")), b"ab")
-        truncated = gzip.compress(b"hello" * 100)[:-6]
-        self.assertEqual(extract_gzip(truncated), truncated)
-        corrupt = b"\x1f\x8bgarbage"
-        self.assertEqual(extract_gzip(corrupt), corrupt)
-        with self.assertRaises(ProviderError):
-            extract_gzip(gzip.compress(b"0" * 100_000), max_bytes=1000)
+    def test_gunzip_file(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            source, dest = Path(td) / "in", Path(td) / "out"
+
+            def gunzip(body: bytes, **kwargs: int) -> bytes | None:
+                source.write_bytes(body)
+                dest.unlink(missing_ok=True)
+                return dest.read_bytes() if gunzip_file(source, dest, **kwargs) else None
+
+            self.assertEqual(gunzip(gzip.compress(b"hello")), b"hello")
+            for plain in (b"plain", b"\x1fplain"):
+                self.assertIsNone(gunzip(plain))
+                self.assertFalse(dest.exists())  # not gzip: nothing written
+            self.assertEqual(gunzip(gzip.compress(b"a") + gzip.compress(b"b")), b"ab")
+            big = os.urandom(3 << 20)  # several read blocks
+            self.assertEqual(gunzip(gzip.compress(big)), big)
+            self.assertIsNone(gunzip(gzip.compress(b"hello" * 100)[:-6]))  # truncated
+            self.assertIsNone(gunzip(b"\x1f\x8bgarbage"))
+            self.assertIsNone(gunzip(b"\x1f\x8b"))
+            with self.assertRaises(ProviderError):
+                gunzip(gzip.compress(b"0" * 100_000), max_bytes=1000)
+            self.assertEqual(gunzip(gzip.compress(b"0" * 1000), max_bytes=1000), b"0" * 1000)
 
     def test_check_xmltv(self) -> None:
         self.assertEqual(check_xmltv(XMLTV.encode()), {"xmltv.channels": 1, "xmltv.programs": 2})
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "tv.xml"
+            path.write_text(XMLTV, "utf-8")
+            self.assertEqual(check_xmltv(path), {"xmltv.channels": 1, "xmltv.programs": 2})
         for bad in (b"<rss></rss>", b"<tv><channel></tv>", b"", b"plain"):
             with self.subTest(bad=bad), self.assertRaises(ProviderError):
                 check_xmltv(bad)
