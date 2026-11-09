@@ -128,7 +128,10 @@ class MemoryCeiling(unittest.TestCase):
             peak = traced_peak(write_xmltv, out, channels, folder, EPGOptions(), NOW)
             size = out.stat().st_size
             self.assertEqual(len(written(out)), 12000)
-            self.assertLess(peak, size // 8, f"peak={peak} size={size}")
+            # the spooled writer's peak is a fixed overhead (about 0.5 MB on 3.12, 0.75 MB on 3.14) whatever
+            # the guide size; holding the guide, or one channel's programmes, would exceed this
+            self.assertGreater(size, 5 << 20)
+            self.assertLess(peak, 2 << 20, f"peak={peak} size={size}")
 
     def test_save_json_streams(self) -> None:
         data = {f"k{i}": {"name": "n" * 200, "i": i, "tags": ["a", "b"]} for i in range(20000)}
