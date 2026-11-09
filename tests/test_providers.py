@@ -318,8 +318,12 @@ class RefreshTests(ServerCase):
                 self.assertEqual([p.name for p in self.data.iterdir()], [local.name])
         self.assertEqual(record["compatibility"], {"xmltv.channels": 1, "xmltv.programs": 2})
 
-    async def test_cancelled_refresh_finishes_in_its_worker(self) -> None:
-        """Cancelling a refresh cannot stop its worker thread, so its files must not be removed under it."""
+    async def _cancel_mid_refresh(self) -> tuple[ProviderManager, str, Path, dict[str, bytes], threading.Event]:
+        """Add a provider, then cancel a refresh while its worker is inside the XMLTV check.
+
+        Returns the manager, provider id, local copy, the fake fetch's bodies and the event that
+        lets the cancelled worker continue. The worker cannot be stopped, only told not to commit.
+        """
         bodies = {"body": XMLTV.encode()}
 
         def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
@@ -329,36 +333,87 @@ class RefreshTests(ServerCase):
         manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
         await manager.add("xmltv", {"file.source": "http://prov/tv.xml"})
         ((pid, _record),) = self.settings.files.xmltv.items()
-        local = self.data / f"{pid}.xml"
-        newer = XMLTV.replace("<title>T</title>", "<title>U</title>", 1).encode()
-        self.assertNotEqual(newer, XMLTV.encode())
-        bodies["body"] = newer
+        # different counts too, so a record changed before the commit check would show
+        bodies["body"] = XMLTV.replace("<tv>", '<tv><channel id="b"><display-name>B</display-name></channel>').encode()
 
-        entered, release, done = threading.Event(), threading.Event(), threading.Event()
+        entered, release = threading.Event(), threading.Event()
         real_check = providers.check_xmltv
+        first = [True]
 
-        def slow_check(source: object) -> dict[str, int]:
+        def slow_check(source: Path | bytes) -> dict[str, int]:
+            if first[0]:
+                first[0] = False
+                entered.set()
+                release.wait(10)
+            return real_check(source)
+
+        patcher = mock.patch("threadfin.providers.check_xmltv", slow_check)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(release.set)
+        task = asyncio.create_task(manager.refresh("xmltv", pid))
+        self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+        task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        return manager, pid, self.data / f"{pid}.xml", bodies, release
+
+    async def _settle(self, expected: list[str]) -> None:
+        """Wait for a cancelled worker to finish and remove its temp files."""
+        for _ in range(250):
+            if sorted(p.name for p in self.data.iterdir()) == expected:
+                return
+            await asyncio.sleep(0.02)
+        self.assertEqual(sorted(p.name for p in self.data.iterdir()), expected)
+
+    async def test_cancelled_refresh_does_not_commit(self) -> None:
+        _manager, pid, local, _bodies, release = await self._cancel_mid_refresh()
+        record = dict(self.settings.files.xmltv[pid])
+        release.set()
+        await self._settle([local.name])
+        await asyncio.sleep(0.1)  # the worker has given up, not just not finished yet
+        self.assertEqual(local.read_bytes(), XMLTV.encode())
+        self.assertEqual(self.settings.files.xmltv[pid], record)
+
+    async def test_later_refresh_wins_over_a_cancelled_one(self) -> None:
+        manager, pid, local, bodies, release = await self._cancel_mid_refresh()
+        newest = XMLTV.replace("<title>T</title>", "<title>NEWEST</title>", 1).encode()
+        bodies["body"] = newest
+        (result,) = await manager.refresh("xmltv", pid)
+        self.assertTrue(result.ok)
+        release.set()
+        await self._settle([local.name])
+        await asyncio.sleep(0.1)
+        self.assertEqual(local.read_bytes(), newest)
+
+    async def test_removal_is_not_undone_by_a_cancelled_refresh(self) -> None:
+        manager, pid, local, _bodies, release = await self._cancel_mid_refresh()
+        self.assertTrue(await manager.remove("xmltv", pid))
+        release.set()
+        await self._settle([])
+        await asyncio.sleep(0.1)
+        self.assertFalse(local.exists())
+        self.assertEqual(self.settings.files.xmltv, {})
+
+    async def test_cancelled_add_keeps_no_record(self) -> None:
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
             entered.set()
             release.wait(10)
-            try:
-                return real_check(source)  # type: ignore[arg-type]
-            finally:
-                done.set()
+            dest.write(XMLTV.encode())
+            return "tv.xml"
 
-        with mock.patch("threadfin.providers.check_xmltv", slow_check):
-            task = asyncio.create_task(manager.refresh("xmltv", pid))
-            self.assertTrue(await asyncio.to_thread(entered.wait, 10))
-            task.cancel()
-            with self.assertRaises(asyncio.CancelledError):
-                await task
-            release.set()
-            self.assertTrue(await asyncio.to_thread(done.wait, 10))
-            for _ in range(250):  # the worker removes its temp files after the check returns
-                if [p.name for p in self.data.iterdir()] == [local.name]:
-                    break
-                await asyncio.sleep(0.02)
-        self.assertEqual([p.name for p in self.data.iterdir()], [local.name])
-        self.assertEqual(local.read_bytes(), newer)
+        manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
+        task = asyncio.create_task(manager.add("xmltv", {"file.source": "http://prov/tv.xml"}))
+        self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+        task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        self.assertEqual(self.settings.files.xmltv, {})
+        release.set()
+        await self._settle([])
 
     async def test_remove(self) -> None:
         await self.manager.add("m3u", {"file.source": f"{self.base}/list.m3u"})

@@ -29,6 +29,7 @@ import ipaddress
 import os
 import secrets
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -335,6 +336,10 @@ class ProviderManager:
         self._max_bytes = max_bytes
         self._fetch = fetch
         self._lock = asyncio.Lock()
+        # Taken by a worker to commit a download and by remove() to delete a copy. A refresh whose
+        # caller was cancelled (its thread cannot be stopped) checks its flag under this lock, so it
+        # can never commit after a later refresh or removal of the same provider.
+        self._commit_lock = threading.Lock()
 
     # --- access ---
     def records(self, kind: str) -> dict[str, Any]:
@@ -390,7 +395,11 @@ class ProviderManager:
             record = {k: v for k, v in data.items() if k not in ("new", "delete")}
             record.setdefault("type", kind)
             self.records(kind)[provider_id] = record
-            result = await self._refresh_one(kind, provider_id, new=True)
+            try:
+                result = await self._refresh_one(kind, provider_id, new=True)
+            except asyncio.CancelledError:
+                self.records(kind).pop(provider_id, None)
+                raise
             if not result.ok:
                 self.records(kind).pop(provider_id, None)
                 raise ProviderError(result.error or "download failed")
@@ -411,7 +420,7 @@ class ProviderManager:
         async with self._lock:
             if self.records(kind).pop(provider_id, None) is None:
                 return False
-            await asyncio.to_thread(self.local_path(kind, provider_id).unlink, True)
+            await asyncio.to_thread(self._remove_copy, self.local_path(kind, provider_id))
             self._save()
             return True
 
@@ -427,8 +436,14 @@ class ProviderManager:
         if isinstance(ip, str) and isinstance(port, str) and ip and port:
             proxy = f"http://{ip}:{port}"
 
+        cancelled = threading.Event()
         try:
-            result = await asyncio.to_thread(self._download_and_store, kind, provider_id, record, source, proxy)
+            result = await asyncio.to_thread(
+                self._download_and_store, kind, provider_id, record, source, proxy, cancelled
+            )
+        except asyncio.CancelledError:
+            cancelled.set()  # before self._lock is released, so later operations come after it
+            raise
         except (ProviderError, InvalidM3UError, OSError) as exc:
             return self._failed(kind, provider_id, record, str(exc), new)
         if not new:
@@ -436,22 +451,32 @@ class ProviderManager:
         await asyncio.to_thread(self._save)
         return result
 
+    def _remove_copy(self, path: Path) -> None:
+        with self._commit_lock:
+            path.unlink(missing_ok=True)
+
     def _download_and_store(
-        self, kind: str, provider_id: str, record: dict[str, Any], source: str, proxy: str
+        self,
+        kind: str,
+        provider_id: str,
+        record: dict[str, Any],
+        source: str,
+        proxy: str,
+        cancelled: threading.Event,
     ) -> RefreshResult:
         """Download to a temp file in the data folder (never all into memory), then store it.
 
         One worker thread does the whole job, including removing its temp files: cancelling the
         caller cannot stop a thread, so the cleanup must not run in the caller while the worker
-        still uses the files. Each download has its own temp names, so a worker left running
-        after a cancellation cannot collide with a later refresh of the same provider.
+        still uses the files. Each download has its own temp names, and a worker whose caller
+        was cancelled stops before it commits anything (see ``_commit_lock``).
         """
         fd, name = tempfile.mkstemp(dir=self._data, prefix=f".{provider_id}.", suffix=".download")
         raw = Path(name)
         try:
             with os.fdopen(fd, "wb") as out:
                 filename = self._fetch_source(kind, source, proxy, out)
-            return self._store(kind, provider_id, record, source, filename, raw)
+            return self._store(kind, provider_id, record, source, filename, raw, cancelled)
         finally:
             raw.unlink(missing_ok=True)
 
@@ -475,30 +500,40 @@ class ProviderManager:
         source: str,
         server_name: str,
         raw: Path,
+        cancelled: threading.Event,
     ) -> RefreshResult:
+        changes = dict(record)  # the record itself is only changed once the copy is committed
         apply_defaults(
-            record, kind=kind, provider_id=provider_id, source=source,
+            changes, kind=kind, provider_id=provider_id, source=source,
             server_name=server_name, app=self._app,
         )  # fmt: skip
-        target = self._data / str(record[f"file.{self._app}"])
+        target = self._data / str(changes[f"file.{self._app}"])
         unpacked = raw.with_name(raw.name + ".gunzip")
         skipped: list[SkippedEntry] = []
         count = 0
+        playlist = b""
         try:
             local = unpacked if gunzip_file(raw, unpacked, max_bytes=self._max_bytes) else raw
             if kind == "m3u":
                 parsed = parse_m3u_report(local.read_bytes())  # playlists are small; the parser needs it all
                 skipped = parsed.skipped
                 count = len(parsed.streams)
-                write_bytes_atomic(target, serialize_m3u(parsed.streams).encode("utf-8"))
+                playlist = serialize_m3u(parsed.streams).encode("utf-8")
             else:
-                record["compatibility"] = check_xmltv(local)
+                changes["compatibility"] = check_xmltv(local)
                 os.chmod(local, 0o644)
-                os.replace(local, target)  # same folder, so the swap is atomic
+            with self._commit_lock:
+                if cancelled.is_set():
+                    raise ProviderError("refresh cancelled")
+                if kind == "m3u":
+                    write_bytes_atomic(target, playlist)
+                else:
+                    os.replace(local, target)  # same folder, so the swap is atomic
+                changes["last.update"] = _now()
+                changes["counter.download"] = _number(changes.get("counter.download")) + 1
+                record.update(changes)
         finally:
             unpacked.unlink(missing_ok=True)
-        record["last.update"] = _now()
-        record["counter.download"] = _number(record.get("counter.download")) + 1
         return RefreshResult(provider_id, kind, True, None, count, skipped)
 
     def _failed(self, kind: str, provider_id: str, record: dict[str, Any], error: str, new: bool) -> RefreshResult:
