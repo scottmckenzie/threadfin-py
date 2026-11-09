@@ -28,6 +28,7 @@ import io
 import ipaddress
 import os
 import secrets
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -426,30 +427,43 @@ class ProviderManager:
         if isinstance(ip, str) and isinstance(port, str) and ip and port:
             proxy = f"http://{ip}:{port}"
 
-        # the download goes to disk, never all into memory; refreshes run one at a time (self._lock)
-        raw = self._data / f".{provider_id}.download.tmp"
         try:
-            filename = await asyncio.to_thread(self._fetch_source, kind, source, proxy, raw)
-            result = await asyncio.to_thread(self._store, kind, provider_id, record, source, filename, raw)
+            result = await asyncio.to_thread(self._download_and_store, kind, provider_id, record, source, proxy)
         except (ProviderError, InvalidM3UError, OSError) as exc:
             return self._failed(kind, provider_id, record, str(exc), new)
-        finally:
-            raw.unlink(missing_ok=True)
         if not new:
             self._update_availability(record)
         await asyncio.to_thread(self._save)
         return result
 
-    def _fetch_source(self, kind: str, source: str, proxy: str, dest: Path) -> str:
+    def _download_and_store(
+        self, kind: str, provider_id: str, record: dict[str, Any], source: str, proxy: str
+    ) -> RefreshResult:
+        """Download to a temp file in the data folder (never all into memory), then store it.
+
+        One worker thread does the whole job, including removing its temp files: cancelling the
+        caller cannot stop a thread, so the cleanup must not run in the caller while the worker
+        still uses the files. Each download has its own temp names, so a worker left running
+        after a cancellation cannot collide with a later refresh of the same provider.
+        """
+        fd, name = tempfile.mkstemp(dir=self._data, prefix=f".{provider_id}.", suffix=".download")
+        raw = Path(name)
+        try:
+            with os.fdopen(fd, "wb") as out:
+                filename = self._fetch_source(kind, source, proxy, out)
+            return self._store(kind, provider_id, record, source, filename, raw)
+        finally:
+            raw.unlink(missing_ok=True)
+
+    def _fetch_source(self, kind: str, source: str, proxy: str, dest: IO[bytes]) -> str:
         timeout = self._settings.buffer_timeout
         timeout = float(timeout) if timeout and timeout > 0 else DEFAULT_TIMEOUT
         agent = self._settings.user_agent
         scheme = urlsplit(source).scheme.lower()
         if scheme in ("http", "https"):
-            with open(dest, "wb") as out:
-                filename: str = self._fetch(
-                    source, out, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes
-                )
+            filename: str = self._fetch(
+                source, dest, proxy=proxy, user_agent=agent, timeout=timeout, max_bytes=self._max_bytes
+            )
             return filename
         raise ProviderError(f"unsupported source {display_url(source)!r}: use an http:// or https:// URL")
 

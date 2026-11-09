@@ -7,9 +7,11 @@ import gc
 import gzip
 import json
 import tempfile
+import threading
 import tracemalloc
 import unittest
 from datetime import UTC, datetime, timedelta
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import IO
 from xml.etree import ElementTree
@@ -19,7 +21,7 @@ from test_epg import channel
 
 from threadfin.epg import EPGOptions, write_xmltv
 from threadfin.jsonio import save_json, to_json
-from threadfin.providers import ProviderManager, check_xmltv, gunzip_file
+from threadfin.providers import ProviderManager, check_xmltv, download_to, gunzip_file
 from threadfin.settings import Settings
 from threadfin.xepg import XEPGChannel
 
@@ -181,6 +183,36 @@ class ProviderDownload(unittest.TestCase):
         peak = traced_peak(gunzip_file, source, dest)
         self.assertLess(peak, 8 << 20, f"peak={peak}")
         self.assertEqual(dest.read_bytes(), self.xml)
+
+    def test_download_to_writes_as_it_arrives(self) -> None:
+        body = bytes(range(256)) * (96 << 10)  # 24 MiB
+
+        class Big(BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                view = memoryview(body)
+                for i in range(0, len(view), 1 << 16):
+                    self.wfile.write(view[i : i + (1 << 16)])
+
+            def log_message(self, format: str, *args: object) -> None:
+                pass
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Big)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        dest = self.folder / "download"
+
+        def fetch() -> None:
+            with open(dest, "wb") as out:
+                self.assertEqual(download_to(f"http://127.0.0.1:{server.server_port}/tv.xml", out), "tv.xml")
+
+        peak = traced_peak(fetch)
+        self.assertLess(peak, 2 << 20, f"peak={peak} body={len(body)}")
+        self.assertEqual(dest.stat().st_size, len(body))
+        self.assertEqual(dest.read_bytes(), body)
 
     def test_adding_a_gzipped_guide(self) -> None:
         body = gzip.compress(self.xml, compresslevel=1)

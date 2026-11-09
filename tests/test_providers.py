@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import gzip
 import os
@@ -14,6 +15,7 @@ from pathlib import Path
 from typing import IO, ClassVar
 from unittest import mock
 
+from threadfin import providers
 from threadfin.m3u import parse_m3u
 from threadfin.providers import (
     ProviderError,
@@ -315,6 +317,48 @@ class RefreshTests(ServerCase):
                 self.assertEqual(local.read_bytes(), XMLTV.encode())
                 self.assertEqual([p.name for p in self.data.iterdir()], [local.name])
         self.assertEqual(record["compatibility"], {"xmltv.channels": 1, "xmltv.programs": 2})
+
+    async def test_cancelled_refresh_finishes_in_its_worker(self) -> None:
+        """Cancelling a refresh cannot stop its worker thread, so its files must not be removed under it."""
+        bodies = {"body": XMLTV.encode()}
+
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            dest.write(bodies["body"])
+            return "tv.xml"
+
+        manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
+        await manager.add("xmltv", {"file.source": "http://prov/tv.xml"})
+        ((pid, _record),) = self.settings.files.xmltv.items()
+        local = self.data / f"{pid}.xml"
+        newer = XMLTV.replace("<title>T</title>", "<title>U</title>", 1).encode()
+        self.assertNotEqual(newer, XMLTV.encode())
+        bodies["body"] = newer
+
+        entered, release, done = threading.Event(), threading.Event(), threading.Event()
+        real_check = providers.check_xmltv
+
+        def slow_check(source: object) -> dict[str, int]:
+            entered.set()
+            release.wait(10)
+            try:
+                return real_check(source)  # type: ignore[arg-type]
+            finally:
+                done.set()
+
+        with mock.patch("threadfin.providers.check_xmltv", slow_check):
+            task = asyncio.create_task(manager.refresh("xmltv", pid))
+            self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            release.set()
+            self.assertTrue(await asyncio.to_thread(done.wait, 10))
+            for _ in range(250):  # the worker removes its temp files after the check returns
+                if [p.name for p in self.data.iterdir()] == [local.name]:
+                    break
+                await asyncio.sleep(0.02)
+        self.assertEqual([p.name for p in self.data.iterdir()], [local.name])
+        self.assertEqual(local.read_bytes(), newer)
 
     async def test_remove(self) -> None:
         await self.manager.add("m3u", {"file.source": f"{self.base}/list.m3u"})
