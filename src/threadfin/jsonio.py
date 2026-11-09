@@ -63,4 +63,18 @@ def write_text_atomic(path: str | os.PathLike[str], text: str, mode: int = 0o644
 
 
 def save_json(path: str | os.PathLike[str], data: Any, mode: int = 0o644) -> None:
-    write_text_atomic(path, to_json(data), mode)
+    """Write ``data`` as :func:`to_json` text, streamed into a temp file and renamed into place.
+
+    ``json.dump`` writes the encoder's chunks as it goes, so a large ``xepg.json`` is never held
+    in memory as one string (and again as bytes).
+    """
+    target = Path(path)
+    fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
+            json.dump(data, handle, indent=2, ensure_ascii=False)
+        os.chmod(tmp_name, mode)
+        os.replace(tmp_name, target)
+    except BaseException:
+        Path(tmp_name).unlink(missing_ok=True)
+        raise

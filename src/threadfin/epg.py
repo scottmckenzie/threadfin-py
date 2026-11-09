@@ -25,6 +25,7 @@ import gzip
 import os
 import re
 import tempfile
+from array import array
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta, tzinfo
@@ -516,6 +517,9 @@ class XMLTVStats:
     errors: dict[str, str] = field(default_factory=dict)  # xmltv file -> message
 
 
+SPOOL_BATCH = 256  # rendered programmes per output channel held before writing to the spool file
+
+
 def write_xmltv(
     path: str | os.PathLike[str],
     channels: Mapping[str, XEPGChannel],
@@ -539,53 +543,86 @@ def write_xmltv(
     entries.sort(key=sort_key)
 
     folder = Path(data_folder)
-    programmes: dict[str, list[str]] = {entry.x_epg: [] for entry in entries}
-
-    # real guides: one pass per provider file, serving every channel that maps into it
-    wanted: dict[str, dict[str, list[XEPGChannel]]] = {}
-    for entry in entries:
-        if DUMMY_FILE in entry.x_xmltv_file:
-            for programme in dummy_programmes(entry, options, now):
-                programmes[entry.x_epg].append(render_programme(convert_programme(programme, entry, options)))
-        elif entry.x_xmltv_file:
-            wanted.setdefault(entry.x_xmltv_file, {}).setdefault(entry.x_mapping, []).append(entry)
-    for file, by_channel in wanted.items():
-        try:
-            for element in iter_top_level(folder / file):
-                if element.tag.rsplit("}", 1)[-1] != "programme":
-                    continue
-                targets = by_channel.get(element.attrib.get("channel", ""))
-                if targets:
-                    source = parse_programme(element)
-                    for target in targets:
-                        programmes[target.x_epg].append(render_programme(convert_programme(source, target, options)))
-        except XMLTVError as exc:
-            stats.errors[file] = str(exc)
-
     xml_path = Path(path)
-    fd, tmp_name = tempfile.mkstemp(dir=xml_path.parent, prefix=f".{xml_path.name}.", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as out:
-            out.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            out.write(f"<tv{_attrs(generator_info_name=options.generator, source_info_name=options.source)}>\n")
-            for entry in entries:
-                if (options.replace_channel_title and entry.x_mapping == PPV) or entry.x_name:
-                    icon = options.image_url(entry.tvg_logo)
-                    out.write(f"  <channel id={quoteattr(_clean(entry.x_channel_id))}>\n")
-                    out.write(f"    <display-name>{_text(entry.x_name)}</display-name>\n")
-                    out.write(f"    <icon{_attrs(src=icon)}/>\n" if icon else '    <icon src=""/>\n')
-                    out.write("  </channel>\n")
-                    stats.channels += 1
-            for entry in entries:
-                chunk = programmes[entry.x_epg]
-                out.writelines(chunk)
-                stats.programmes += len(chunk)
-            out.write("</tv>\n")
-        os.chmod(tmp_name, 0o644)
-        os.replace(tmp_name, xml_path)
-    except BaseException:
-        Path(tmp_name).unlink(missing_ok=True)
-        raise
+    # Programmes are written after all the <channel> elements, in channel order, but are read in
+    # provider-file order. Rather than hold the whole guide in memory, each channel's rendered
+    # programmes go to an unnamed spool file and only their (offset, length) runs are kept.
+    runs: dict[str, array[int]] = {entry.x_epg: array("q") for entry in entries}
+    counts = dict.fromkeys(runs, 0)
+    pending: dict[str, list[str]] = {}
+
+    with tempfile.TemporaryFile(dir=xml_path.parent) as spool:
+
+        def flush() -> None:
+            for x_epg, parts in pending.items():
+                data = "".join(parts).encode("utf-8")
+                runs[x_epg].extend((spool.tell(), len(data)))
+                counts[x_epg] += len(parts)
+                spool.write(data)
+            pending.clear()
+
+        # real guides: one pass per provider file, serving every channel that maps into it
+        wanted: dict[str, dict[str, list[XEPGChannel]]] = {}
+        for entry in entries:
+            if DUMMY_FILE in entry.x_xmltv_file:
+                pending[entry.x_epg] = [
+                    render_programme(convert_programme(programme, entry, options))
+                    for programme in dummy_programmes(entry, options, now)
+                ]
+                flush()
+            elif entry.x_xmltv_file:
+                wanted.setdefault(entry.x_xmltv_file, {}).setdefault(entry.x_mapping, []).append(entry)
+        for file, by_channel in wanted.items():
+            current = None
+            try:
+                for element in iter_top_level(folder / file):
+                    if element.tag.rsplit("}", 1)[-1] != "programme":
+                        continue
+                    source_channel = element.attrib.get("channel", "")
+                    targets = by_channel.get(source_channel)
+                    if targets:
+                        if source_channel != current:
+                            flush()
+                            current = source_channel
+                        source = parse_programme(element)
+                        for target in targets:
+                            parts = pending.setdefault(target.x_epg, [])
+                            parts.append(render_programme(convert_programme(source, target, options)))
+                            if len(parts) >= SPOOL_BATCH:
+                                flush()
+            except XMLTVError as exc:
+                stats.errors[file] = str(exc)
+            flush()  # keeps what was read before an error, as before
+
+        fd, tmp_name = tempfile.mkstemp(dir=xml_path.parent, prefix=f".{xml_path.name}.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "wb") as out:
+                out.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
+                head = f"<tv{_attrs(generator_info_name=options.generator, source_info_name=options.source)}>\n"
+                out.write(head.encode("utf-8"))
+                for entry in entries:
+                    if (options.replace_channel_title and entry.x_mapping == PPV) or entry.x_name:
+                        icon = options.image_url(entry.tvg_logo)
+                        block = (
+                            f"  <channel id={quoteattr(_clean(entry.x_channel_id))}>\n"
+                            f"    <display-name>{_text(entry.x_name)}</display-name>\n"
+                            + (f"    <icon{_attrs(src=icon)}/>\n" if icon else '    <icon src=""/>\n')
+                            + "  </channel>\n"
+                        )
+                        out.write(block.encode("utf-8"))
+                        stats.channels += 1
+                for entry in entries:
+                    entry_runs = runs[entry.x_epg]
+                    for i in range(0, len(entry_runs), 2):
+                        spool.seek(entry_runs[i])
+                        out.write(spool.read(entry_runs[i + 1]))
+                    stats.programmes += counts[entry.x_epg]
+                out.write(b"</tv>\n")
+            os.chmod(tmp_name, 0o644)
+            os.replace(tmp_name, xml_path)
+        except BaseException:
+            Path(tmp_name).unlink(missing_ok=True)
+            raise
 
     if gzip_path is not None:
         with open(xml_path, "rb") as source_file, gzip.open(gzip_path, "wb") as gz_file:
