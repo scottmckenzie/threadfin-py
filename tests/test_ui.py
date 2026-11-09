@@ -66,6 +66,24 @@ class Pages(AppTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Rebuilt: 3 channels", triggers(response)["toast"])
 
+    def test_icons_are_linked_and_served(self) -> None:
+        page = self.client.get("/web/").text
+        self.assertNotIn('href="data:,"', page)
+        icons = re.findall(r'<link rel="(?:icon|apple-touch-icon)" href="([^"]+)"', page)
+        self.assertEqual(
+            icons, ["/web/static/favicon.svg", "/web/static/favicon-32.png", "/web/static/apple-touch-icon.png"]
+        )
+        types = {".svg": "image/svg+xml", ".png": "image/png"}
+        for href in icons:
+            with self.subTest(href=href):
+                response = self.client.get(href)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.headers["content-type"], types[href[href.rindex(".") :]])
+                if href.endswith(".png"):
+                    self.assertTrue(response.content.startswith(b"\x89PNG\r\n\x1a\n"))
+                else:
+                    self.assertIn(b'viewBox="0 0 32 32"', response.content)
+
     def test_static_files_only(self) -> None:
         self.assertEqual(self.client.get("/web/static/../settings.json").status_code, 404)
         self.assertEqual(self.client.get("/web/nope").status_code, 404)
@@ -525,6 +543,13 @@ class Login(AppTestCase):
         self.assertEqual(self.client.get("/web/first-user", follow_redirects=False).headers["location"], "/web/")
         self.client.post("/web/first-user", data={"username": "evil", "password": "x", "confirm": "x"})
         self.assertEqual(len(self.service.auth.users), 1)
+
+    def test_icons_load_before_login(self) -> None:
+        self.service.auth.create_first_user("admin", "pw")
+        self.assertIn('href="/web/static/favicon.svg"', self.client.get("/web/login").text)
+        for name in ("favicon.svg", "favicon-32.png", "apple-touch-icon.png"):
+            with self.subTest(name=name):
+                self.assertEqual(self.client.get(f"/web/static/{name}", follow_redirects=False).status_code, 200)
 
     def test_login_logout(self) -> None:
         self.service.auth.create_first_user("admin", "pw")
