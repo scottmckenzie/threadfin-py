@@ -42,7 +42,7 @@ Provider layer follow-through: `ParseResult.skipped` is carried into `RefreshRes
 | `-port` / `-branch` command-line flags are written into `settings.json`, so they persist after the flag is removed. | kept |
 | `backup.failover.requests` (default 3; 0 = off, else at least 2) and `backup.failover.seconds` (default 5; at least 1): see the backup channel row under M3U output. | **added**: Python-only; the Go app does not know them and drops them when it saves `settings.json` |
 | Unknown keys are dropped on save. | **changed**: preserved, so newer settings survive |
-| Writes `settings.json` in place. | **changed**: atomic temp-file + rename |
+| Writes `settings.json` in place. | **changed**: atomic temp-file + rename; every JSON file (`xepg.json`, `urls.json`, …) is streamed into the temp file rather than built as one string, byte-identical to before |
 | `buffer*`, `ffmpeg.options`, `vlc.*`, `storeBufferInRAM`, `ffmpeg.forceHttp` | kept in the file for compatibility, **inert** (no stream buffer in this port) |
 
 ## Channel probe (`src/threadfin/probe.py`, `probe_store.py`, `probe_service.py`)
@@ -146,6 +146,7 @@ Compared element by element (parsed XML) with the real `createXMLTVFile` on 50 c
 | A dummy guide with a zero length looped forever. | **fixed**: 30 minutes |
 | The file was written in place. | **changed**: atomic replace, optional gzip copy |
 | Several channels mapped to one provider channel re-read the file per channel. | **changed**: one streaming pass per provider file |
+| The whole guide was built in memory before it was written. | **changed**: rendered programmes are spooled to an unnamed temp file in the output folder, so memory stays flat whatever the guide size (the folder needs free space about the size of the guide, twice while the atomic copy is written) |
 
 ## M3U output and stream ids (`playlist.py`)
 
