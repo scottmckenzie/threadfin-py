@@ -21,11 +21,13 @@ Differences from Go (all fixes, see docs/PARITY_NOTES.md):
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import gzip
 import http
 import http.client
 import io
 import ipaddress
+import logging
 import os
 import secrets
 import tempfile
@@ -52,6 +54,8 @@ ID_PREFIX = {"m3u": "M", "xmltv": "X"}
 
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_BYTES = 1 << 30  # 1 GiB, both on the wire and after gunzip
+log = logging.getLogger(__name__)
+
 _BLOCK = 1 << 20  # unzip and copy in 1 MiB blocks
 
 _ID_ALPHABET = "AB1CD2EF3GH4IJ5KL6MN7OP8QR9ST0UVWXYZ"
@@ -453,11 +457,20 @@ class ProviderManager:
             await asyncio.to_thread(self._save)
             return result
         except asyncio.CancelledError:
-            self._settle_cancelled(kind, provider_id, record, job, new)
+            # In a thread, since it may wait for a commit in progress, and always awaited to the end
+            # before self._lock is released, even if this task is cancelled again meanwhile.
+            settle = asyncio.ensure_future(
+                asyncio.to_thread(self._settle_cancelled, kind, provider_id, record, job, new)
+            )
+            while not settle.done():
+                with contextlib.suppress(asyncio.CancelledError):
+                    await asyncio.wait([settle])
+            if (error := settle.exception()) is not None:
+                log.error("settling a cancelled %s provider %s failed: %s", kind, provider_id, error)
             raise
 
     def _settle_cancelled(self, kind: str, provider_id: str, record: dict[str, Any], job: _Job, new: bool) -> None:
-        """Called when the caller is cancelled, before ``self._lock`` is released.
+        """Run in a thread when the caller is cancelled, before ``self._lock`` is released.
 
         The worker thread cannot be stopped. Under the commit lock (so a commit in progress, a
         rename or a small playlist write, is finished first) it is told not to commit; if it

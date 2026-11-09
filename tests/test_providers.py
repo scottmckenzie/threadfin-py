@@ -449,6 +449,83 @@ class RefreshTests(ServerCase):
         self.assertEqual(len(saves), 2)  # saved again when cancelled, so it survives a restart
         release.set()
 
+    async def test_cancellation_does_not_block_the_event_loop(self) -> None:
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            dest.write(XMLTV.encode())
+            return "tv.xml"
+
+        manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
+        await manager.add("xmltv", {"file.source": "http://prov/tv.xml"})
+        pid = next(iter(self.settings.files.xmltv))
+        entered, release_worker = threading.Event(), threading.Event()
+        self.addCleanup(release_worker.set)
+        real_check = providers.check_xmltv
+
+        def slow_check(source: Path | bytes) -> dict[str, int]:
+            entered.set()
+            release_worker.wait(10)
+            return real_check(source)
+
+        locked, free_lock = threading.Event(), threading.Event()
+        self.addCleanup(free_lock.set)
+
+        def hold_commit_lock() -> None:  # stands in for a slow commit by another worker
+            with manager._commit_lock:
+                locked.set()
+                free_lock.wait(10)
+
+        with mock.patch("threadfin.providers.check_xmltv", slow_check):
+            task = asyncio.create_task(manager.refresh("xmltv", pid))
+            self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+            holder = threading.Thread(target=hold_commit_lock)
+            holder.start()
+            self.assertTrue(await asyncio.to_thread(locked.wait, 10))
+            task.cancel()
+            started = time.monotonic()
+            for _ in range(10):  # the loop keeps running while the cancelled refresh waits
+                await asyncio.sleep(0.01)
+            self.assertLess(time.monotonic() - started, 1.0)
+            self.assertFalse(task.done())
+            task.cancel()  # cancelled again: it still settles before releasing the provider lock
+            await asyncio.sleep(0.05)
+            self.assertFalse(task.done())
+            self.assertTrue(manager._lock.locked())
+            free_lock.set()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            self.assertFalse(manager._lock.locked())
+            release_worker.set()
+            await asyncio.to_thread(holder.join, 10)
+        await self._settle([f"{pid}.xml"])
+        self.assertEqual((self.data / f"{pid}.xml").read_bytes(), XMLTV.encode())
+
+    async def test_failed_settlement_is_logged(self) -> None:
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            dest.write(XMLTV.encode())
+            return "tv.xml"
+
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+        calls: list[int] = []
+
+        def save() -> None:
+            calls.append(1)
+            if len(calls) == 1:  # the add's own save: cancel the add here
+                entered.set()
+                release.wait(10)
+            else:  # the save made while settling the cancellation
+                raise OSError("disk full")
+
+        manager = ProviderManager(self.settings, self.data, save, fetch=fake)
+        task = asyncio.create_task(manager.add("xmltv", {"file.source": "http://prov/tv.xml"}))
+        self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+        with self.assertLogs("threadfin.providers", "ERROR") as logs:
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+        self.assertIn("disk full", logs.output[0])
+        release.set()
+
     async def test_cancelled_add_keeps_no_record(self) -> None:
         entered, release = threading.Event(), threading.Event()
         self.addCleanup(release.set)
