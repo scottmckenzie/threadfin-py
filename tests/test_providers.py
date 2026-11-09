@@ -395,6 +395,60 @@ class RefreshTests(ServerCase):
         self.assertFalse(local.exists())
         self.assertEqual(self.settings.files.xmltv, {})
 
+    async def test_refresh_keeps_edits_made_while_it_runs(self) -> None:
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            dest.write(XMLTV.encode())
+            return "tv.xml"
+
+        manager = ProviderManager(self.settings, self.data, self._save, fetch=fake)
+        await manager.add("xmltv", {"file.source": "http://prov/tv.xml"})
+        ((pid, record),) = self.settings.files.xmltv.items()
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+        real_check = providers.check_xmltv
+
+        def slow_check(source: Path | bytes) -> dict[str, int]:
+            entered.set()
+            release.wait(10)
+            return real_check(source)
+
+        with mock.patch("threadfin.providers.check_xmltv", slow_check):
+            task = asyncio.create_task(manager.refresh("xmltv", pid))
+            self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+            record["name"] = "Edited meanwhile"  # as update() could after a cancellation
+            release.set()
+            (result,) = await task
+        self.assertTrue(result.ok)
+        self.assertEqual(record["name"], "Edited meanwhile")
+        self.assertEqual(record["counter.download"], 2)
+
+    async def test_cancelled_add_after_its_commit_is_kept_and_saved(self) -> None:
+        def fake(url: str, dest: IO[bytes], **kwargs: object) -> str:
+            dest.write(XMLTV.encode())
+            return "tv.xml"
+
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+        saves: list[str] = []
+
+        def save() -> None:
+            saves.append(threading.current_thread().name)
+            if len(saves) == 1:  # the add's own save, in a worker thread: cancel the add here
+                entered.set()
+                release.wait(10)
+
+        manager = ProviderManager(self.settings, self.data, save, fetch=fake)
+        task = asyncio.create_task(manager.add("xmltv", {"file.source": "http://prov/tv.xml"}))
+        self.assertTrue(await asyncio.to_thread(entered.wait, 10))
+        task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        ((pid, record),) = self.settings.files.xmltv.items()  # kept: its copy is already committed
+        self.assertEqual((self.data / f"{pid}.xml").read_bytes(), XMLTV.encode())
+        self.assertEqual(record["compatibility"], {"xmltv.channels": 1, "xmltv.programs": 2})
+        self.assertEqual(len(saves), 2)  # saved again when cancelled, so it survives a restart
+        release.set()
+
     async def test_cancelled_add_keeps_no_record(self) -> None:
         entered, release = threading.Event(), threading.Event()
         self.addCleanup(release.set)

@@ -303,6 +303,14 @@ def apply_defaults(
 
 
 @dataclass(slots=True)
+class _Job:
+    """One refresh's state shared with its worker thread; read and written under the commit lock."""
+
+    cancelled: bool = False
+    committed: bool = False
+
+
+@dataclass(slots=True)
 class RefreshResult:
     provider_id: str
     kind: str
@@ -395,11 +403,7 @@ class ProviderManager:
             record = {k: v for k, v in data.items() if k not in ("new", "delete")}
             record.setdefault("type", kind)
             self.records(kind)[provider_id] = record
-            try:
-                result = await self._refresh_one(kind, provider_id, new=True)
-            except asyncio.CancelledError:
-                self.records(kind).pop(provider_id, None)
-                raise
+            result = await self._refresh_one(kind, provider_id, new=True)
             if not result.ok:
                 self.records(kind).pop(provider_id, None)
                 raise ProviderError(result.error or "download failed")
@@ -436,20 +440,38 @@ class ProviderManager:
         if isinstance(ip, str) and isinstance(port, str) and ip and port:
             proxy = f"http://{ip}:{port}"
 
-        cancelled = threading.Event()
+        job = _Job()
         try:
-            result = await asyncio.to_thread(
-                self._download_and_store, kind, provider_id, record, source, proxy, cancelled
-            )
+            try:
+                result = await asyncio.to_thread(
+                    self._download_and_store, kind, provider_id, record, source, proxy, job
+                )
+            except (ProviderError, InvalidM3UError, OSError) as exc:
+                return self._failed(kind, provider_id, record, str(exc), new)
+            if not new:
+                self._update_availability(record)
+            await asyncio.to_thread(self._save)
+            return result
         except asyncio.CancelledError:
-            cancelled.set()  # before self._lock is released, so later operations come after it
+            self._settle_cancelled(kind, provider_id, record, job, new)
             raise
-        except (ProviderError, InvalidM3UError, OSError) as exc:
-            return self._failed(kind, provider_id, record, str(exc), new)
-        if not new:
-            self._update_availability(record)
-        await asyncio.to_thread(self._save)
-        return result
+
+    def _settle_cancelled(self, kind: str, provider_id: str, record: dict[str, Any], job: _Job, new: bool) -> None:
+        """Called when the caller is cancelled, before ``self._lock`` is released.
+
+        The worker thread cannot be stopped. Under the commit lock (so a commit in progress, a
+        rename or a small playlist write, is finished first) it is told not to commit; if it
+        already has, the result is kept and saved, otherwise a new provider is dropped.
+        """
+        with self._commit_lock:
+            job.cancelled = True
+            committed = job.committed
+        if committed:
+            if not new:
+                self._update_availability(record)
+            self._save()
+        elif new:
+            self.records(kind).pop(provider_id, None)
 
     def _remove_copy(self, path: Path) -> None:
         with self._commit_lock:
@@ -462,7 +484,7 @@ class ProviderManager:
         record: dict[str, Any],
         source: str,
         proxy: str,
-        cancelled: threading.Event,
+        job: _Job,
     ) -> RefreshResult:
         """Download to a temp file in the data folder (never all into memory), then store it.
 
@@ -476,7 +498,7 @@ class ProviderManager:
         try:
             with os.fdopen(fd, "wb") as out:
                 filename = self._fetch_source(kind, source, proxy, out)
-            return self._store(kind, provider_id, record, source, filename, raw, cancelled)
+            return self._store(kind, provider_id, record, source, filename, raw, job)
         finally:
             raw.unlink(missing_ok=True)
 
@@ -500,18 +522,22 @@ class ProviderManager:
         source: str,
         server_name: str,
         raw: Path,
-        cancelled: threading.Event,
+        job: _Job,
     ) -> RefreshResult:
-        changes = dict(record)  # the record itself is only changed once the copy is committed
-        apply_defaults(
-            changes, kind=kind, provider_id=provider_id, source=source,
-            server_name=server_name, app=self._app,
-        )  # fmt: skip
-        target = self._data / str(changes[f"file.{self._app}"])
+        def fill_defaults(data: dict[str, Any]) -> None:
+            apply_defaults(
+                data, kind=kind, provider_id=provider_id, source=source,
+                server_name=server_name, app=self._app,
+            )  # fmt: skip
+
+        preview = dict(record)
+        fill_defaults(preview)
+        target = self._data / str(preview[f"file.{self._app}"])
         unpacked = raw.with_name(raw.name + ".gunzip")
         skipped: list[SkippedEntry] = []
         count = 0
         playlist = b""
+        compatibility: dict[str, int] = {}
         try:
             local = unpacked if gunzip_file(raw, unpacked, max_bytes=self._max_bytes) else raw
             if kind == "m3u":
@@ -520,18 +546,23 @@ class ProviderManager:
                 count = len(parsed.streams)
                 playlist = serialize_m3u(parsed.streams).encode("utf-8")
             else:
-                changes["compatibility"] = check_xmltv(local)
+                compatibility = check_xmltv(local)
                 os.chmod(local, 0o644)
             with self._commit_lock:
-                if cancelled.is_set():
+                if job.cancelled:
                     raise ProviderError("refresh cancelled")
                 if kind == "m3u":
                     write_bytes_atomic(target, playlist)
                 else:
                     os.replace(local, target)  # same folder, so the swap is atomic
-                changes["last.update"] = _now()
-                changes["counter.download"] = _number(changes.get("counter.download")) + 1
-                record.update(changes)
+                # changed in place, and only missing keys plus our own: an edit made while this
+                # worker ran (update() does not wait for it after a cancellation) is kept
+                fill_defaults(record)
+                if kind == "xmltv":
+                    record["compatibility"] = compatibility
+                record["last.update"] = _now()
+                record["counter.download"] = _number(record.get("counter.download")) + 1
+                job.committed = True
         finally:
             unpacked.unlink(missing_ok=True)
         return RefreshResult(provider_id, kind, True, None, count, skipped)
