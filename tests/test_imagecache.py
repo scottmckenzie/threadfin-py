@@ -180,6 +180,28 @@ class Downloads(unittest.TestCase):
         self.cache.fill(session)
         self.assertEqual(self.calls.count("http://h/gone.png"), 2)
 
+    def test_old_failures_are_forgotten(self) -> None:
+        gone, other = cache_name("http://h/gone.png"), cache_name("http://h/other.png")
+        s1 = self.cache.session("http://me")
+        s1.url("http://h/gone.png")
+        self.assertEqual(self.cache.fill(s1), (0, 1))
+        self.assertEqual(set(self.cache._failed), {gone})
+
+        self.now += 6 * 3600 - 1
+        s2 = self.cache.session("http://me")
+        s2.url("http://h/other.png")
+        self.assertEqual(self.cache.fill(s2), (0, 1))
+        self.assertEqual(set(self.cache._failed), {gone, other})  # gone.png is still too young to forget
+
+        self.now += 1
+        self.assertEqual(self.cache.fill(self.cache.session("http://me")), (0, 0))
+        self.assertEqual(set(self.cache._failed), {other})  # forgotten although no session wants it
+
+        self.now += 6 * 3600
+        self.cache.fill(self.cache.session("http://me"))
+        self.assertEqual(self.cache._failed, {})
+        self.assertEqual(self.calls, ["http://h/gone.png", "http://h/other.png"])
+
     def test_cached_images_are_not_downloaded_again(self) -> None:
         session = self.cache.session("http://me")
         session.url("http://h/a.png")

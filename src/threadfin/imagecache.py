@@ -197,6 +197,9 @@ class ImageCache:
     def fill(self, session: ImageSession) -> tuple[int, int]:
         """Download what the session is missing; returns (downloaded, failed)."""
         now = self._clock()
+        # Forget failures old enough to retry, so images that stopped being wanted (channels
+        # removed, programmes past) do not stay remembered for the life of the process.
+        self._failed = {n: t for n, t in self._failed.items() if now - t < RETRY_FAILED_AFTER}
         todo = [(n, s) for n, s in session.wanted.items()
                 if not self.has(n) and now - self._failed.get(n, -RETRY_FAILED_AFTER) >= RETRY_FAILED_AFTER]  # fmt: skip
         if not todo:
