@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .filters import build_filter_rules, filter_stream
-from .m3u import SkippedEntry, Stream, parse_m3u_report
+from .m3u import SkippedEntry, Stream, parse_m3u_file
 from .providers import ProviderError, ProviderManager
 
 PLEX_CHANNEL_LIMIT = 480
@@ -60,10 +60,9 @@ def _percent(count: int, total: int) -> int:
 def _load(manager: ProviderManager, provider_id: str, name: str) -> tuple[list[Stream], list[SkippedEntry]]:
     path = manager.local_path("m3u", provider_id)
     try:
-        content = path.read_bytes()
+        parsed = parse_m3u_file(path)  # a line at a time: the file is never in memory as a whole
     except OSError as exc:
         raise ProviderError(f"{name}: Local copy of the file no longer exists ({exc.strerror})") from exc
-    parsed = parse_m3u_report(content)
     return parsed.streams, parsed.skipped
 
 

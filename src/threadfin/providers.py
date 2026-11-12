@@ -44,8 +44,7 @@ from typing import IO, Any
 from urllib.parse import urlsplit
 from xml.etree import ElementTree
 
-from .jsonio import write_bytes_atomic
-from .m3u import InvalidM3UError, SkippedEntry, parse_m3u_report, serialize_m3u
+from .m3u import InvalidM3UError, SkippedEntry, store_m3u
 from .redact import clean_text, display_url
 
 KINDS = ("m3u", "xmltv")
@@ -547,27 +546,23 @@ class ProviderManager:
         fill_defaults(preview)
         target = self._data / str(preview[f"file.{self._app}"])
         unpacked = raw.with_name(raw.name + ".gunzip")
+        playlist = raw.with_name(raw.name + ".m3u")  # the local copy, written as the playlist is parsed
         skipped: list[SkippedEntry] = []
         count = 0
-        playlist = b""
         compatibility: dict[str, int] = {}
         try:
             local = unpacked if gunzip_file(raw, unpacked, max_bytes=self._max_bytes) else raw
             if kind == "m3u":
-                parsed = parse_m3u_report(local.read_bytes())  # playlists are small; the parser needs it all
-                skipped = parsed.skipped
-                count = len(parsed.streams)
-                playlist = serialize_m3u(parsed.streams).encode("utf-8")
+                with open(playlist, "w", encoding="utf-8", newline="") as out:
+                    count, skipped = store_m3u(local, out)
+                local = playlist
             else:
                 compatibility = check_xmltv(local)
-                os.chmod(local, 0o644)
+            os.chmod(local, 0o644)
             with self._commit_lock:
                 if job.cancelled:
                     raise ProviderError("refresh cancelled")
-                if kind == "m3u":
-                    write_bytes_atomic(target, playlist)
-                else:
-                    os.replace(local, target)  # same folder, so the swap is atomic
+                os.replace(local, target)  # same folder, so the swap is atomic
                 # changed in place, and only missing keys plus our own: an edit made while this
                 # worker ran (update() does not wait for it after a cancellation) is kept
                 fill_defaults(record)
@@ -578,6 +573,7 @@ class ProviderManager:
                 job.committed = True
         finally:
             unpacked.unlink(missing_ok=True)
+            playlist.unlink(missing_ok=True)
         return RefreshResult(provider_id, kind, True, None, count, skipped)
 
     def _failed(self, kind: str, provider_id: str, record: dict[str, Any], error: str, new: bool) -> RefreshResult:
