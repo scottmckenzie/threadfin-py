@@ -22,8 +22,12 @@ for any input, so it is not ported; this parser is used for every size.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
+import sys
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+from typing import IO
 
 Stream = dict[str, str]
 
@@ -32,7 +36,7 @@ Stream = dict[str, str]
 # attribute quotes.
 _PARAM_RE = re.compile(r"""[-a-zA-Z&=]*(?:".*?"|(?<==)'[^']*')""")
 _EXTINF = "#EXTINF"
-_EXTINF_RE = re.compile(_EXTINF)
+_HEADER = "#EXTM3U\n"
 
 _INVALID_MSG = "Invalid M3U file, an extended M3U file is required."
 
@@ -86,35 +90,94 @@ def parse_m3u_report(content: bytes | str) -> ParseResult:
     Raises :class:`InvalidM3UError` for HLS media playlists and for input
     without an ``#EXTM3U`` header.
     """
-    original = content if isinstance(content, str) else content.decode("utf-8", errors="replace")
+    text = content if isinstance(content, str) else content.decode("utf-8", errors="replace")
+    return _collect(iter_m3u(_split_lines(text)))
 
-    if "#EXT-X-TARGETDURATION" in original or "#EXT-X-MEDIA-SEQUENCE" in original:
+
+def parse_m3u_file(path: str | os.PathLike[str]) -> ParseResult:
+    """:func:`parse_m3u_report` for a file, read a line at a time instead of all at once."""
+    with open(path, "rb") as handle:
+        return _collect(iter_m3u(line.decode("utf-8", errors="replace") for line in handle))
+
+
+def store_m3u(source: str | os.PathLike[str], dest: IO[str]) -> tuple[int, list[SkippedEntry]]:
+    """Parse the playlist file ``source`` and write the local copy (see :func:`serialize_m3u`) to ``dest``.
+
+    Each entry is written as soon as it is parsed, so neither the streams nor the copy are held
+    in memory. Returns the number of streams and the skipped entries; raises
+    :class:`InvalidM3UError` (after writing) when ``source`` is not an extended M3U playlist.
+    """
+    count = 0
+    skipped: list[SkippedEntry] = []
+    dest.write(_HEADER)
+    with open(source, "rb") as handle:
+        for entry in iter_m3u(line.decode("utf-8", errors="replace") for line in handle):
+            if isinstance(entry, SkippedEntry):
+                skipped.append(entry)
+            else:
+                dest.write(_entry_text(entry))
+                count += 1
+    return count, skipped
+
+
+def iter_m3u(lines: Iterable[str]) -> Iterator[Stream | SkippedEntry]:
+    """Streams and skipped entries of a playlist given as lines, each ending in ``"\\n"`` but the last.
+
+    Entries are yielded as they are read. Whether the playlist is valid is only known at the
+    end, so :class:`InvalidM3UError` is raised after the last entry: callers must not use what
+    they were given until the iterator is exhausted.
+
+    Every marker the parser looks for (``#EXTM3U``, ``#EXTINF``, the HLS tags and Go's ``:-1``)
+    lies within one line, so working a line at a time gives exactly the result of working on
+    the whole text.
+    """
+    header = hls = False
+    entry: list[str] | None = None  # text of the current #EXTINF entry, after the marker
+    entry_line, entry_source = 0, ""  # where it starts, and that line as read
+    for number, original in enumerate(lines, start=1):
+        header = header or "#EXTM3U" in original
+        hls = hls or "#EXT-X-TARGETDURATION" in original or "#EXT-X-MEDIA-SEQUENCE" in original
+        # Go also deletes ":-1" everywhere (it turns "#EXTINF:-1" into "#EXTINF"); kept for parity.
+        line = original.replace(":-1", "")
+        parts = line.split(_EXTINF)
+        if entry is not None:
+            entry.append(parts[0])
+        for part in parts[1:]:
+            if entry is not None:
+                yield _finish(entry, entry_line, entry_source)
+            entry, entry_line, entry_source = [part], number, original
+    if entry is not None:
+        yield _finish(entry, entry_line, entry_source)
+    if hls or not header:
         raise InvalidM3UError(_INVALID_MSG)
-    if "#EXTM3U" not in original:
-        raise InvalidM3UError(_INVALID_MSG)
 
-    # Go also deletes ":-1" everywhere (it turns "#EXTINF:-1" into "#EXTINF"); kept for parity.
-    # Newlines are untouched, so line numbers stay valid.
-    text = original.replace(":-1", "")
 
+def _finish(entry: list[str], line: int, source: str) -> Stream | SkippedEntry:
+    outcome = _parse_channel("".join(entry))
+    if isinstance(outcome, _Skip):
+        return SkippedEntry(line, outcome.reason, outcome.url, source.strip()[:200])
+    return outcome
+
+
+def _collect(entries: Iterator[Stream | SkippedEntry]) -> ParseResult:
     streams: list[Stream] = []
     skipped: list[SkippedEntry] = []
-    original_lines: list[str] | None = None
-
-    starts = [m.start() for m in _EXTINF_RE.finditer(text)]
-    line, previous = 1, 0
-    for i, start in enumerate(starts):
-        line += text.count("\n", previous, start)
-        previous = start
-        end = starts[i + 1] if i + 1 < len(starts) else len(text)
-        outcome = _parse_channel(text[start + len(_EXTINF) : end])
-        if isinstance(outcome, _Skip):
-            if original_lines is None:
-                original_lines = original.split("\n")
-            skipped.append(SkippedEntry(line, outcome.reason, outcome.url, original_lines[line - 1].strip()[:200]))
+    for entry in entries:
+        if isinstance(entry, SkippedEntry):
+            skipped.append(entry)
         else:
-            streams.append(outcome)
+            streams.append(entry)
     return ParseResult(streams, skipped)
+
+
+def _split_lines(text: str) -> Iterator[str]:
+    """``text`` split after every ``"\\n"`` (and only there), like iterating over a binary file."""
+    start = 0
+    while (end := text.find("\n", start)) != -1:
+        yield text[start : end + 1]
+        start = end + 1
+    if start < len(text):
+        yield text[start:]
 
 
 def _strip_delimiters(attribute: str) -> str:
@@ -164,8 +227,9 @@ def _parse_channel(chunk: str) -> Stream | _Skip:
         key, sep, val = _strip_delimiters(match.group(0)).partition("=")
         if not sep:
             continue
-        # Case-sensitive "tvg" test, as in Go: "TVG-ID" is kept as-is.
-        stream[key.lower() if "tvg" in key else key] = val
+        # Case-sensitive "tvg" test, as in Go: "TVG-ID" is kept as-is. Interned: the same few
+        # names repeat in every stream, and each would otherwise be a separate string.
+        stream[sys.intern(key.lower() if "tvg" in key else key)] = val
         if "://" not in val and val:
             values.append(val + " ")
 
@@ -205,10 +269,11 @@ def serialize_m3u(streams: list[Stream]) -> str:
     survive (as in Go), so custom filters see the same text as before. Unlike Go, values
     containing ``"`` are written with single quotes instead of producing a broken line.
     """
-    out = ["#EXTM3U\n"]
-    for s in streams:
-        attributes = " ".join(
-            _attribute(key, s.get(key, "")) for key in ("tvg-id", "tvg-name", "tvg-chno", "tvg-logo", "group-title")
-        )
-        out.append(f"#EXTINF:-1 {attributes},{s.get('name', '')}\n{s.get('url', '')}\n")
-    return "".join(out)
+    return _HEADER + "".join(_entry_text(s) for s in streams)
+
+
+def _entry_text(s: Stream) -> str:
+    attributes = " ".join(
+        _attribute(key, s.get(key, "")) for key in ("tvg-id", "tvg-name", "tvg-chno", "tvg-logo", "group-title")
+    )
+    return f"#EXTINF:-1 {attributes},{s.get('name', '')}\n{s.get('url', '')}\n"
